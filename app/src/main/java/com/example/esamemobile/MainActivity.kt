@@ -6,19 +6,30 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
@@ -48,6 +59,14 @@ fun LoginScreen(modifier: Modifier = Modifier) {
     val coroutineScope = rememberCoroutineScope()
     val auth = FirebaseAuth.getInstance()
 
+    var currentUser by remember { mutableStateOf(auth.currentUser) }
+
+    LaunchedEffect(Unit) {
+        auth.addAuthStateListener { firebaseAuth ->
+            currentUser = firebaseAuth.currentUser
+        }
+    }
+
     val webClientId = "803305060535-h1adgsgul2khemr3rcmvsevb6q35ieev.apps.googleusercontent.com"
 
     Box(
@@ -56,14 +75,38 @@ fun LoginScreen(modifier: Modifier = Modifier) {
             .background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
-        val currentUser = auth.currentUser
         if (currentUser != null) {
-            Text(
-                text = "Benvenuto\n${currentUser.displayName}",
-                color = Color.White,
-                fontSize = 24.sp
-            )
+            //Se l'utente è loggato mettiamo la schermata di benvenuto
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Benvenuto\n${currentUser?.displayName}",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = {
+                        auth.signOut()
+                        currentUser = null
+                        Toast.makeText(context, "Logout effettuato", Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text(
+                        text = "Logout",
+                        color = Color.White,
+                        fontSize = 16.sp
+                    )
+                }
+            }
         } else {
+            //Se non è loggato mostriamo la schermata di login
             Button(
                 onClick = {
                     val credentialManager = CredentialManager.create(context)
