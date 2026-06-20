@@ -42,6 +42,7 @@ import com.example.esamemobile.ui.theme.EsameMobileTheme
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -63,6 +64,9 @@ fun LoginScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val auth = FirebaseAuth.getInstance()
+
+    //DATABASE: Inizializzazione
+    val db = FirebaseFirestore.getInstance()
 
     var currentUser by remember { mutableStateOf(auth.currentUser) }
 
@@ -104,6 +108,69 @@ fun LoginScreen(modifier: Modifier = Modifier) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                //DATABASE: Bottone creazione tabella
+                Button(
+                    onClick = {
+                        val datiTest = hashMapOf(
+                            "nomeEseguito" to displayedName,
+                            "emailEseguito" to (currentUser?.email ?: "Nessuna Email"),
+                            "uidCreatore" to (currentUser?.uid ?: ""),
+                            "timeStamp" to java.lang.System.currentTimeMillis()
+                        )
+
+                        db.collection("tabella_testing")
+                            .document(currentUser?.uid ?: "default_doc")
+                            .set(datiTest)
+                            .addOnSuccessListener {
+                                Toast.makeText(context, "Collezione creata, dati inseriti", Toast.LENGTH_SHORT).show()
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(context, "Errore scrittura: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Green),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                ) {
+                    Text(text = "Crea Collezione", color = Color.Black, fontSize = 16.sp)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                //DATABASE: Bottone distruzione
+                Button(
+                    onClick = {
+                        db.collection("tabella_testing")
+                            .get()
+                            .addOnSuccessListener { querySnapshot ->
+                                if (!querySnapshot.isEmpty) {
+                                    val batch = db.batch() //per eliminazioni multiple insieme
+                                    for (document in querySnapshot) {
+                                        batch.delete(document.reference)
+                                    }
+                                    batch.commit()
+                                        .addOnSuccessListener {
+                                            Toast.makeText(context, "Tutti i documenti eliminati! Collezione distrutta!", Toast.LENGTH_SHORT).show()
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Toast.makeText(context, "Errore distruzione: ${e.message}", Toast.LENGTH_LONG).show()
+                                        }
+                                } else {
+                                    Toast.makeText(context, "La collezione è già vuota o inesistente", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(context, "Errore nel recupero dei dati: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Magenta),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                ) {
+                    Text(text = "Distruggi Collezione", color = Color.White, fontSize = 16.sp)
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                //Bottone di Logout
                 Button(
                     onClick = {
                         auth.signOut()
