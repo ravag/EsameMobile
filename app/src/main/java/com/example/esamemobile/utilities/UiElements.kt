@@ -70,7 +70,7 @@ fun NavigationBottomBarWithFAB(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp)
-                .background(Color(0xFFE1E1E1)),
+                .background(Color(0xFF1E1E1E)),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceAround
         ) {
@@ -102,117 +102,91 @@ fun NavigationBottomBarWithFAB(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .weight(1f)
-                    .clickable { onTabSelected(0) }
+                    .clickable { onTabSelected(1) }
             ) {
                 Icon(
                     Icons.Outlined.AccountBox,
                     contentDescription = "Gruppi",
-                    tint = if (selectedIndex == 0) Color.Green else Color.White,
+                    tint = if (selectedIndex == 1) Color.Green else Color.White,
                     modifier = Modifier.size(26.dp)
                 )
                 Text(
                     "Gruppi",
-                    color = if (selectedIndex == 0) Color.Green else Color.White,
+                    color = if (selectedIndex == 1) Color.Green else Color.White,
                     fontSize = 12.sp
                 )
             }
 
         }
-        
-    //Floating Action Button (FAB)
-    FloatingActionButton(
-        onClick = onFabClick,
-        containerColor = Color.Green,
-        contentColor = Color.Black,
-        shape = CircleShape,
-        modifier = Modifier
-            .size(72.dp)
-            .offset(y = (-28).dp)
+
+        //Floating Action Button (FAB)
+        FloatingActionButton(
+            onClick = onFabClick,
+            containerColor = Color.Green,
+            contentColor = Color.Black,
+            shape = CircleShape,
+            modifier = Modifier
+                .size(72.dp)
+                .offset(y = (-28).dp)
+        ) {
+            Icon(
+                Icons.Default.Add,
+                contentDescription = "Aggiungi",
+                modifier = Modifier.size(36.dp)
+            )
+        }
+    }
+}
+
+    @Composable
+    fun CharacterDetailsNavigationBar(
+        selectedIndex: Int,
+        onTabSelected: (Int) -> Unit
     ) {
-        Icon(Icons.Default.Add, contentDescription = "Aggiungi", modifier = Modifier.size(36.dp))
-    }
-}
-
-@Composable
-fun CharacterDetailsNavigationBar(
-    selectedIndex: Int,
-    onTabSelected: (Int) -> Unit
-) {
-    NavigationBar(containerColor = Color(0xFF1E1E1E)) {
-        //Tasto sinistro: Statistiche
-        NavigationBarItem(
-            selected = selectedIndex == 0,
-            onClick = { onTabSelected(0) },
-            label = { Text("Statistiche", color = Color.White) },
-            icon = {
-                Icon(
-                    Icons.Outlined.Person,
-                    contentDescription = "Statistiche",
-                    tint = Color.White
-                )
-            }
-        )
-
-        //Tasto centrale: Abilità
-        NavigationBarItem(
-            selected = selectedIndex == 1,
-            onClick = { onTabSelected(1) },
-            label = { Text("Abilità", color = Color.White) },
-            icon = {
-                Icon(
-                    Icons.Outlined.Info,
-                    contentDescription = "Abilità",
-                    tint = Color.White
-                )
-            }
-        )
-
-        //Tasto destro: Equipaggiamento
-        NavigationBarItem(
-            selected = selectedIndex == 2,
-            onClick = { onTabSelected(2) },
-            label = { Text("Equipaggiamento", color = Color.White) },
-            icon = {
-                Icon(
-                    Icons.Outlined.ShoppingCart,
-                    contentDescription = "Equipaggiamento",
-                    tint = Color.White
-                )
-            }
-        )
-    }
-}
-
-@Composable
-fun NavigationBottomBar(
-    selectedIndex: Int,
-    onTabSelected: (Int) -> Unit
-) {
-    val items = listOf(
-        NavigationItem("Personaggi", Icons.Outlined.Person),
-        NavigationItem("Gruppi", Icons.Outlined.AccountBox),
-    )
-
-    val selectedItemIndex = remember { mutableStateOf(0) }
-
-    NavigationBar {
-        items.forEachIndexed { index, item ->
+        NavigationBar(containerColor = Color(0xFF1E1E1E)) {
+            //Tasto sinistro: Statistiche
             NavigationBarItem(
-                selected = selectedIndex == index,
-                onClick = {
-                    onTabSelected(index)
-                },
-                label = { Text(text = item.title) },
+                selected = selectedIndex == 0,
+                onClick = { onTabSelected(0) },
+                label = { Text("Statistiche", color = Color.White) },
                 icon = {
                     Icon(
-                        imageVector = item.icon,
-                        contentDescription = item.title
+                        Icons.Outlined.Person,
+                        contentDescription = "Statistiche",
+                        tint = Color.White
+                    )
+                }
+            )
+
+            //Tasto centrale: Abilità
+            NavigationBarItem(
+                selected = selectedIndex == 1,
+                onClick = { onTabSelected(1) },
+                label = { Text("Abilità", color = Color.White) },
+                icon = {
+                    Icon(
+                        Icons.Outlined.Info,
+                        contentDescription = "Abilità",
+                        tint = Color.White
+                    )
+                }
+            )
+
+            //Tasto destro: Equipaggiamento
+            NavigationBarItem(
+                selected = selectedIndex == 2,
+                onClick = { onTabSelected(2) },
+                label = { Text("Equipaggiamento", color = Color.White) },
+                icon = {
+                    Icon(
+                        Icons.Outlined.ShoppingCart,
+                        contentDescription = "Equipaggiamento",
+                        tint = Color.White
                     )
                 }
             )
         }
     }
-}
 
 @Composable
 fun CharacterList(contentPadding: PaddingValues, chars: List<Character>,context: Context) {
