@@ -47,6 +47,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.esamemobile.data.Character
+import com.example.esamemobile.data.Group
 import com.example.esamemobile.utilities.composables.ImageWithPlaceholder
 import com.example.esamemobile.utilities.composables.Size
 
@@ -215,6 +216,16 @@ fun NavigationBottomBar(
 
 @Composable
 fun CharacterList(contentPadding: PaddingValues, chars: List<Character>,context: Context) {
+    GenericList(contentPadding,chars,context,true)
+}
+
+@Composable
+fun GroupList(contentPadding: PaddingValues, groups: List<Group>, context: Context) {
+    GenericList(contentPadding, groups, context, false )
+}
+
+@Composable
+private fun GenericList(contentPadding: PaddingValues, elems: List<Any>, context: Context, isChar: Boolean) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -222,10 +233,51 @@ fun CharacterList(contentPadding: PaddingValues, chars: List<Character>,context:
         contentPadding = PaddingValues(8.dp,8.dp,8.dp,80.dp),
         modifier = Modifier.padding(contentPadding)
     ) {
-        items(chars) { char ->
-            CharacterItem(char) {
-                Toast.makeText(context,"cliccato", Toast.LENGTH_SHORT).show()
+        if(isChar) {
+            elems as List<Character>
+            items(elems) { elem ->
+                CharacterItem(elem) {
+                    Toast.makeText(context,"cliccato personaggio ${elem.id}", Toast.LENGTH_SHORT).show()
+                }
             }
+        } else {
+            elems as List<Group>
+            items(elems) {elem ->
+                GroupItem(elem) {
+                    Toast.makeText(context,"Cliccato gruppo ${elem.id}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun GroupItem(group: Group, onClick: () -> Unit) {
+    Card(
+        onClick =  onClick,
+        modifier = Modifier
+            .size(150.dp)
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            val imageUri = Uri.parse(group.imageUri)
+            ImageWithPlaceholder(imageUri, Size.Sm)
+            Spacer(Modifier.size(8.dp))
+            Text(
+                group.name,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -234,13 +286,17 @@ fun CharacterList(contentPadding: PaddingValues, chars: List<Character>,context:
 fun CharacterItem(char: Character, onClick: () -> Unit) {
     Card(
         onClick = onClick,
-        modifier = Modifier.size(150.dp).fillMaxWidth(),
+        modifier = Modifier
+            .size(150.dp)
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp).fillMaxSize(),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
