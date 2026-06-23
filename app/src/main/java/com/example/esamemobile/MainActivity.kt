@@ -1,6 +1,7 @@
 package com.example.esamemobile
 
 import android.Manifest
+import android.R
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -45,23 +46,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.getSystemService
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import com.example.esamemobile.ui.theme.EsameMobileTheme
+import com.example.esamemobile.utilities.NavigationBottomBar
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.OutputStreamWriter
-import java.net.HttpURLConnection
-import java.net.URL
-import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,6 +108,10 @@ fun LoginScreen(modifier: Modifier = Modifier) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
+    var showDebugDatabaseScreen by remember { mutableStateOf(false) }
+
+    var selectedItemIndex by remember { mutableStateOf(0)}
+
     LaunchedEffect(Unit) {
         auth.addAuthStateListener { firebaseAuth ->
             currentUser = firebaseAuth.currentUser
@@ -123,27 +122,24 @@ fun LoginScreen(modifier: Modifier = Modifier) {
 
     LaunchedEffect(currentUser) {
         if (currentUser != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(
-                    "canale_gdr",
-                    "Notifiche GDR",
-                    NotificationManager.IMPORTANCE_DEFAULT
+            val channel = NotificationChannel(
+                "canale_gdr",
+                "Notifiche GDR",
+                NotificationManager.IMPORTANCE_DEFAULT
                 )
-                val manager =
-                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                manager.createNotificationChannel(channel)
-            }
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
 
             db.collection("notifiche_bacheca")
                 .addSnapshotListener { snapshots, e ->
                     if (e != null) return@addSnapshotListener
 
-                    val lastDocIn_incoming = snapshots?.documentChanges?.find { it.type == DocumentChange.Type.ADDED }
-                    if (lastDocIn_incoming != null) {
+                    val lastDocInincoming = snapshots?.documentChanges?.find { it.type == DocumentChange.Type.ADDED }
+                    if (lastDocInincoming != null) {
                         val title =
-                            lastDocIn_incoming.document.getString("titolo") ?: "Nuova Notifica"
-                        val msg = lastDocIn_incoming.document.getString("messaggio") ?: ""
-                        val authorId = lastDocIn_incoming.document.getString("autoreId") ?: ""
+                            lastDocInincoming.document.getString("titolo") ?: "Nuova Notifica"
+                        val msg = lastDocInincoming.document.getString("messaggio") ?: ""
+                        val authorId = lastDocInincoming.document.getString("autoreId") ?: ""
 
                         //Per evitare che la notifica suoni anche dal telefono che l'ha mandata
                         if (authorId != auth.currentUser?.uid) {
@@ -154,172 +150,90 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                                 .setAutoCancel(true)
 
-                            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                            notificationManager.notify(System.currentTimeMillis().toInt(), builder.build())
+                            val notificationManager =
+                                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                            notificationManager.notify(
+                                System.currentTimeMillis().toInt(),
+                                builder.build()
+                            )
                         }
                     }
                 }
         }
     }
 
-        val webClientId = "803305060535-h1adgsgul2khemr3rcmvsevb6q35ieev.apps.googleusercontent.com"
+    val webClientId = "803305060535-h1adgsgul2khemr3rcmvsevb6q35ieev.apps.googleusercontent.com"
 
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(Color.Black),
-            contentAlignment = Alignment.Center
-        ) {
-            if (currentUser != null) {
-                //Se l'utente è loggato mettiamo la schermata di benvenuto
-                val displayedName = currentUser?.displayName
-                    ?: currentUser?.email?.substringBefore("@")
-                    ?: "Utente"
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        contentAlignment = Alignment.Center
+    ) {
+        if (currentUser != null) {
+            //Se l'utente è loggato mettiamo la schermata principale
+            val displayedName = currentUser?.displayName ?: currentUser?.email?.substringBefore("@") ?: "Utente"
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "Benvenuto\n${displayedName}",
-                        color = Color.White,
-                        fontSize = 24.sp,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    //DATABASE: Bottone creazione tabella
-                    Button(
-                        onClick = {
-                            val datiTest = hashMapOf(
-                                "nomeEseguito" to displayedName,
-                                "emailEseguito" to (currentUser?.email ?: "Nessuna Email"),
-                                "uidCreatore" to (currentUser?.uid ?: ""),
-                                "timeStamp" to java.lang.System.currentTimeMillis()
-                            )
-
-                            db.collection("tabella_testing")
-                                .document(currentUser?.uid ?: "default_doc")
-                                .set(datiTest)
-                                .addOnSuccessListener {
-                                    Toast.makeText(
-                                        context,
-                                        "Collezione creata, dati inseriti",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                                .addOnFailureListener { e ->
-                                    Toast.makeText(
-                                        context,
-                                        "Errore scrittura: ${e.message}",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Green),
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                    ) {
-                        Text(text = "Crea Collezione", color = Color.Black, fontSize = 16.sp)
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    //DATABASE: Bottone distruzione
-                    Button(
-                        onClick = {
-                            db.collection("tabella_testing")
-                                .get()
-                                .addOnSuccessListener { querySnapshot ->
-                                    if (!querySnapshot.isEmpty) {
-                                        val batch = db.batch() //per eliminazioni multiple insieme
-                                        for (document in querySnapshot) {
-                                            batch.delete(document.reference)
-                                        }
-                                        batch.commit()
-                                            .addOnSuccessListener {
-                                                Toast.makeText(
-                                                    context,
-                                                    "Tutti i documenti eliminati! Collezione distrutta!",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                            .addOnFailureListener { e ->
-                                                Toast.makeText(
-                                                    context,
-                                                    "Errore distruzione: ${e.message}",
-                                                    Toast.LENGTH_LONG
-                                                ).show()
-                                            }
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            "La collezione è già vuota o inesistente",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
-                                .addOnFailureListener { e ->
-                                    Toast.makeText(
-                                        context,
-                                        "Errore nel recupero dei dati: ${e.message}",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Magenta),
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                    ) {
-                        Text(text = "Distruggi Collezione", color = Color.White, fontSize = 16.sp)
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    //NOTIFICHE CLOUD: Bottone invia notifica a tutti
-                    Button(
-                        onClick = {
-                            val newNotification = hashMapOf(
-                                "title" to "Hai perso il gioco",
-                                "message" to "Il Master $displayedName ha inviato una notifica",
-                                "authorID" to (currentUser?.uid ?: ""),
-                                "timeStamp" to System.currentTimeMillis()
-                            )
-
-                            db.collection("notifiche_bacheca")
-                                .add(newNotification)
-                                .addOnSuccessListener {
-                                    Toast.makeText(context, "Notifica inserita nel DB!", Toast.LENGTH_SHORT).show()
-                                }
-                                .addOnFailureListener { e ->
-                                    Toast.makeText(context, "Errore invio notifica: ${e.message}", Toast.LENGTH_LONG).show()
-                                }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                    ) {
-                        Text(text = "Invia Notifica", color = Color.Black, fontSize = 16.sp)
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    //Bottone di Logout
-                    Button(
-                        onClick = {
-                            FirebaseMessaging.getInstance().unsubscribeFromTopic("tutti")
-                            auth.signOut()
-                            currentUser = null
-                            Toast.makeText(context, "Logout effettuato", Toast.LENGTH_SHORT).show()
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                    ) {
-                        Text(
-                            text = "Logout",
-                            color = Color.White,
-                            fontSize = 16.sp
+            if (showDebugDatabaseScreen) {
+                DebugDatabaseScreen(
+                    displayedName = displayedName,
+                    currentUser = currentUser,
+                    db = db,
+                    context = context,
+                    onCloseDebug = { showDebugDatabaseScreen = false }
+                )
+            } else {
+                Scaffold(
+                    bottomBar = {
+                        NavigationBottomBar(
+                            selectedIndex = selectedItemIndex,
+                            onTabSelected = { newIndex -> selectedItemIndex = newIndex }
                         )
+                    },
+                    containerColor = Color.Black
+                ) { innerPadding ->
+                    Column (
+                        modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        //Bottone per la schermata di debug
+                        Button (
+                            onClick = {showDebugDatabaseScreen = true},
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan)
+                        ) {
+                            Text("Debug Database", color = Color.Black, fontSize = 12.sp)
+                        }
+
+                        Spacer(modifier = Modifier.height(48.dp))
+
+                        when (selectedItemIndex) {
+                            0 -> Text("Schermata Personaggi", color = Color.White, fontSize = 24.sp, textAlign = TextAlign.Center)
+                            1 -> Text("Schermata Gruppi", color = Color.White, fontSize = 24.sp, textAlign = TextAlign.Center)
+                        }
+
+                        Spacer(modifier = Modifier.height(48.dp))
+
+                        //Bottone di logout
+                        Button(
+                            onClick = {
+                                FirebaseMessaging.getInstance().unsubscribeFromTopic("tutti")
+                                auth.signOut()
+                                currentUser = null
+                                Toast.makeText(context, "Logout effettuato", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                        ) {
+                            Text(
+                                text = "Logout",
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
+                        }
                     }
                 }
-            } else {
+            }
+        } else {
                 //Se non è loggato mostriamo la schermata di login
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -381,7 +295,10 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                                             if (error is com.google.firebase.auth.FirebaseAuthInvalidUserException ||
                                                 error is com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
                                             ) {
-                                                auth.createUserWithEmailAndPassword(email, password)
+                                                auth.createUserWithEmailAndPassword(
+                                                    email,
+                                                    password
+                                                )
                                                     .addOnCompleteListener { regTask ->
                                                         if (regTask.isSuccessful) {
                                                             Toast.makeText(
@@ -422,7 +339,11 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                                         }
                                     }
                             } else {
-                                Toast.makeText(context, "Riempi tutti i campi!", Toast.LENGTH_SHORT)
+                                Toast.makeText(
+                                    context,
+                                    "Riempi tutti i campi!",
+                                    Toast.LENGTH_SHORT
+                                )
                                     .show()
                             }
                         },
@@ -506,5 +427,161 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                     }
                 }
             }
+            }
+        }
+
+@Composable
+fun DebugDatabaseScreen(
+    displayedName: String,
+    currentUser: com.google.firebase.auth.FirebaseUser?,
+    db: com.google.firebase.firestore.FirebaseFirestore,
+    context: android.content.Context,
+    onCloseDebug: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxSize().padding(16.dp)
+    ) {
+        Text(
+            "MODALITA' DEBUG\nBenvenuto $displayedName",
+            color = Color.White,
+            fontSize = 20.sp,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(Modifier.height(24.dp))
+
+        //DATABASE: Bottone creazione tabella
+        Button(
+            onClick = {
+                val datiTest = hashMapOf(
+                    "nomeEseguito" to displayedName,
+                    "emailEseguito" to (currentUser?.email ?: "Nessuna Email"),
+                    "uidCreatore" to (currentUser?.uid ?: ""),
+                    "timeStamp" to java.lang.System.currentTimeMillis()
+                )
+
+                db.collection("tabella_testing")
+                    .document(currentUser?.uid ?: "default_doc")
+                    .set(datiTest)
+                    .addOnSuccessListener {
+                        Toast.makeText(
+                            context,
+                            "Collezione creata, dati inseriti",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(
+                            context,
+                            "Errore scrittura: ${e.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Green),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        ) {
+            Text(text = "Crea Collezione", color = Color.Black, fontSize = 16.sp)
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        //DATABASE: Bottone distruzione
+        Button(
+            onClick = {
+                db.collection("tabella_testing")
+                    .get()
+                    .addOnSuccessListener { querySnapshot ->
+                        if (!querySnapshot.isEmpty) {
+                            val batch = db.batch() //per eliminazioni multiple insieme
+                            for (document in querySnapshot) {
+                                batch.delete(document.reference)
+                            }
+                            batch.commit()
+                                .addOnSuccessListener {
+                                    Toast.makeText(
+                                        context,
+                                        "Tutti i documenti eliminati! Collezione distrutta!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                                .addOnFailureListener { e ->
+                                    Toast.makeText(
+                                        context,
+                                        "Errore distruzione: ${e.message}",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "La collezione è già vuota o inesistente",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(
+                            context,
+                            "Errore nel recupero dei dati: ${e.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Magenta),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        ) {
+            Text(text = "Distruggi Collezione", color = Color.White, fontSize = 16.sp)
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        //NOTIFICHE CLOUD: Bottone invia notifica a tutti
+        Button(
+            onClick = {
+                val newNotification = hashMapOf(
+                    "title" to "Hai perso il gioco",
+                    "message" to "Il Master $displayedName ha inviato una notifica",
+                    "authorID" to (currentUser?.uid ?: ""),
+                    "timeStamp" to System.currentTimeMillis()
+                )
+
+                db.collection("notifiche_bacheca")
+                    .add(newNotification)
+                    .addOnSuccessListener {
+                        Toast.makeText(context, "Notifica inserita nel DB!", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(
+                            context,
+                            "Errore invio notifica: ${e.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800)),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        ) {
+            Text(text = "Invia Notifica", color = Color.Black, fontSize = 16.sp)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        //Bottone per tornare alla home
+        Button(
+            onClick = {
+                onCloseDebug()
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+        ) {
+            Text(
+                "CHIUDI",
+                color = Color.White,
+                fontSize = 16.sp
+            )
         }
     }
+}
