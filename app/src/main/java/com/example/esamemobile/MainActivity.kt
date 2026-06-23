@@ -17,6 +17,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,7 +48,11 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
+import com.example.esamemobile.data.Character
+import com.example.esamemobile.data.Group
 import com.example.esamemobile.ui.theme.EsameMobileTheme
+import com.example.esamemobile.utilities.CharacterList
+import com.example.esamemobile.utilities.GroupList
 import com.example.esamemobile.utilities.NavigationBottomBarWithFAB
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.firebase.auth.FirebaseAuth
@@ -182,6 +187,29 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                     onCloseDebug = { showDebugDatabaseScreen = false }
                 )
             } else {
+                val charactersTest = remember {
+                    listOf(
+                        Character(id = 1, name = "Joe Jostino", ""),
+                        Character(id = 2, name = "Gigi Pancetta", ""),
+                        Character(id = 2, name = "Ettore Pelacane", "")
+                    )
+                }
+
+                val groupsTest = remember {
+                    listOf(
+                        Group(id = 1, name = "I Zingari", ""),
+                        Group(id = 2, name = "I fantastici 2", ""),
+                        Group(id = 3, name = "I tre moschettoni", ""),
+                        Group(id = 4, name = "I quattro gatti", ""),
+                        Group(id = 5, name = "I cojo(n)ti", ""),
+                        Group(id = 6, name = "Giovanni", ""),
+                        Group(id = 7, name = "Miku club", ""),
+                        Group(id = 8, name = "Il gioco perso", ""),
+                        Group(id = 9, name = "Ci piacciono i treni", ""),
+                        Group(id = 10, name = "Impottibile!", "")
+                    )
+                }
+
                 Scaffold(
                     bottomBar = {
                         NavigationBottomBarWithFAB(
@@ -198,42 +226,69 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                     containerColor = Color.Black
                 ) { innerPadding ->
                     Column (
-                        modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
                     ) {
-                        //Bottone per la schermata di debug
-                        Button (
-                            onClick = {showDebugDatabaseScreen = true},
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan)
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Debug Database", color = Color.Black, fontSize = 12.sp)
+                            //Bottone per la schermata di debug
+                            Button (
+                                onClick = {showDebugDatabaseScreen = true},
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan)
+                            ) {
+                                Text("Debug Database", color = Color.Black, fontSize = 12.sp)
+                            }
+
+                            //Bottone di logout
+                            Button(
+                                onClick = {
+                                    FirebaseMessaging.getInstance().unsubscribeFromTopic("tutti")
+                                    auth.signOut()
+                                    currentUser = null
+                                    Toast.makeText(context, "Logout effettuato", Toast.LENGTH_SHORT).show()
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                            ) {
+                                Text(
+                                    text = "Logout",
+                                    color = Color.White,
+                                    fontSize = 16.sp
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(48.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                        when (selectedItemIndex) {
-                            0 -> Text("Schermata Personaggi", color = Color.White, fontSize = 24.sp, textAlign = TextAlign.Center)
-                            1 -> Text("Schermata Gruppi", color = Color.White, fontSize = 24.sp, textAlign = TextAlign.Center)
-                        }
-
-                        Spacer(modifier = Modifier.height(48.dp))
-
-                        //Bottone di logout
-                        Button(
-                            onClick = {
-                                FirebaseMessaging.getInstance().unsubscribeFromTopic("tutti")
-                                auth.signOut()
-                                currentUser = null
-                                Toast.makeText(context, "Logout effettuato", Toast.LENGTH_SHORT).show()
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
                         ) {
-                            Text(
-                                text = "Logout",
-                                color = Color.White,
-                                fontSize = 16.sp
-                            )
+                            when (selectedItemIndex) {
+                                0 -> {
+                                    CharacterList(
+                                        contentPadding = innerPadding,
+                                        chars = charactersTest,
+                                        context = context
+                                    )
+                                }
+                                1 -> {
+                                    GroupList(
+                                        contentPadding = innerPadding,
+                                        groups = groupsTest,
+                                        context = context
+                                    )
+                                }
+                            }
                         }
                     }
                 }
