@@ -1,7 +1,6 @@
 package com.example.esamemobile
 
 import android.Manifest
-import android.R
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -49,7 +48,7 @@ import androidx.core.content.ContextCompat
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import com.example.esamemobile.ui.theme.EsameMobileTheme
-import com.example.esamemobile.utilities.NavigationBottomBar
+import com.example.esamemobile.utilities.NavigationBottomBarWithFAB
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
@@ -185,9 +184,15 @@ fun LoginScreen(modifier: Modifier = Modifier) {
             } else {
                 Scaffold(
                     bottomBar = {
-                        NavigationBottomBar(
+                        NavigationBottomBarWithFAB(
                             selectedIndex = selectedItemIndex,
-                            onTabSelected = { newIndex -> selectedItemIndex = newIndex }
+                            onTabSelected = { newIndex -> selectedItemIndex = newIndex },
+                            onFabClick = {
+                                when (selectedItemIndex) {
+                                    0 -> Toast.makeText(context, "Azione: CREA NUOVO PERSONAGGIO", Toast.LENGTH_SHORT).show()
+                                    1 -> Toast.makeText(context, "Azione: CREA NUOVO GRUPPO", Toast.LENGTH_SHORT). show()
+                                }
+                            }
                         )
                     },
                     containerColor = Color.Black
