@@ -84,7 +84,7 @@ fun HomeScreen(
         containerColor = Color.Black
     ) { innerPadding ->
         Column (
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .background(Color.Black),
             horizontalAlignment = Alignment.CenterHorizontally,
