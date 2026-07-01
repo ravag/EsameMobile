@@ -9,9 +9,13 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.ui.graphics.vector.ImageVector
 import android.content.Context
+import android.graphics.Paint
 import android.net.Uri
 import android.widget.Toast
+import androidx.biometric.R
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,21 +29,31 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -284,3 +298,83 @@ fun CharacterItem(char: Character, onClick: () -> Unit) {
     }
 }
 
+@Composable
+fun CharacterHeader(
+    name: String,
+    age: String,
+    characterClass: String,
+    level: String,
+    availablePe: Int,
+    imageUri: String?,
+    onLevelUpClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val parsedUri = remember(imageUri) {
+        if (!imageUri.isNullOrEmpty()) {
+            Uri.parse(imageUri)
+        } else {
+            Uri.EMPTY
+        }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color.Black)
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text("Nome: $name", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Età: $age", color = Color.White, fontSize = 16.sp)
+                Text("Classe: $characterClass", color = Color.White, fontSize = 16.sp)
+                Text("Livello: $level", color = Color.White, fontSize = 16.sp)
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Box(
+                modifier = Modifier
+                    .size(110.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
+                    .background(Color.DarkGray),
+                contentAlignment = Alignment.Center
+            ) {
+                ImageWithPlaceholder(
+                    uri = parsedUri,
+                    size = Size.Lg
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        Button(
+            onClick = onLevelUpClick,
+            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            shape = RoundedCornerShape(4.dp)
+        ) {
+            Text(
+                "Level Up",
+                color = Color.Black,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        HorizontalDivider(color = Color.Gray, thickness = 1.dp)
+    }
+}
