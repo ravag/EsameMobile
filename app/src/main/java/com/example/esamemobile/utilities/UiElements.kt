@@ -200,17 +200,17 @@ fun NavigationBottomBarWithFAB(
     }
 
 @Composable
-fun CharacterList(contentPadding: PaddingValues, chars: List<Character>,context: Context) {
-    GenericList(contentPadding,chars,context,true)
+fun CharacterList(modifier: Modifier = Modifier, contentPadding: PaddingValues, chars: List<Character>,context: Context) {
+    GenericList(modifier = modifier, contentPadding,chars,context,true)
 }
 
 @Composable
-fun GroupList(contentPadding: PaddingValues, groups: List<Group>, context: Context) {
-    GenericList(contentPadding, groups, context, false )
+fun GroupList(modifier: Modifier = Modifier, contentPadding: PaddingValues, groups: List<Group>, context: Context) {
+    GenericList(modifier = modifier, contentPadding, groups, context, false )
 }
 
 @Composable
-private fun GenericList(contentPadding: PaddingValues, elems: List<Any>, context: Context, isChar: Boolean) {
+private fun GenericList(modifier: Modifier = Modifier, contentPadding: PaddingValues, elems: List<Any>, context: Context, isChar: Boolean) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         verticalArrangement = Arrangement.spacedBy(8.dp),
