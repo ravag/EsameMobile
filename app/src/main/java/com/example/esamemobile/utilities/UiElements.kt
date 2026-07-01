@@ -301,10 +301,9 @@ fun CharacterItem(char: Character, onClick: () -> Unit) {
 @Composable
 fun CharacterHeader(
     name: String,
-    age: String,
+    age: Int,
     characterClass: String,
-    level: String,
-    availablePe: Int,
+    level: Int,
     imageUri: String?,
     onLevelUpClick: () -> Unit,
     modifier: Modifier = Modifier
