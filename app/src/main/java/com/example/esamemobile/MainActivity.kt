@@ -12,7 +12,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
@@ -21,14 +23,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import com.example.esamemobile.screens.DebugDatabaseScreen
+import com.example.esamemobile.screens.HomeScreen
 import com.example.esamemobile.screens.LoginScreen
 import com.example.esamemobile.ui.theme.EsameMobileTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
+import com.example.esamemobile.screens.LoginScreen
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,9 +119,42 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                //Mostriamo la schermata di login
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                   LoginScreen(modifier=Modifier.padding(innerPadding))
+                //Smistamento Schermate
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    containerColor = Color.Black
+                ) { innerPadding ->
+                    val user = currentUser
+
+                    if (user != null) {
+                        //Utente loggato
+                        if (showDebugDatabaseScreen) {
+                            val displayedName = user.displayName ?: user.email?.substringBefore("@") ?: "Utente"
+                            DebugDatabaseScreen(
+                                displayedName = displayedName,
+                                currentUser = user,
+                                db = db,
+                                context = context,
+                                onCloseDebug = { showDebugDatabaseScreen = false }
+                            )
+                        } else {
+                            HomeScreen(
+                                currentUser = user,
+                                onNavigationToDebug = { showDebugDatabaseScreen = true },
+                                modifier = Modifier.padding(innerPadding)
+                            )
+                        }
+                    } else {
+                        //Utente non loggato
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            LoginScreen(modifier=Modifier.padding(innerPadding))
+                        }
+                    }
                 }
             }
         }
