@@ -2,9 +2,12 @@ package com.example.esamemobile.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +20,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,7 +40,9 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.messaging.FirebaseMessaging
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalFocusManager
 import com.example.esamemobile.utilities.composables.SimpleSearchBar
+import kotlinx.coroutines.sync.Mutex
 
 @Composable
 fun HomeScreen(
@@ -46,6 +52,7 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
+    val focusManager = LocalFocusManager.current
     var selectedItemIndex by remember { mutableStateOf(0) }
     val textFieldState = rememberTextFieldState()
 
@@ -53,7 +60,7 @@ fun HomeScreen(
         listOf(
             Character(id = 1, name = "Joe Jostino", ""),
             Character(id = 2, name = "Gigi Pancetta", ""),
-            Character(id = 2, name = "Ettore Pelacane", "")
+            Character(id = 3, name = "Ettore Pelacane", "")
         )
     }
 
@@ -94,12 +101,20 @@ fun HomeScreen(
         }
     }
 
+    LaunchedEffect(selectedItemIndex) {
+        focusManager.clearFocus()
+    }
+
     Scaffold(
         bottomBar = {
             NavigationBottomBarWithFAB(
                 selectedIndex = selectedItemIndex,
-                onTabSelected = { newIndex -> selectedItemIndex = newIndex },
+                onTabSelected = { newIndex ->
+                    focusManager.clearFocus()
+                    selectedItemIndex = newIndex
+                                },
                 onFabClick = {
+                    focusManager.clearFocus()
                     when (selectedItemIndex) {
                         0 -> Toast.makeText(context, "Azione: CREA NUOVO PERSONAGGIO", Toast.LENGTH_SHORT).show()
                         1 -> Toast.makeText(context, "Azione: CREA NUOVO GRUPPO", Toast.LENGTH_SHORT). show()
@@ -112,7 +127,14 @@ fun HomeScreen(
         Column (
             modifier = modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .padding(innerPadding)
+                .background(Color.Black)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    focusManager.clearFocus()
+                },
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(modifier = Modifier.height(16.dp))
@@ -151,33 +173,37 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            SimpleSearchBar(
-                textFieldState
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                ) {
-                    when (selectedItemIndex) {
-                        0 -> {
-                            CharacterList(
-                                contentPadding = innerPadding,
-                                chars = filteredChars,
-                                context = context
-                            )
-                        }
+            SimpleSearchBar(textFieldState)
 
-                        1 -> {
-                            GroupList(
-                                contentPadding = innerPadding,
-                                groups = filteredGroups,
-                                context = context
-                            )
-                        }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                when (selectedItemIndex) {
+                    0 -> {
+                        CharacterList(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(0.dp),
+                            chars = filteredChars,
+                            context = context
+                        )
+                    }
+
+                    1 -> {
+                        GroupList(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(0.dp),
+                            groups = filteredGroups,
+                            context = context
+                        )
                     }
                 }
             }
+
+
         }
     }
 }

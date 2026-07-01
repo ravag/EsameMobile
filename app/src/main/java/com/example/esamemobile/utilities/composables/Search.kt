@@ -3,6 +3,7 @@ package com.example.esamemobile.utilities.composables
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,23 +21,19 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SimpleSearchBar(
     textFieldState: TextFieldState,
-    content: @Composable () -> Unit
+    modifier: Modifier = Modifier
 ) {
-
-    var expanded by rememberSaveable { mutableStateOf(false) }
-
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        TextField(
+    TextField(
             value = textFieldState.text.toString(),
-            onValueChange = {textFieldState.edit { replace(0,length,it) }},
+            onValueChange = { text ->
+                textFieldState.edit { replace(0,this.length, text) }
+                            },
             readOnly = false,
-            placeholder = {Text("Cerca")}
+            placeholder = { Text("Cerca") },
+            modifier = modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        content.invoke()
-    }
+
 }
+
 
 
