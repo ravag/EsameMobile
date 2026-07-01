@@ -37,6 +37,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.example.esamemobile.screens.LoginScreen
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
+import androidx.navigation.compose.rememberNavController
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,6 +48,8 @@ class MainActivity : ComponentActivity() {
                 val context = LocalContext.current
                 val auth = remember { FirebaseAuth.getInstance() }
                 val db = remember { FirebaseFirestore.getInstance() }
+
+                val navController = rememberNavController()
 
                 var currentUser by remember { mutableStateOf(auth.currentUser) }
                 var showDebugDatabaseScreen by remember { mutableStateOf(false) }
@@ -81,6 +84,9 @@ class MainActivity : ComponentActivity() {
                 //Listener per le notifiche della bacheca quando l'utente è loggato
                 LaunchedEffect(currentUser) {
                     if(currentUser != null) {
+
+                        navController.navigate(EsameMobileRoute.Home)
+
                         val channel = NotificationChannel(
                             "canale_gdr",
                             "Notifiche GDR",
@@ -119,43 +125,44 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                //Smistamento Schermate
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    containerColor = Color.Black
-                ) { innerPadding ->
-                    val user = currentUser
+                EsameMobileNavGraph(navController)
 
-                    if (user != null) {
-                        //Utente loggato
-                        if (showDebugDatabaseScreen) {
-                            val displayedName = user.displayName ?: user.email?.substringBefore("@") ?: "Utente"
-                            DebugDatabaseScreen(
-                                displayedName = displayedName,
-                                currentUser = user,
-                                db = db,
-                                context = context,
-                                onCloseDebug = { showDebugDatabaseScreen = false }
-                            )
-                        } else {
-                            HomeScreen(
-                                currentUser = user,
-                                onNavigationToDebug = { showDebugDatabaseScreen = true },
-                                modifier = Modifier.padding(innerPadding)
-                            )
-                        }
-                    } else {
-                        //Utente non loggato
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.Black),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            LoginScreen(modifier=Modifier.padding(innerPadding))
-                        }
-                    }
-                }
+                //Smistamento Schermate
+//                Scaffold(
+//                    modifier = Modifier.fillMaxSize(),
+//                    containerColor = Color.Black
+//                ) { innerPadding ->
+//                    val user = currentUser
+//
+//                    if (user != null) {
+//                        //Utente loggato
+//                        if (showDebugDatabaseScreen) {
+//                            val displayedName = user.displayName ?: user.email?.substringBefore("@") ?: "Utente"
+//                            DebugDatabaseScreen(
+//                                displayedName = displayedName,
+//                                currentUser = user,
+//                                db = db,
+//                                context = context,
+//                                onCloseDebug = { showDebugDatabaseScreen = false }
+//                            )
+//                        } else {
+//                            HomeScreen(
+//                                onNavigationToDebug = { showDebugDatabaseScreen = true },
+//                                modifier = Modifier.padding(innerPadding)
+//                            )
+//                        }
+//                    } else {
+//                        //Utente non loggato
+//                        Box(
+//                            modifier = Modifier
+//                                .fillMaxSize()
+//                                .background(Color.Black),
+//                            contentAlignment = Alignment.Center
+//                        ) {
+//                            LoginScreen(modifier=Modifier.padding(innerPadding))
+//                        }
+//                    }
+//                }
             }
         }
     }

@@ -12,21 +12,39 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import com.example.esamemobile.EsameMobileRoute
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun DebugDatabaseScreen(
-    displayedName: String,
-    currentUser: com.google.firebase.auth.FirebaseUser?,
-    db: com.google.firebase.firestore.FirebaseFirestore,
-    context: android.content.Context,
-    onCloseDebug: () -> Unit
+//    displayedName: String,
+//    currentUser: com.google.firebase.auth.FirebaseUser?,
+//    db: com.google.firebase.firestore.FirebaseFirestore,
+//    context: android.content.Context,
+//    onCloseDebug: () -> Unit
+      navController: NavHostController
 ) {
+    val context = LocalContext.current
+    val auth = remember { FirebaseAuth.getInstance() }
+    val db = remember { FirebaseFirestore.getInstance() }
+
+    var currentUser by remember { mutableStateOf(auth.currentUser) }
+    val displayedName = currentUser!!.displayName ?: currentUser!!.email?.substringBefore("@") ?: "Utente"
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -162,7 +180,7 @@ fun DebugDatabaseScreen(
         //Bottone per tornare alla home
         Button(
             onClick = {
-                onCloseDebug()
+                navController.navigate(EsameMobileRoute.Home)
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
         ) {

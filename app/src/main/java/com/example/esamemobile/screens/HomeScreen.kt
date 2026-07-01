@@ -41,14 +41,14 @@ import com.google.firebase.messaging.FirebaseMessaging
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.navigation.NavHostController
+import com.example.esamemobile.EsameMobileRoute
 import com.example.esamemobile.utilities.composables.SimpleSearchBar
 import kotlinx.coroutines.sync.Mutex
 
 @Composable
 fun HomeScreen(
-    currentUser: FirebaseUser,
-    onNavigationToDebug: () -> Unit,
-    modifier: Modifier = Modifier
+    navController: NavHostController
 ) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
@@ -125,7 +125,7 @@ fun HomeScreen(
         containerColor = Color.Black
     ) { innerPadding ->
         Column (
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .background(Color.Black)
@@ -148,7 +148,7 @@ fun HomeScreen(
             ) {
                 //Bottone per la schermata di debug
                 Button (
-                    onClick = onNavigationToDebug,
+                    onClick = { navController.navigate(EsameMobileRoute.Debug) },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan)
                 ) {
                     Text("Debug Database", color = Color.Black, fontSize = 12.sp)
@@ -160,6 +160,7 @@ fun HomeScreen(
                         FirebaseMessaging.getInstance().unsubscribeFromTopic("tutti")
                         auth.signOut()
                         Toast.makeText(context, "Logout effettuato", Toast.LENGTH_SHORT).show()
+                        navController.navigate(EsameMobileRoute.Login)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
                 ) {
