@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -49,11 +51,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavHostController
+import androidx.compose.ui.text.input.ImeAction
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,7 +70,7 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
     var name by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
 
-    var isPointBuy by remember { mutableStateOf(false) }
+    var isSpendingPEMode by remember { mutableStateOf(false) }
 
     //Stati delle statistiche base
     var peLeft by remember { mutableStateOf(10) }
@@ -75,6 +79,13 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
     var intelligence by remember { mutableStateOf(1) }
     var charisma by remember { mutableStateOf(1) }
     var power by remember { mutableStateOf(1) }
+
+    //Valori base delle stat congelati dai quali si conta la spesa dei PE
+    var baseStrength by remember { mutableStateOf(1) }
+    var baseAgility by remember { mutableStateOf(1) }
+    var baseIntelligence by remember { mutableStateOf(1) }
+    var baseCharisma by remember { mutableStateOf(1) }
+    var basePower by remember { mutableStateOf(1) }
 
     var peSpentHP by remember { mutableStateOf(0) }
     var hpBase by remember { mutableStateOf(0) }
@@ -90,22 +101,20 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
     val speed by remember { derivedStateOf { 6 + (1.5 * agilityModifier) } }
     val inventoryCapacity by remember { derivedStateOf { maxOf(1, strengthModifier + 1) } }
     val baseDamage by remember { derivedStateOf { calculateBaseDamage(power) } }
-    
+
     //Funzione per gestire il point buy sulle statistiche
-    fun handleStatChange(currentValue: Int, increment: Boolean, onUpdate: (Int) -> Unit) {
-        if (isPointBuy) {
-            if (increment && peLeft >= 2) {
+    fun handleStatChange(currentValue: Int, baseValue: Int, increment: Boolean, onUpdate: (Int) -> Unit) {
+        if (!isSpendingPEMode) return
+
+        if (increment) {
+            if (peLeft >= 2 && currentValue < 10) {
                 onUpdate(currentValue + 1)
                 peLeft -= 2
-            } else if (!increment && currentValue > 1) {
-                onUpdate(currentValue - 1)
-                peLeft += 2
             }
         } else {
-            if (increment) {
-                onUpdate(currentValue + 1)
-            } else if (!increment && currentValue > 1) {
+            if (currentValue > baseValue) {
                 onUpdate(currentValue - 1)
+                peLeft += 2
             }
         }
     }
@@ -116,10 +125,11 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
+                .pointerInput(Unit) { detectTapGestures(onTap = { focusManager.clearFocus() }) }
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header
+            // Header (Nome, Età, Foto Avatar)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -146,15 +156,16 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
                                 age = it
                                 val parsedAge = it.toIntOrNull() ?: 0
                                 if (parsedAge > 70) {
-                                   Toast.makeText(context, "Età superiore a 70, TODO Malus Casuale", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Età superiore a 70, TODO Malus Casuale", Toast.LENGTH_SHORT).show()
                                 }
-                                            },
+                            },
                             label = { Text("Età") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.weight(1f)
                         )
                         IconButton(
                             onClick = {
+                                focusManager.clearFocus()
                                 val randomAge = (1..100).random()
                                 age = randomAge.toString()
                                 if (randomAge > 70) {
@@ -169,12 +180,14 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
                     }
                 }
 
+                // Foto Avatar
                 Box(
                     modifier = Modifier
                         .size(110.dp)
                         .background(Color.LightGray, RoundedCornerShape(8.dp))
                         .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
                         .clickable{
+                            focusManager.clearFocus()
                             Toast.makeText(context, "TODO Apri Galleria o Fotocamera", Toast.LENGTH_SHORT).show()
                         },
                     contentAlignment = Alignment.Center
@@ -193,11 +206,12 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
                             fontSize = 11.sp,
                             textAlign = TextAlign.Center,
                             color = Color.DarkGray
-                            )
+                        )
                     }
                 }
             }
 
+            //Contatore PE Rimasti
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
@@ -214,6 +228,7 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
                 }
             }
 
+            //Controllo Modalità Statistiche
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -221,33 +236,59 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
             ) {
                 Text("STATISTICHE", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Custom", fontSize = 14.sp)
+                    Text(
+                        "Inserimento\nManuale",
+                        fontSize = 12.sp,
+                        color = if (!isSpendingPEMode) MaterialTheme.colorScheme.primary else Color.Gray
+                    )
                     Switch(
-                        checked = isPointBuy,
-                        onCheckedChange = { isPointBuy = it },
+                        checked = isSpendingPEMode,
+                        onCheckedChange = { checked ->
+                            focusManager.clearFocus()
+                            isSpendingPEMode = checked
+                            if (checked) {
+                                baseStrength = strength
+                                baseAgility = agility
+                                baseIntelligence = intelligence
+                                baseCharisma = charisma
+                                basePower = power
+                            } else {
+                                strength = baseStrength
+                                agility = baseAgility
+                                intelligence = baseIntelligence
+                                charisma = baseCharisma
+                                power = basePower
+                                peLeft = 10 - peSpentHP
+                            }
+                        },
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
-                    Text("Point Buy", fontSize = 14.sp)
+                    Text(
+                        "Aumenta\nStatistiche",
+                        fontSize = 12.sp,
+                        color = if (isSpendingPEMode) MaterialTheme.colorScheme.primary else Color.Gray
+                    )
                 }
             }
 
+            //Lista delle Statistiche Reattive
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 val stats = listOf(
-                    Triple("Forza", strength) { v:Int -> strength = v },
-                    Triple("Agilità", agility) { v:Int -> agility = v },
-                    Triple("Intelligenza", intelligence) { v:Int -> intelligence = v },
-                    Triple("Carisma", charisma) { v:Int -> charisma = v },
-                    Triple("Potere", power) { v:Int -> power = v },
+                    EditableStat("Forza", strength, baseStrength) { v:Int -> strength = v },
+                    EditableStat("Agilità", agility, baseAgility) { v:Int -> agility = v },
+                    EditableStat("Intelligenza", intelligence, baseIntelligence) { v:Int -> intelligence = v },
+                    EditableStat("Carisma", charisma, baseCharisma) { v:Int -> charisma = v },
+                    EditableStat("Potere", power, basePower) { v:Int -> power = v },
                 )
 
-                stats.forEach { (label, value, updateBlock) ->
+                stats.forEach { stat ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = label,
+                            text = stat.label,
                             modifier = Modifier.width(100.dp),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
@@ -255,29 +296,48 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             IconButton(
-                                onClick = { handleStatChange(value, false, updateBlock) }
+                                onClick = { handleStatChange(stat.value, stat.baseValue,  false, stat.onValueChange) },
+                                enabled = isSpendingPEMode && stat.value > stat.baseValue
                             ) {
                                 Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Meno")
                             }
 
-                            Box(
-                                modifier = Modifier
-                                    .size(50.dp)
-                                    .background(Color.LightGray, RoundedCornerShape(4.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("$value", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            if (!isSpendingPEMode) {
+                                OutlinedTextField(
+                                    value = if (stat.value == 0) "" else stat.value.toString(),
+                                    onValueChange = { input ->
+                                        val parsed = input.toIntOrNull() ?: 0
+                                        if (parsed in 1..10 || input.isEmpty()) {
+                                            stat.onValueChange(parsed)
+                                        }
+                                    },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                                    modifier = Modifier.size(55.dp),
+                                    textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.Center, fontWeight = FontWeight.Bold),
+                                    singleLine = true
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(55.dp)
+                                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("${stat.value}", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                }
                             }
 
                             IconButton(
-                                onClick = { handleStatChange(value, true, updateBlock) }
+                                onClick = { handleStatChange(stat.value, stat.baseValue, true, stat.onValueChange) },
+                                enabled = isSpendingPEMode && peLeft >= 2 && stat.value < 10
                             ) {
                                 Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Più")
                             }
                         }
 
                         Text(
-                            "Mod: ${if (calculateModifier(value) >= 0) "+" else ""}${calculateModifier(value)}",
+                            "Mod: ${if (calculateModifier(stat.value) >= 0) "+" else ""}${calculateModifier(stat.value)}",
                             modifier = Modifier.width(60.dp),
                             textAlign = TextAlign.End,
                             fontWeight = FontWeight.SemiBold
@@ -288,6 +348,7 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+            //Dati Derivati
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -349,7 +410,7 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
-                    )
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -368,11 +429,12 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
     }
 }
 
-
-
-
-
-
+data class EditableStat(
+    val label: String,
+    val value: Int,
+    val baseValue: Int,
+    val onValueChange: (Int) -> Unit
+)
 
 fun calculateBaseDamage(power: Int): String {
     return when (power) {
