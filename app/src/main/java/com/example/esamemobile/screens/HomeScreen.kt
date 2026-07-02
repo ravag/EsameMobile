@@ -41,6 +41,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.esamemobile.EsameMobileRoute
 import com.example.esamemobile.data.firebase.DatabaseServices
@@ -135,7 +136,7 @@ fun HomeScreen(
                 onFabClick = {
                     focusManager.clearFocus()
                     when (selectedItemIndex) {
-                        0 -> Toast.makeText(context, "Azione: CREA NUOVO PERSONAGGIO", Toast.LENGTH_SHORT).show()
+                        0 -> navController.navigate(EsameMobileRoute.CharacterCreation)
                         1 -> Toast.makeText(context, "Azione: CREA NUOVO GRUPPO", Toast.LENGTH_SHORT). show()
                     }
                 }
