@@ -54,12 +54,11 @@ fun HomeScreen(
     navController: NavHostController
 ) {
     val context = LocalContext.current
-    val auth = FirebaseAuth.getInstance()
     val focusManager = LocalFocusManager.current
     var selectedItemIndex by remember { mutableStateOf(0) }
     val textFieldState = rememberTextFieldState()
 
-    val charactersTest = remember {
+    var charactersTest = remember {
         listOf(
             Character(id = 1, name = "Joe Jostino", ""),
             Character(id = 2, name = "Gigi Pancetta", ""),
@@ -69,16 +68,16 @@ fun HomeScreen(
 
     var groupsTest = remember {
         listOf(
-            Group(id = 1, name = "I Zingari", ""),
-            Group(id = 2, name = "I fantastici 2", ""),
-            Group(id = 3, name = "I tre moschettoni", ""),
-            Group(id = 4, name = "I quattro gatti", ""),
-            Group(id = 5, name = "I cojo(n)ti", ""),
-            Group(id = 6, name = "Giovanni", ""),
-            Group(id = 7, name = "Miku club", ""),
-            Group(id = 8, name = "Il gioco perso", ""),
-            Group(id = 9, name = "Ci piacciono i treni", ""),
-            Group(id = 10, name = "Impottibile!", "")
+            Group(id = "1", name = "I Zingari", ""),
+            Group(id = "2", name = "I fantastici 2", ""),
+            Group(id = "3", name = "I tre moschettoni", ""),
+            Group(id = "4", name = "I quattro gatti", ""),
+            Group(id = "5", name = "I cojo(n)ti", ""),
+            Group(id = "6", name = "Giovanni", ""),
+            Group(id = "7", name = "Miku club", ""),
+            Group(id = "8", name = "Il gioco perso", ""),
+            Group(id = "9", name = "Ci piacciono i treni", ""),
+            Group(id = "10", name = "Impottibile!", "")
         )
     }
 
@@ -105,7 +104,7 @@ fun HomeScreen(
     }
 
     //DatabaseServices.insertNewUser()
-    DatabaseServices.insertNewCharacter(charactersTest[0])
+    DatabaseServices.insertNewCharacter(charactersTest[2])
     DatabaseServices.readCharacter(1) { c ->
         if (c != null) {
             Toast.makeText(context, "nome: ${c.name}", Toast.LENGTH_SHORT).show()
@@ -113,11 +112,19 @@ fun HomeScreen(
             Toast.makeText(context, "ERRORAZZO", Toast.LENGTH_SHORT).show()
         }
     }
-    DatabaseServices.getAllUserGroups(context) { l ->
+    DatabaseServices.getAllUserGroups { l ->
         if (l != null) {
             groupsTest = l
         } else {
             Toast.makeText(context, "ERRORAZZO gruppi", Toast.LENGTH_SHORT).show()
+        }
+    }
+    DatabaseServices.getAllUserCharacters { l ->
+        if (l != null) {
+            charactersTest = l
+            Toast.makeText(context, l.toString(), Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "ERRORAZZO personaggi", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -178,7 +185,7 @@ fun HomeScreen(
                 Button(
                     onClick = {
                         FirebaseMessaging.getInstance().unsubscribeFromTopic("tutti")
-                        auth.signOut()
+                        DatabaseServices.logout()
                         Toast.makeText(context, "Logout effettuato", Toast.LENGTH_SHORT).show()
                         navController.navigate(EsameMobileRoute.Login)
                     },

@@ -45,6 +45,10 @@ object DatabaseServices {
         }
     }
 
+    fun logout() {
+        auth.signOut()
+    }
+
     fun insertNewUser() {
         db.collection("users").document(auth.currentUser!!.uid).set("ciao")
     }
@@ -68,17 +72,52 @@ object DatabaseServices {
 
     }
 
-    fun getAllUserGroups(context: Context,onComplete: (List<Group>?) -> Unit) {
+    fun getAllUserCharacters(onComplete: (List<Character>?) -> Unit) {
+        db.collection("users")
+            .document(auth.currentUser!!.uid)
+            .collection("characters")
+            .get()
+            .addOnSuccessListener { results ->
+                val list = mutableListOf<Character>()
+                for (doc in results) {
+                    list.add(doc.toObject<Character>())
+                }
+                onComplete(list)
+            }
+            .addOnFailureListener { e ->
+                Log.w("Errore",e)
+                onComplete(null)
+            }
+    }
+
+    fun getAllUserGroups(onComplete: (List<Group>?) -> Unit) {
         db.collectionGroup("groups")
             .whereArrayContains("partecipants",auth.currentUser!!.uid)
             .get()
             .addOnSuccessListener { results ->
-                Toast.makeText(context,results.toString(), Toast.LENGTH_SHORT).show()
-                onComplete(null)
+                val list = mutableListOf<Group>()
+                for (doc in results) {
+                    list.add(doc.toObject<Group>())
+                }
+                onComplete(list)
             }
             .addOnFailureListener { e ->
                 Log.w("Errore",e)
                 onComplete(null)}
+    }
+
+    fun readGroup(groupId: String,onComplete:(Group?) -> Unit) {
+
+        db.collection("users")
+            .document(groupId)
+            .get()
+            .addOnSuccessListener { documentSnapshot ->
+                val g = documentSnapshot.toObject<Group>()
+                onComplete(g)
+            }
+            .addOnFailureListener { exception -> onComplete(null) }
+
+
     }
 }
 
