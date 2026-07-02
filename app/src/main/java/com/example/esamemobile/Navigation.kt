@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.example.esamemobile.screens.CharacterCreationPart1Screen
 import com.example.esamemobile.screens.CharacterDetailsScreen
 import com.example.esamemobile.screens.DebugDatabaseScreen
 import com.example.esamemobile.screens.HomeScreen
@@ -16,6 +17,7 @@ sealed interface EsameMobileRoute {
     @Serializable data class CharacterDetails(val charId: Int) : EsameMobileRoute
     @Serializable data object Login : EsameMobileRoute
     @Serializable data object Debug : EsameMobileRoute //Questa è momentanea, sarà da rimuovere in futuro
+    @Serializable data object CharacterCreation : EsameMobileRoute
 }
 
 
@@ -35,6 +37,9 @@ fun EsameMobileNavGraph(navController: NavHostController) {
         }
         composable<EsameMobileRoute.Login> {
             LoginScreen()
+        }
+        composable<EsameMobileRoute.CharacterCreation> {
+            CharacterCreationPart1Screen(navController)
         }
 //        composable<EsameMobileRoute.CharacterDetails> { backStackEntry ->
 //            val route = backStackEntry.toRoute<EsameMobileRoute.CharacterDetails>()
