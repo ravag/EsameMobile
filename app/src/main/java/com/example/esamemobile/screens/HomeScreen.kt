@@ -43,8 +43,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.navigation.NavHostController
 import com.example.esamemobile.EsameMobileRoute
+import com.example.esamemobile.data.firebase.DatabaseServices
 import com.example.esamemobile.utilities.composables.SimpleSearchBar
-import kotlinx.coroutines.sync.Mutex
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -64,7 +66,7 @@ fun HomeScreen(
         )
     }
 
-    val groupsTest = remember {
+    var groupsTest = remember {
         listOf(
             Group(id = 1, name = "I Zingari", ""),
             Group(id = 2, name = "I fantastici 2", ""),
@@ -98,6 +100,23 @@ fun HomeScreen(
             } else {
                 groupsTest.filter { it.name.contains(searchText,ignoreCase = true) }
             }
+        }
+    }
+
+    //DatabaseServices.insertNewUser()
+    DatabaseServices.insertNewCharacter(charactersTest[0])
+    DatabaseServices.readCharacter(1) { c ->
+        if (c != null) {
+            Toast.makeText(context, "nome: ${c.name}", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(context, "ERRORAZZO", Toast.LENGTH_SHORT).show()
+        }
+    }
+    DatabaseServices.getAllUserGroups(context) { l ->
+        if (l != null) {
+            groupsTest = l
+        } else {
+            Toast.makeText(context, "ERRORAZZO gruppi", Toast.LENGTH_SHORT).show()
         }
     }
 

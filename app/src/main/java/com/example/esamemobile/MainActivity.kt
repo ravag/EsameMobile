@@ -28,6 +28,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.example.esamemobile.data.firebase.DatabaseServices
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,86 +40,88 @@ class MainActivity : ComponentActivity() {
         setContent {
             EsameMobileTheme {
                 val context = LocalContext.current
-                val auth = remember { FirebaseAuth.getInstance() }
-                val db = remember { FirebaseFirestore.getInstance() }
+//                val auth = remember { FirebaseAuth.getInstance() }
+//                val db = remember { FirebaseFirestore.getInstance() }
 
                 val navController = rememberNavController()
 
-                var currentUser by remember { mutableStateOf(auth.currentUser) }
-                var showDebugDatabaseScreen by remember { mutableStateOf(false) }
-
-                //Chiediamo il permesso per le notifiche
-                var hasNotificationPermission by remember {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
-                    } else {
-                        mutableStateOf(true)
-                    }
-                }
-
-                val launcher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.RequestPermission(),
-                    onResult = { isGranted -> hasNotificationPermission = isGranted }
-                )
-
-                LaunchedEffect(Unit) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {
-                        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    }
-                }
-
-                //Listener allo stato dell'autenticazione per aggiornare la schermata in tempo reale
-                LaunchedEffect(Unit) {
-                    auth.addAuthStateListener { firebaseAuth ->
-                        currentUser = firebaseAuth.currentUser
-                    }
-                }
-
-                //Listener per le notifiche della bacheca quando l'utente è loggato
-                LaunchedEffect(currentUser) {
-                    if(currentUser != null) {
-
-                        navController.navigate(EsameMobileRoute.Home)
-
-                        val channel = NotificationChannel(
-                            "canale_gdr",
-                            "Notifiche GDR",
-                            NotificationManager.IMPORTANCE_DEFAULT
-                        )
-
-                        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                        manager.createNotificationChannel(channel)
-
-                        db.collection("Notifiche_bacheca")
-                            .addSnapshotListener { snapshots, e ->
-                                if (e != null) return@addSnapshotListener
-
-                                val lastDocIncoming = snapshots?.documentChanges?.find { it.type == DocumentChange.Type.ADDED }
-                                if (lastDocIncoming != null) {
-                                    val title = lastDocIncoming.document.getString("titolo") ?: "Nuova Notifica"
-                                    val msg = lastDocIncoming.document.getString("messaggio") ?: ""
-                                    val authorId = lastDocIncoming.document.getString("autoreId") ?: ""
-
-                                    if (authorId != auth.currentUser?.uid) {
-                                        val builder = NotificationCompat.Builder(context, "canale_gdr")
-                                            .setSmallIcon(android.R.drawable.stat_notify_chat)
-                                            .setContentTitle(title)
-                                            .setContentText(msg)
-                                            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                                            .setAutoCancel(true)
-
-                                        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                                        notificationManager.notify(
-                                            System.currentTimeMillis().toInt(),
-                                            builder.build()
-                                        )
-                                    }
-                                }
-                            }
-                    }
-                }
-
+                DatabaseServices.test(navController,context)
                 EsameMobileNavGraph(navController)
+
+                //var currentUser by remember { mutableStateOf(auth.currentUser) }
+//                var showDebugDatabaseScreen by remember { mutableStateOf(false) }
+//
+//                //Chiediamo il permesso per le notifiche
+//                var hasNotificationPermission by remember {
+//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+//                        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
+//                    } else {
+//                        mutableStateOf(true)
+//                    }
+//                }
+//
+//                val launcher = rememberLauncherForActivityResult(
+//                    contract = ActivityResultContracts.RequestPermission(),
+//                    onResult = { isGranted -> hasNotificationPermission = isGranted }
+//                )
+//
+//                LaunchedEffect(Unit) {
+//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {
+//                        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+//                    }
+//                }
+
+//                //Listener allo stato dell'autenticazione per aggiornare la schermata in tempo reale
+//                LaunchedEffect(Unit) {
+//                    auth.addAuthStateListener { firebaseAuth ->
+//                        currentUser = firebaseAuth.currentUser
+//                    }
+//                }
+//
+//                //Listener per le notifiche della bacheca quando l'utente è loggato
+//                LaunchedEffect(currentUser) {
+//                    if(currentUser != null) {
+//
+//                        navController.navigate(EsameMobileRoute.Home)
+//
+//                        val channel = NotificationChannel(
+//                            "canale_gdr",
+//                            "Notifiche GDR",
+//                            NotificationManager.IMPORTANCE_DEFAULT
+//                        )
+//
+//                        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+//                        manager.createNotificationChannel(channel)
+//
+//                        db.collection("Notifiche_bacheca")
+//                            .addSnapshotListener { snapshots, e ->
+//                                if (e != null) return@addSnapshotListener
+//
+//                                val lastDocIncoming = snapshots?.documentChanges?.find { it.type == DocumentChange.Type.ADDED }
+//                                if (lastDocIncoming != null) {
+//                                    val title = lastDocIncoming.document.getString("titolo") ?: "Nuova Notifica"
+//                                    val msg = lastDocIncoming.document.getString("messaggio") ?: ""
+//                                    val authorId = lastDocIncoming.document.getString("autoreId") ?: ""
+//
+//                                    if (authorId != auth.currentUser?.uid) {
+//                                        val builder = NotificationCompat.Builder(context, "canale_gdr")
+//                                            .setSmallIcon(android.R.drawable.stat_notify_chat)
+//                                            .setContentTitle(title)
+//                                            .setContentText(msg)
+//                                            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+//                                            .setAutoCancel(true)
+//
+//                                        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+//                                        notificationManager.notify(
+//                                            System.currentTimeMillis().toInt(),
+//                                            builder.build()
+//                                        )
+//                                    }
+//                                }
+//                            }
+//                    }
+//                }
+
 
                 //Smistamento Schermate
 //                Scaffold(

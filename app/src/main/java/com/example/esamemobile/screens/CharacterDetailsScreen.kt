@@ -16,24 +16,5 @@ import com.example.esamemobile.utilities.composables.Size
 
 @Composable
 fun CharacterDetailsScreen(character: Character, modifier: Modifier) {
-    Scaffold {
-        Row(
-            modifier = modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            //Character info
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("Nome: ${character.name}")
-                Text("Età: ")
-                Text("Classe: ")
-                Text("Livello: ")
-            }
 
-            //Character image
-            val imageUri = Uri.parse(character.imageUri)
-            ImageWithPlaceholder(imageUri,Size.Lg)
-        }
-    }
 }
