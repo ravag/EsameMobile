@@ -1,34 +1,30 @@
 package com.example.esamemobile.data.firebase
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.core.app.NotificationCompat
 import androidx.navigation.NavHostController
 import com.example.esamemobile.EsameMobileRoute
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.Group
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObject
-import kotlinx.coroutines.tasks.await
+import kotlin.collections.hashMapOf
 
 object DatabaseServices {
     val auth = FirebaseAuth.getInstance()
+    @SuppressLint("StaticFieldLeak")
     val db = FirebaseFirestore.getInstance()
 
     @Composable
-    fun test(navController: NavHostController, context: Context) {
+    fun Test(navController: NavHostController, context: Context) {
         var currentUser by remember { mutableStateOf(auth.currentUser) }
         //Listener allo stato dell'autenticazione per aggiornare la schermata in tempo reale
         LaunchedEffect(Unit) {
@@ -37,10 +33,11 @@ object DatabaseServices {
             }
         }
 
-        //Listener per le notifiche della bacheca quando l'utente è loggato
         LaunchedEffect(currentUser) {
             if(currentUser != null) {
                 navController.navigate(EsameMobileRoute.Home)
+                insertNewUser()
+                TokenReceiver.newToken()
             }
         }
     }
@@ -49,8 +46,14 @@ object DatabaseServices {
         auth.signOut()
     }
 
+    fun updateToken(token: String) {
+        db.collection("users").document(auth.currentUser!!.uid).update("fcmToken",token)
+    }
+
     fun insertNewUser() {
-        db.collection("users").document(auth.currentUser!!.uid).set("ciao")
+        db.collection("users").document(auth.currentUser!!.uid).set(hashMapOf(
+            "fcmToken" to ""
+        ))
     }
     fun insertNewCharacter(char: Character) {
         db.collection("users").document(auth.currentUser!!.uid).collection("characters").document("${char.id}").set(char)

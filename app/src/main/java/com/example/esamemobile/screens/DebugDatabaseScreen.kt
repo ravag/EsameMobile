@@ -52,7 +52,7 @@ fun DebugDatabaseScreen(
     ) {
         Text(
             "MODALITA' DEBUG\nBenvenuto $displayedName",
-            color = Color.White,
+            color = Color.Magenta,
             fontSize = 20.sp,
             textAlign = TextAlign.Center
         )
@@ -152,7 +152,8 @@ fun DebugDatabaseScreen(
                     "title" to "Hai perso il gioco",
                     "message" to "Il Master $displayedName ha inviato una notifica",
                     "authorID" to (currentUser?.uid ?: ""),
-                    "timeStamp" to System.currentTimeMillis()
+                    "timeStamp" to System.currentTimeMillis(),
+                    "group" to "0"
                 )
 
                 db.collection("notifiche_bacheca")

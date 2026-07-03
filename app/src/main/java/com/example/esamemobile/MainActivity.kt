@@ -45,31 +45,37 @@ class MainActivity : ComponentActivity() {
 
                 val navController = rememberNavController()
 
-                DatabaseServices.test(navController,context)
-                EsameMobileNavGraph(navController)
-
                 //var currentUser by remember { mutableStateOf(auth.currentUser) }
 //                var showDebugDatabaseScreen by remember { mutableStateOf(false) }
 //
-//                //Chiediamo il permesso per le notifiche
-//                var hasNotificationPermission by remember {
-//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-//                        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
-//                    } else {
-//                        mutableStateOf(true)
-//                    }
-//                }
+                //Chiediamo il permesso per le notifiche
+                var hasNotificationPermission by remember {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
+                    } else {
+                        mutableStateOf(true)
+                    }
+                }
 //
-//                val launcher = rememberLauncherForActivityResult(
-//                    contract = ActivityResultContracts.RequestPermission(),
-//                    onResult = { isGranted -> hasNotificationPermission = isGranted }
-//                )
-//
-//                LaunchedEffect(Unit) {
-//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {
-//                        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-//                    }
-//                }
+                val launcher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission(),
+                    onResult = { isGranted -> hasNotificationPermission = isGranted }
+                )
+
+                LaunchedEffect(Unit) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {
+                        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+
+                val channel = NotificationChannel(
+                    "canale_gdr",
+                    "Notifiche GDR",
+                    NotificationManager.IMPORTANCE_DEFAULT
+                    )
+
+                val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                manager.createNotificationChannel(channel)
 
 //                //Listener allo stato dell'autenticazione per aggiornare la schermata in tempo reale
 //                LaunchedEffect(Unit) {
@@ -159,6 +165,9 @@ class MainActivity : ComponentActivity() {
 //                        }
 //                    }
 //                }
+
+                DatabaseServices.Test(navController,context)
+                EsameMobileNavGraph(navController)
             }
         }
     }
