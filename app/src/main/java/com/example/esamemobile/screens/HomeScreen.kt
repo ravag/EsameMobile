@@ -1,5 +1,6 @@
 package com.example.esamemobile.screens
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -217,7 +218,9 @@ fun HomeScreen(
                             contentPadding = PaddingValues(0.dp),
                             chars = filteredChars,
                             context = context
-                        )
+                        ) {
+                            navController.navigate(EsameMobileRoute.CharacterDetails(5))
+                        }
                     }
 
                     1 -> {

@@ -1,10 +1,13 @@
 package com.example.esamemobile
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.example.esamemobile.data.Character
+import com.example.esamemobile.data.firebase.DatabaseServices
 import com.example.esamemobile.screens.CharacterCreationPart1Screen
 import com.example.esamemobile.screens.CharacterDetailsScreen
 import com.example.esamemobile.screens.DebugDatabaseScreen
@@ -21,8 +24,6 @@ sealed interface EsameMobileRoute {
 }
 
 
-//Prima di fare questa parte bisogna sistemare bene come passare i parametri in giro perché
-//altrimenti non so come passarli in questi costruttori
 @Composable
 fun EsameMobileNavGraph(navController: NavHostController) {
     NavHost(
@@ -41,9 +42,9 @@ fun EsameMobileNavGraph(navController: NavHostController) {
         composable<EsameMobileRoute.CharacterCreation> {
             CharacterCreationPart1Screen(navController)
         }
-//        composable<EsameMobileRoute.CharacterDetails> { backStackEntry ->
-//            val route = backStackEntry.toRoute<EsameMobileRoute.CharacterDetails>()
-//            CharacterDetailsScreen()
-//        }
+        composable<EsameMobileRoute.CharacterDetails> { backStackEntry ->
+            //val route = backStackEntry.toRoute<EsameMobileRoute.CharacterDetails>()
+            CharacterDetailsScreen(Character(5,"ciao",""), navController)
+        }
     }
 }
