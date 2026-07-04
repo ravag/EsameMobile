@@ -69,56 +69,85 @@ fun CharacterDetailsScreen(character: Character, navController: NavHostControlle
         }
     ) { innerPadding ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(innerPadding)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
         ) {
             CharacterHeader(character.name,0,"a ne so",0,character.imageUri, Modifier) {
                 Toast.makeText(context,"Level up", Toast.LENGTH_SHORT).show()
             }
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("POTERI EVOLUZIONE", fontSize = 25.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(0.9f))
-                IconButton (
-                    onClick = { Toast.makeText(context,"aggiungi", Toast.LENGTH_SHORT).show()},
-                    modifier = Modifier.weight(0.1f)
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "nuovo potere",
-                        tint = Color.Magenta
-                    )
+            when(selectedIndex) {
+                0 -> {
+
+                }
+                1 -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("POTERI EVOLUZIONE", fontSize = 25.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(0.9f))
+                        IconButton (
+                            onClick = { Toast.makeText(context,"aggiungi", Toast.LENGTH_SHORT).show()},
+                            modifier = Modifier.weight(0.1f)
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = "nuovo potere",
+                                tint = Color.Magenta
+                            )
+                        }
+                    }
+
+                    ListItems(abilities, Modifier.weight(1f))
+                    Spacer(Modifier.height(10.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("ABILITA'", fontSize = 25.sp, fontWeight = FontWeight.ExtraBold,modifier = Modifier.weight(0.7f))
+                        IconButton (
+                            onClick = { Toast.makeText(context,"rimuovi", Toast.LENGTH_SHORT).show()},
+                            modifier = Modifier.weight(0.1f)
+                        ) {
+                            Icon(
+                                Icons.Default.Remove,
+                                contentDescription = "togli un uso",
+                                tint = Color.Magenta
+                            )
+                        }
+                        Text("2/2",modifier = Modifier.weight(0.1f))
+                        IconButton (
+                            onClick = { Toast.makeText(context,"aggiungi", Toast.LENGTH_SHORT).show()},
+                            modifier = Modifier.weight(0.1f)
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = "aggiungi un uso",
+                                tint = Color.Magenta
+                            )
+                        }
+                    }
+                    ListItems(abilities, Modifier.weight(1f))
+                }
+                else -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("INVENTARIO", fontSize = 25.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(0.7f))
+                        Text("Capacità 2/2", modifier = Modifier.weight(0.2f))
+                        IconButton (
+                            onClick = { Toast.makeText(context,"aggiungi", Toast.LENGTH_SHORT).show()},
+                            modifier = Modifier.weight(0.1f)
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = "nuovo oggetto",
+                                tint = Color.Magenta
+                            )
+                        }
+                    }
+                    ListItems(abilities,Modifier.weight(1f))
                 }
             }
 
-            ListItems(abilities, Modifier.weight(1f))
-            Spacer(Modifier.height(10.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("ABILITA'", fontSize = 25.sp, fontWeight = FontWeight.ExtraBold,modifier = Modifier.weight(0.7f))
-                IconButton (
-                    onClick = { Toast.makeText(context,"rimuovi", Toast.LENGTH_SHORT).show()},
-                    modifier = Modifier.weight(0.1f)
-                ) {
-                    Icon(
-                        Icons.Default.Remove,
-                        contentDescription = "togli un uso",
-                        tint = Color.Magenta
-                    )
-                }
-                Text("2/2",modifier = Modifier.weight(0.1f))
-                IconButton (
-                    onClick = { Toast.makeText(context,"aggiungi", Toast.LENGTH_SHORT).show()},
-                    modifier = Modifier.weight(0.1f)
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "aggiungi un uso",
-                        tint = Color.Magenta
-                    )
-                }
-            }
-            ListItems(abilities, Modifier.weight(1f))
         }
 
     }
@@ -141,10 +170,12 @@ private fun ListItems(abilities: List<Abilities>,modifier: Modifier) {
 private fun AbilityItem(ability: Abilities) {
     Column() {
         Row(
-            modifier = Modifier.border(
-                width = 1.dp,
-                color = Color.Magenta
-                ).padding(8.dp)
+            modifier = Modifier
+                .border(
+                    width = 1.dp,
+                    color = Color.Magenta
+                )
+                .padding(8.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top
