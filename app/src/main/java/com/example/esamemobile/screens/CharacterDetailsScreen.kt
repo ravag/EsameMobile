@@ -86,69 +86,13 @@ fun CharacterDetailsScreen(character: Character, navController: NavHostControlle
             }
             when (selectedIndex) {
                 0 -> {
-                    CountRow("HP",hp,maxHp,{hp = if(hp != 0) hp-1 else 0},{hp = if(hp != maxHp) hp+1 else maxHp})
-                    //Questa è la soluzione più rapida che ho trovato, si potrebbe provare se no a usare due rettangoli sovrapposti per fare l'effetto, ci si pensa
-                    LinearProgressIndicator(
-                        modifier = Modifier.height(15.dp).fillMaxWidth(),
-                        progress = { hp.toFloat()/maxHp },
-                        color = Color.Green,
-                        trackColor = Color.Red
+                    StatSection(
+                        hp = hp,
+                        maxHp = maxHp,
+                        onDecrease = {hp = if(hp != 0) hp-1 else 0},
+                        onIncrease = {hp = if(hp != maxHp) hp+1 else maxHp},
+                        stats = listOf(0.5f,0.8f,0.1f,0.9f,0.3f) //Da sostituire successivamente, sono solo valori di test
                     )
-
-                    Spacer(Modifier.height(10.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("Velocità")
-                            Text("6m", fontSize = 25.sp)
-                        }
-
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("Armatura")
-                            Text("media", fontSize = 25.sp)
-                        }
-                    }
-
-                    Spacer(Modifier.height(20.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("Statistiche")
-                            //Da sostituire con il nome corretto delle statistiche, me le sono dimenticate
-                            Text("Forza")
-                            Text("Forza")
-                            Text("Forza")
-                            Text("Forza")
-                            Text("Forza")
-                        }
-
-                        Column(
-                            modifier = Modifier.weight(1f).border(
-                                width = 1.dp,
-                                color = Color.Magenta
-                            ),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            statChart(listOf(0.5f,0.8f,0.1f,0.9f,0.3f),listOf("EDO","E M","OLT","O S","CEM"), lineColor = Color.Magenta, fillColor = Color.Magenta.copy(alpha = 0.3f))
-                        }
-                    }
                 }
                 1 -> {
                     EvolutionPowersSection(
@@ -182,7 +126,7 @@ fun CharacterDetailsScreen(character: Character, navController: NavHostControlle
 }
 
 @Composable
-private fun SectionHeader(
+private fun PowersHeader(
     title: String,
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -269,7 +213,7 @@ private fun EvolutionPowersSection(
     Column(
         modifier = modifier
     ) {
-        SectionHeader(
+        PowersHeader(
             title = "POTERI EVOLUZIONE",
             onAddClick = onAddPower,
             titleWeight = 0.9f
@@ -317,6 +261,82 @@ private fun InventorySection(
         )
         ListItems(items, Modifier.fillMaxWidth().weight(1f))
     }
+}
+
+@Composable
+private fun StatSection(
+    hp: Int,
+    maxHp: Int,
+    onDecrease: () -> Unit,
+    onIncrease: () -> Unit,
+    stats: List<Float>
+) {
+    CountRow("HP",hp,maxHp,onDecrease,onIncrease)
+    //Questa è la soluzione più rapida che ho trovato, si potrebbe provare se no a usare due rettangoli sovrapposti per fare l'effetto, ci si pensa
+    LinearProgressIndicator(
+        modifier = Modifier.height(15.dp).fillMaxWidth(),
+        progress = { hp.toFloat()/maxHp },
+        color = Color.Green,
+        trackColor = Color.Red
+    )
+
+    Spacer(Modifier.height(10.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Velocità")
+            Text("6m", fontSize = 25.sp)
+        }
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Armatura")
+            Text("media", fontSize = 25.sp)
+        }
+    }
+
+    Spacer(Modifier.height(20.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Statistiche")
+            //Da sostituire con il nome corretto delle statistiche, me le sono dimenticate
+            Text("Forza")
+            Text("Forza")
+            Text("Forza")
+            Text("Forza")
+            Text("Forza")
+        }
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            statChart(stats,listOf("EDO","E M","OLT","O S","CEM"), lineColor = Color.Magenta, fillColor = Color.Magenta.copy(alpha = 0.3f))
+        }
+    }
+}
+
+//Questa penso sarà da trasportare nel viewModel
+private fun normalizeStats(stats: List<Int>): List<Float> {
+    val maxStat = 15
+    return stats.map { stat -> stat.toFloat()/maxStat }
 }
 
 @Composable
