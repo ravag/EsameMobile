@@ -1,15 +1,10 @@
 package com.example.esamemobile.screens
 
-import android.graphics.drawable.Icon
-import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Grid
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,14 +15,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -37,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,8 +46,6 @@ import androidx.navigation.NavHostController
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.utilities.CharacterDetailsNavigationBar
 import com.example.esamemobile.utilities.CharacterHeader
-import com.example.esamemobile.utilities.composables.ImageWithPlaceholder
-import com.example.esamemobile.utilities.composables.Size
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -158,7 +146,7 @@ fun CharacterDetailsScreen(character: Character, navController: NavHostControlle
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            starChart(listOf(0.5f,0.8f,0.1f,0.9f,0.3f),listOf("EDO","E M","OLT","O S","CEM"), lineColor = Color.Magenta, fillColor = Color.Magenta.copy(alpha = 0.3f))
+                            statChart(listOf(0.5f,0.8f,0.1f,0.9f,0.3f),listOf("EDO","E M","OLT","O S","CEM"), lineColor = Color.Magenta, fillColor = Color.Magenta.copy(alpha = 0.3f))
                         }
                     }
                 }
@@ -374,8 +362,8 @@ private fun AbilityItem(ability: Abilities) {
 }
 
 @Composable
-fun starChart(
-    values: List<Float>,
+fun statChart(
+    values: List<Float>,    //Serve normalizzato tra 0 e 1, farò una funzione per farlo
     labels: List<String>,
     modifier: Modifier = Modifier,
     lineColor: Color,
@@ -393,16 +381,17 @@ fun starChart(
     ) {
         val center = Offset(size.width/2,size.height/2)
         val radius = size.minDimension / 2
-        val angleStep = (2* Math.PI / sides)
+        val vertexAngle = (2* Math.PI / sides)
 
+        //Disegna i pentagoni concentrici per ora 4 pentagoni concentrici
         for (level in 1..4) {
-            val levelRadius = radius * level / 4
+            val pentagonLevel = radius * level / 4
             val path = Path()
             for (i in 0 until sides) {
-                val angle = -Math.PI / 2 + i*angleStep
+                val angle = -Math.PI / 2 + i*vertexAngle
                 val point = Offset(
-                    x = center.x + (levelRadius * cos(angle)).toFloat(),
-                    y = center.y + (levelRadius * sin(angle)).toFloat()
+                    x = center.x + (pentagonLevel * cos(angle)).toFloat(),
+                    y = center.y + (pentagonLevel * sin(angle)).toFloat()
                 )
                 if (i == 0) path.moveTo(point.x,point.y) else path.lineTo(point.x,point.y)
             }
@@ -410,8 +399,9 @@ fun starChart(
             drawPath(path, Color.Gray,style = Stroke(width = 1.dp.toPx()))
         }
 
+        //Disegna una riga dal centro al vertice del pentagono
         for (i in 0 until sides) {
-            val angle = -Math.PI / 2 * angleStep
+            val angle = -Math.PI / 2 + vertexAngle * i
             val end = Offset(
                 x = center.x + (radius * cos(angle)).toFloat(),
                 y = center.y + (radius * sin(angle)).toFloat()
@@ -421,7 +411,7 @@ fun starChart(
 
         val dataPath = Path()
         values.forEachIndexed { i, value ->
-            val angle = -Math.PI / 2 + i * angleStep
+            val angle = -Math.PI / 2 + i * vertexAngle
             val point = Offset(
                 x = center.x + (radius * value * cos(angle)).toFloat(),
                 y = center.y + (radius * value * sin(angle)).toFloat()
@@ -433,8 +423,9 @@ fun starChart(
         drawPath(dataPath,fillColor)
         drawPath(dataPath,lineColor, style = Stroke(width = 2.dp.toPx()))
 
+        //Disegna le etichette sui vertici
         for (i in 0 until sides) {
-            val angle = -Math.PI / 2 + i * angleStep
+            val angle = -Math.PI / 2 + i * vertexAngle
             val labelRadius = radius + 20.dp.toPx()
             val labelPosition = Offset(
                 x = center.x + (labelRadius * cos(angle)).toFloat(),
