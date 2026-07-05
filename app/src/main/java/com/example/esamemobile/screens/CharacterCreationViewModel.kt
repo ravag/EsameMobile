@@ -6,6 +6,11 @@ import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 
+enum class CreationStep {
+    STATISTICS,
+    ABILITIES,
+    INVENTORY
+}
 
 class CharacterViewModel : ViewModel() {
     var peLeft by mutableStateOf(10)

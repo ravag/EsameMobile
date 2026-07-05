@@ -8,8 +8,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.firebase.DatabaseServices
-import com.example.esamemobile.screens.CharacterCreationPart1Screen
-import com.example.esamemobile.screens.CharacterCreationPart2Screen
 import com.example.esamemobile.screens.CharacterDetailsScreen
 import com.example.esamemobile.screens.DebugDatabaseScreen
 import com.example.esamemobile.screens.HomeScreen
@@ -43,19 +41,9 @@ fun EsameMobileNavGraph(navController: NavHostController) {
         composable<EsameMobileRoute.Login> {
             LoginScreen()
         }
-        composable<EsameMobileRoute.CharacterCreation> {
-            CharacterCreationPart1Screen(navController)
-        }
         composable<EsameMobileRoute.CharacterDetails> { backStackEntry ->
             //val route = backStackEntry.toRoute<EsameMobileRoute.CharacterDetails>()
             CharacterDetailsScreen(Character(5,"ciao",""), navController)
         }
-        composable<EsameMobileRoute.CharacterCreation2> {
-            CharacterCreationPart2Screen(navController)
-        }
-//        composable<EsameMobileRoute.CharacterDetails> { backStackEntry ->
-//            val route = backStackEntry.toRoute<EsameMobileRoute.CharacterDetails>()
-//            CharacterDetailsScreen()
-//        }
     }
 }
