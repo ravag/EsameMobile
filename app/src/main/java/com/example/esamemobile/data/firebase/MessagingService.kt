@@ -2,6 +2,7 @@ package com.example.esamemobile.data.firebase
 
 import android.app.NotificationManager
 import androidx.core.app.NotificationCompat
+import com.example.esamemobile.R
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -35,9 +36,10 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun showNotification(title: String?, body: String?) {
-        val channelId = "default_channel"
+        val channelId = "canale_gdr"
 
         val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
             .setContentText(body)
             .setAutoCancel(true)

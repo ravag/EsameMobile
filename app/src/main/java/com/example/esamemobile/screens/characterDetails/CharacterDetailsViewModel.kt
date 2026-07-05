@@ -30,13 +30,13 @@ data class CharacterDetailsState(
 
 data class CharacterDetailsActions(
     val onTabSelected: (Int) -> Unit,
-    val onLevelUp: (Context) -> Unit,
+    val onLevelUp: (Context) -> Unit,   //Da modificare una volta che si ha la schermata di levelUp
     val onDecreaseHp: () -> Unit,
     val onIncreaseHp: () -> Unit,
-    val onAddPower: (Context) -> Unit,
+    val onAddPower: (Context) -> Unit,  //Da modificare una volta che si hanno i poteri fatti bene e un idea di cosa dovrebbe fare questo pulsante
     val onDecreaseUsage: () -> Unit,
     val onIncreaseUsage: () -> Unit,
-    val onAddItem: (Context) -> Unit,
+    val onAddItem: (Context) -> Unit,   //Stessa cosa dei poteri, tanto sono entrambi solo nome, descrizione, costo/peso
     //val onUseItem: () -> Unit, //Al momento non utilizzata, bisogna capire come e quando usarla
 )
 
