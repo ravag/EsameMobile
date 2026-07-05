@@ -58,10 +58,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavHostController
 import androidx.compose.ui.text.input.ImeAction
+import com.example.esamemobile.EsameMobileRoute
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CharacterCreationPart1Screen(navController: NavHostController) {
+fun CharacterCreationPart1Screen(
+    navController: NavHostController,
+    viewModel: CharacterViewModel
+) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
@@ -73,7 +77,6 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
     var isSpendingPEMode by remember { mutableStateOf(false) }
 
     //Stati delle statistiche base
-    var peLeft by remember { mutableStateOf(10) }
     var strength by remember { mutableStateOf(1) }
     var agility by remember { mutableStateOf(1) }
     var intelligence by remember { mutableStateOf(1) }
@@ -107,14 +110,14 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
         if (!isSpendingPEMode) return
 
         if (increment) {
-            if (peLeft >= 2 && currentValue < 10) {
+            if (viewModel.peLeft >= 2 && currentValue < 10) {
                 onUpdate(currentValue + 1)
-                peLeft -= 2
+                viewModel.peLeft = viewModel.peLeft - 2
             }
         } else {
             if (currentValue > baseValue) {
                 onUpdate(currentValue - 1)
-                peLeft += 2
+                viewModel.peLeft = viewModel.peLeft + 2
             }
         }
     }
@@ -224,7 +227,7 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("Punti Evoluzione Rimasti:", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Text("$peLeft PE", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                    Text("${viewModel.peLeft} PE", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
                 }
             }
 
@@ -258,7 +261,7 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
                                 intelligence = baseIntelligence
                                 charisma = baseCharisma
                                 power = basePower
-                                peLeft = 10 - peSpentHP
+                                viewModel.peLeft = 10 - peSpentHP
                             }
                         },
                         modifier = Modifier.padding(horizontal = 8.dp)
@@ -330,7 +333,7 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
 
                             IconButton(
                                 onClick = { handleStatChange(stat.value, stat.baseValue, true, stat.onValueChange) },
-                                enabled = isSpendingPEMode && peLeft >= 2 && stat.value < 10
+                                enabled = isSpendingPEMode && viewModel.peLeft >= 2 && stat.value < 10
                             ) {
                                 Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Più")
                             }
@@ -380,7 +383,7 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
                             IconButton(
                                 onClick = {
                                     peSpentHP --
-                                    peLeft ++
+                                    viewModel.peLeft += 1
                                 }
                             ) {
                                 Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Rimuovi PE da HP")
@@ -391,12 +394,12 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
 
                         IconButton(
                             onClick = {
-                                if (peLeft > 0) {
+                                if (viewModel.peLeft > 0) {
                                     peSpentHP ++
-                                    peLeft --
+                                    viewModel.peLeft -= 1
                                 }
                             },
-                            enabled = peLeft > 0
+                            enabled = viewModel.peLeft > 0
                         ) {
                             Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Aggiungi PE a HP")
                         }
@@ -417,7 +420,7 @@ fun CharacterCreationPart1Screen(navController: NavHostController) {
 
             Button(
                 onClick = {
-                    Toast.makeText(context, "TODO: Aggiungere la schermata per i poteri custom e poi l'inventario custom", Toast.LENGTH_SHORT).show()
+                    navController.navigate(EsameMobileRoute.CharacterCreation2)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
