@@ -60,6 +60,8 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.9.7")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.8")
     implementation("androidx.compose.material:material-icons-extended:1.7.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
