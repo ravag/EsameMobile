@@ -67,6 +67,7 @@ import kotlin.collections.remove
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.navigation.NavController
@@ -786,6 +787,45 @@ fun CharacterCreationScreen(
                     CreationStep.INVENTORY -> {
                         // TODO: Text("Schermata inventario da aggiungere")
                     }
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        focusManager.clearFocus()
+                        when (currentStep) {
+                            CreationStep.ABILITIES -> currentStep = CreationStep.STATISTICS
+                            CreationStep.INVENTORY -> currentStep = CreationStep.ABILITIES
+                            else -> {}
+                        }
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp),
+                    enabled = currentStep != CreationStep.STATISTICS
+                ) {
+                    Text("< Indietro", fontSize = 16.sp)
+                }
+
+                Button(
+                    onClick = {
+                        focusManager.clearFocus()
+                        when (currentStep) {
+                            CreationStep.STATISTICS -> currentStep = CreationStep.ABILITIES
+                            CreationStep.ABILITIES -> currentStep = CreationStep.INVENTORY
+                            CreationStep.INVENTORY -> TODO()
+                        }
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp),
+                ) {
+                    val buttonText = if (currentStep == CreationStep.INVENTORY) "Conferma" else "Avanti >"
+                    Text(buttonText, fontSize = 16.sp)
                 }
             }
         }

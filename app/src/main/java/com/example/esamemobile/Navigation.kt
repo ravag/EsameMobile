@@ -8,11 +8,19 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsScreen
+import androidx.navigation.toRoute
+import com.example.esamemobile.data.Character
+import com.example.esamemobile.data.firebase.DatabaseServices
+import com.example.esamemobile.screens.CharacterCreationScreen
+import com.example.esamemobile.screens.CharacterDetailsScreen
+import com.example.esamemobile.screens.CharacterViewModel
 import com.example.esamemobile.screens.DebugDatabaseScreen
 import com.example.esamemobile.screens.HomeScreen
 import com.example.esamemobile.screens.LoginScreen
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewModel
 import kotlinx.serialization.Serializable
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 sealed interface EsameMobileRoute {
     @Serializable data object Home : EsameMobileRoute
@@ -20,7 +28,6 @@ sealed interface EsameMobileRoute {
     @Serializable data object Login : EsameMobileRoute
     @Serializable data object Debug : EsameMobileRoute //Questa è momentanea, sarà da rimuovere in futuro
     @Serializable data object CharacterCreation : EsameMobileRoute
-    @Serializable data object CharacterCreation2: EsameMobileRoute
 }
 
 
@@ -46,6 +53,9 @@ fun EsameMobileNavGraph(navController: NavHostController) {
             val characterVm = viewModel<CharacterDetailsViewModel>()
             val charState by characterVm.state.collectAsStateWithLifecycle()
             CharacterDetailsScreen(charState,characterVm.actions, navController)
+        }
+        composable<EsameMobileRoute.CharacterCreation> {
+            CharacterCreationScreen(navController, viewModel<CharacterViewModel>())
         }
     }
 }
