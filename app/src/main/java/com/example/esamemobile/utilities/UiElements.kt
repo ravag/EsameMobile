@@ -149,68 +149,68 @@ fun NavigationBottomBarWithFAB(
     }
 }
 
-    @Composable
-    fun CharacterDetailsNavigationBar(
-        selectedIndex: Int,
-        onTabSelected: (Int) -> Unit
-    ) {
-        NavigationBar(containerColor = Color(0xFF1E1E1E)) {
-            //Tasto sinistro: Statistiche
-            NavigationBarItem(
-                selected = selectedIndex == 0,
-                onClick = { onTabSelected(0) },
-                label = { Text("Statistiche", color = Color.White) },
-                icon = {
-                    Icon(
-                        Icons.Outlined.Person,
-                        contentDescription = "Statistiche",
-                        tint = Color.White
-                    )
-                }
-            )
+@Composable
+fun CharacterDetailsNavigationBar(
+    selectedIndex: Int,
+    onTabSelected: (Int) -> Unit
+) {
+    NavigationBar(containerColor = Color(0xFF1E1E1E)) {
+        //Tasto sinistro: Statistiche
+        NavigationBarItem(
+            selected = selectedIndex == 0,
+            onClick = { onTabSelected(0) },
+            label = { Text("Statistiche", color = Color.White) },
+            icon = {
+                Icon(
+                    Icons.Outlined.Person,
+                    contentDescription = "Statistiche",
+                    tint = Color.White
+                )
+            }
+        )
 
-            //Tasto centrale: Abilità
-            NavigationBarItem(
-                selected = selectedIndex == 1,
-                onClick = { onTabSelected(1) },
-                label = { Text("Abilità", color = Color.White) },
-                icon = {
-                    Icon(
-                        Icons.Outlined.Info,
-                        contentDescription = "Abilità",
-                        tint = Color.White
-                    )
-                }
-            )
+        //Tasto centrale: Abilità
+        NavigationBarItem(
+            selected = selectedIndex == 1,
+            onClick = { onTabSelected(1) },
+            label = { Text("Abilità", color = Color.White) },
+            icon = {
+                Icon(
+                    Icons.Outlined.Info,
+                    contentDescription = "Abilità",
+                    tint = Color.White
+                )
+            }
+        )
 
-            //Tasto destro: Equipaggiamento
-            NavigationBarItem(
-                selected = selectedIndex == 2,
-                onClick = { onTabSelected(2) },
-                label = { Text("Equipaggiamento", color = Color.White) },
-                icon = {
-                    Icon(
-                        Icons.Outlined.ShoppingCart,
-                        contentDescription = "Equipaggiamento",
-                        tint = Color.White
-                    )
-                }
-            )
-        }
+        //Tasto destro: Equipaggiamento
+        NavigationBarItem(
+            selected = selectedIndex == 2,
+            onClick = { onTabSelected(2) },
+            label = { Text("Equipaggiamento", color = Color.White) },
+            icon = {
+                Icon(
+                    Icons.Outlined.ShoppingCart,
+                    contentDescription = "Equipaggiamento",
+                    tint = Color.White
+                )
+            }
+        )
     }
+}
 
 @Composable
-fun CharacterList(modifier: Modifier = Modifier, contentPadding: PaddingValues, chars: List<Character>,context: Context) {
-    GenericList(modifier = modifier, contentPadding,chars,context,true)
+fun CharacterList(modifier: Modifier = Modifier, contentPadding: PaddingValues, chars: List<Character>,context: Context,onClick: () -> Unit) {
+    GenericList(modifier = modifier, contentPadding,chars,context,true,onClick)
 }
 
 @Composable
 fun GroupList(modifier: Modifier = Modifier, contentPadding: PaddingValues, groups: List<Group>, context: Context) {
-    GenericList(modifier = modifier, contentPadding, groups, context, false )
+    GenericList(modifier = modifier, contentPadding, groups, context, false ){}
 }
 
 @Composable
-private fun GenericList(modifier: Modifier = Modifier, contentPadding: PaddingValues, elems: List<Any>, context: Context, isChar: Boolean) {
+private fun GenericList(modifier: Modifier = Modifier, contentPadding: PaddingValues, elems: List<Any>, context: Context, isChar: Boolean,onClick: () -> Unit) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -221,9 +221,7 @@ private fun GenericList(modifier: Modifier = Modifier, contentPadding: PaddingVa
         if(isChar) {
             elems as List<Character>
             items(elems) { elem ->
-                CharacterItem(elem) {
-                    Toast.makeText(context,"cliccato personaggio ${elem.id}", Toast.LENGTH_SHORT).show()
-                }
+                CharacterItem(elem,onClick)
             }
         } else {
             elems as List<Group>
@@ -305,8 +303,8 @@ fun CharacterHeader(
     characterClass: String,
     level: Int,
     imageUri: String?,
+    modifier: Modifier = Modifier,
     onLevelUpClick: () -> Unit,
-    modifier: Modifier = Modifier
 ) {
     val parsedUri = remember(imageUri) {
         if (!imageUri.isNullOrEmpty()) {
