@@ -1,58 +1,46 @@
 package com.example.esamemobile.screens
 
-import android.R
+import com.example.esamemobile.screens.CharacterViewModel
+import androidx.compose.foundation.lazy.items
 import android.widget.Toast
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -62,13 +50,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavHostController
 import androidx.compose.ui.text.input.ImeAction
-import androidx.navigation.NavController
+import com.example.esamemobile.EsameMobileRoute
 
 data class Ability(
     val id: String = java.util.UUID.randomUUID().toString(),
@@ -81,15 +68,14 @@ data class Ability(
 @Composable
 fun CharacterCreationPart2Screen(
     navController: NavHostController,
-    initialPeLeft: Int = 10,
-    onBackClick: (Int) -> Unit = {},
+    viewModel: CharacterViewModel,
+    onBackClick: (Int) -> Unit = { navController.navigate(EsameMobileRoute.CharacterCreation) },
     onNextClick: (List<Ability>, Int) -> Unit = { _, _ -> }
 ) {
     val ctx = LocalContext.current
     val focusManager = LocalFocusManager.current
 
-    var peLeft by remember { mutableStateOf(initialPeLeft) }
-    val abilitiesList = remember { mutableStateListOf<Ability>() }
+    val abilitiesList = viewModel.abilitiesList
 
     var showDialog by remember { mutableStateOf(false) }
     var isEditing by remember { mutableStateOf(false) }
@@ -108,6 +94,7 @@ fun CharacterCreationPart2Screen(
     }
 
     Scaffold(
+        floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
@@ -151,7 +138,7 @@ fun CharacterCreationPart2Screen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text("Punti Evoluzione Rimasti: ", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Text("$peLeft PE", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                    Text("${viewModel.peLeft} PE", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
                 }
             }
 
@@ -218,7 +205,7 @@ fun CharacterCreationPart2Screen(
                                 //Testo Elimina
                                 IconButton(
                                     onClick = {
-                                        peLeft += ability.cost
+                                        viewModel.peLeft = viewModel.peLeft + ability.cost
                                         abilitiesList.remove(ability)
                                         Toast.makeText(ctx, "Abilità rimossa", Toast.LENGTH_SHORT).show()
                                     }
@@ -237,7 +224,7 @@ fun CharacterCreationPart2Screen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 OutlinedButton(
-                    onClick = { onBackClick(peLeft) },
+                    onClick = { onBackClick(viewModel.peLeft) },
                     modifier = Modifier
                         .weight(1f)
                         .height(50.dp)
@@ -247,7 +234,7 @@ fun CharacterCreationPart2Screen(
 
                 Button(
                     onClick = {
-                        onNextClick(abilitiesList.toList(), peLeft)
+                        onNextClick(abilitiesList.toList(), viewModel.peLeft)
                         Toast.makeText(ctx, "TODO: Prossima Schermata Inventario", Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier
@@ -263,10 +250,25 @@ fun CharacterCreationPart2Screen(
     //Dialog di Modifica Abilità
     if (showDialog) {
         BasicAlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text(if (isEditing) "Modifica Abilità" else "Nuova Abilità") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            onDismissRequest = { showDialog = false }
+        ) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = AlertDialogDefaults.containerColor),
+                shape = RoundedCornerShape(28.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    //Titolo
+                    Text(
+                        text = if (isEditing) "Modifica Abilità" else "Nuova Abilità",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                        )
+
+                    //Campi input
                     OutlinedTextField(
                         value = abilityName,
                         onValueChange = { abilityName = it },
@@ -295,57 +297,67 @@ fun CharacterCreationPart2Screen(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val costInt = abilityCost.toIntOrNull() ?: 0
 
-                        if (abilityName.isBlank()) {
-                            Toast.makeText(ctx, "Inserisci un nome valido!", Toast.LENGTH_SHORT).show()
-                            return@Button
+                    //Pulsanti Conferma e Annulla
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedButton(
+                            onClick = { showDialog = false }
+                        ) {
+                            Text("Annulla")
                         }
 
-                        if (costInt < 0) {
-                            Toast.makeText(ctx, "Inserisci un costo valido (non negativo)!", Toast.LENGTH_SHORT).show()
-                            return@Button
-                        }
+                        Spacer(modifier = Modifier.width(8.dp))
 
-                        if (isEditing) {
-                            val oldAbility = abilitiesList.find { it.id == abilityIdToEdit }
-                            if (oldAbility != null) {
-                                val currentPePool = peLeft + oldAbility.cost
-                                if (costInt <= currentPePool) {
-                                    peLeft = currentPePool - costInt
-                                    val index = abilitiesList.indexOf(oldAbility)
-                                    abilitiesList[index] = Ability(oldAbility.id, abilityName, abilityDescription, costInt)
-                                    showDialog = false
-                                    resetDialogFields()
+                        Button(
+                            onClick = {
+                                val costInt = abilityCost.toIntOrNull() ?: 0
+
+                                if (abilityName.isBlank()) {
+                                    Toast.makeText(ctx, "Inserisci un nome valido!", Toast.LENGTH_SHORT).show()
+                                    return@Button
+                                }
+
+                                if (costInt < 0) {
+                                    Toast.makeText(ctx, "Inserisci un costo valido (non negativo)!", Toast.LENGTH_SHORT).show()
+                                    return@Button
+                                }
+
+                                if (isEditing) {
+                                    val oldAbility = abilitiesList.find { it.id == abilityIdToEdit }
+                                    if (oldAbility != null) {
+                                        val currentPePool = viewModel.peLeft + oldAbility.cost
+                                        if (costInt <= currentPePool) {
+                                            viewModel.peLeft = currentPePool - costInt
+                                            val index = abilitiesList.indexOf(oldAbility)
+                                            abilitiesList[index] = Ability(oldAbility.id, abilityName, abilityDescription, costInt)
+                                            showDialog = false
+                                            resetDialogFields()
+                                        } else {
+                                            Toast.makeText(ctx, "PE insufficienti!", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
                                 } else {
-                                    Toast.makeText(ctx, "PE insufficienti!", Toast.LENGTH_SHORT).show()
+                                    if (costInt <= viewModel.peLeft) {
+                                        viewModel.peLeft = viewModel.peLeft - costInt
+                                        abilitiesList.add(Ability(name = abilityName, description = abilityDescription, cost = costInt))
+                                        showDialog = false
+                                        resetDialogFields()
+                                    } else {
+                                        Toast.makeText(ctx, "PE insufficienti per questa abilità", Toast.LENGTH_SHORT).show()
+                                    }
                                 }
                             }
-                        } else {
-                            if (costInt <= peLeft) {
-                                peLeft -= costInt
-                                abilitiesList.add(Ability(name = abilityName, description = abilityDescription, cost = costInt))
-                                showDialog = false
-                                resetDialogFields()
-                            } else {
-                                Toast.makeText(ctx, "PE insufficienti per questa abilità", Toast.LENGTH_SHORT).show()
-                            }
+                        ) {
+                            Text(if (isEditing) "Salva" else "Aggiungi")
                         }
+
                     }
-                ) {
-                    Text(if (isEditing) "Salva" else "Aggiungi")
-                }
-            },
-            dismissButton = {
-                OutlinedButton(onClick = { showDialog = false }) {
-                    Text("Annulla")
                 }
             }
-        )
+        }
     }
 }
