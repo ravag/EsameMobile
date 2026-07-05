@@ -1,4 +1,4 @@
-package com.example.esamemobile.screens
+package com.example.esamemobile.screens.characterDetails
 
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
@@ -49,30 +49,30 @@ import com.example.esamemobile.utilities.CharacterHeader
 import kotlin.math.cos
 import kotlin.math.sin
 
-private class Abilities(
+class Abilities(
     val name: String,
     val description: String,
     val cost: Int
 )
 @Composable
-fun CharacterDetailsScreen(character: Character, navController: NavHostController) {
+fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: CharacterDetailsActions, navController: NavHostController) {
 
     val context = LocalContext.current
-    var selectedIndex by remember { mutableStateOf(0) }
+    //var selectedIndex by remember { mutableStateOf(0) }
 
-    var abilities: List<Abilities> = listOf(Abilities("caio","wow caia",1),
-        Abilities("aaa","wow caia",3),
-        Abilities("bbb","wow caia",2),
-        Abilities("cccc","nel mezzo del cammin di nostra vita mi ritrovai per una selva oscura che la diretta via era smarrita, tanto ...",5))
-
-    var hp by remember { mutableStateOf(10) }
-    val maxHp = 10
+//    var abilities: List<Abilities> = listOf(Abilities("caio","wow caia",1),
+//        Abilities("aaa","wow caia",3),
+//        Abilities("bbb","wow caia",2),
+//        Abilities("cccc","nel mezzo del cammin di nostra vita mi ritrovai per una selva oscura che la diretta via era smarrita, tanto ...",5))
+//
+//    var hp by remember { mutableStateOf(10) }
+//    val maxHp = 10
 
     Scaffold(
         bottomBar = {
             CharacterDetailsNavigationBar(
-                selectedIndex = selectedIndex,
-                onTabSelected = {index -> selectedIndex = index}
+                selectedIndex = detailsState.selectedTab.ordinal,
+                onTabSelected = detailsActions.onTabSelected
             )
         }
     ) { innerPadding ->
@@ -81,41 +81,44 @@ fun CharacterDetailsScreen(character: Character, navController: NavHostControlle
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            CharacterHeader(character.name,0,"a ne so",0,character.imageUri, Modifier) {
-                Toast.makeText(context,"Level up", Toast.LENGTH_SHORT).show()
+            CharacterHeader(detailsState.character.name,0,"a ne so",0,detailsState.character.imageUri, Modifier) {
+                detailsActions.onLevelUp(context)
             }
-            when (selectedIndex) {
-                0 -> {
+            when (detailsState.selectedTab) {
+                CharacterDetailsTab.STATS  -> {
                     StatSection(
-                        hp = hp,
-                        maxHp = maxHp,
-                        onDecrease = {hp = if(hp != 0) hp-1 else 0},
-                        onIncrease = {hp = if(hp != maxHp) hp+1 else maxHp},
-                        stats = listOf(0.5f,0.8f,0.1f,0.9f,0.3f) //Da sostituire successivamente, sono solo valori di test
+                        hp = detailsState.hp,
+                        maxHp = detailsState.maxHp,
+                        onDecrease = detailsActions.onDecreaseHp,
+                        onIncrease = detailsActions.onIncreaseHp,
+                        stats = detailsState.stats,
+                        normalizedStats = detailsState.normalizedStats
                     )
                 }
-                1 -> {
+
+                CharacterDetailsTab.POWERS ->  {
                     EvolutionPowersSection(
-                        abilities = abilities,
+                        abilities = detailsState.abilities,
                         modifier = Modifier.weight(1f),
-                        onAddPower = { Toast.makeText(context, "aggiungi", Toast.LENGTH_SHORT).show() }
+                        onAddPower = { detailsActions.onAddPower(context) }
                     )
                     Spacer(Modifier.height(10.dp))
                     AbilitiesSection(
-                        abilities = abilities,
-                        usageCurrent = 2,
-                        usageMax = 2,
+                        abilities = detailsState.abilities,
+                        usageCurrent = detailsState.abilityUsageCurrent,
+                        usageMax = detailsState.abilityUsageMax,
                         modifier = Modifier.weight(1f),
-                        onDecreaseUsage = { Toast.makeText(context, "rimuovi", Toast.LENGTH_SHORT).show() },
-                        onIncreaseUsage = { Toast.makeText(context, "aggiungi", Toast.LENGTH_SHORT).show() }
+                        onDecreaseUsage = detailsActions.onDecreaseUsage,
+                        onIncreaseUsage = detailsActions.onIncreaseUsage
                     )
                 }
-                else -> {
+
+                CharacterDetailsTab.INVENTORY ->  {
                     InventorySection(
-                        items = abilities,
-                        capacityCurrent = 2,
-                        capacityMax = 2,
-                        onAddItem = { Toast.makeText(context, "aggiungi", Toast.LENGTH_SHORT).show() }
+                        items = detailsState.abilities,
+                        capacityCurrent = detailsState.inventoryCapacityCurrent,
+                        capacityMax = detailsState.inventoryCapacityMax,
+                        onAddItem = { detailsActions.onAddItem(context) }
                     )
                 }
             }
@@ -269,7 +272,8 @@ private fun StatSection(
     maxHp: Int,
     onDecrease: () -> Unit,
     onIncrease: () -> Unit,
-    stats: List<Float>
+    stats: List<Int>,
+    normalizedStats: List<Float>
 ) {
     CountRow("HP",hp,maxHp,onDecrease,onIncrease)
     //Questa è la soluzione più rapida che ho trovato, si potrebbe provare se no a usare due rettangoli sovrapposti per fare l'effetto, ci si pensa
@@ -316,11 +320,11 @@ private fun StatSection(
         ) {
             Text("Statistiche")
             //Da sostituire con il nome corretto delle statistiche, me le sono dimenticate
-            Text("Forza")
-            Text("Forza")
-            Text("Forza")
-            Text("Forza")
-            Text("Forza")
+            Text("Forza ${stats[0]}")
+            Text("Forza ${stats[1]}")
+            Text("Forza ${stats[2]}")
+            Text("Forza ${stats[3]}")
+            Text("Forza ${stats[4]}")
         }
 
         Column(
@@ -328,16 +332,11 @@ private fun StatSection(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            statChart(stats,listOf("EDO","E M","OLT","O S","CEM"), lineColor = Color.Magenta, fillColor = Color.Magenta.copy(alpha = 0.3f))
+            statChart(normalizedStats,listOf("EDO","E M","OLT","O S","CEM"), lineColor = Color.Magenta, fillColor = Color.Magenta.copy(alpha = 0.3f))
         }
     }
 }
 
-//Questa penso sarà da trasportare nel viewModel
-private fun normalizeStats(stats: List<Int>): List<Float> {
-    val maxStat = 15
-    return stats.map { stat -> stat.toFloat()/maxStat }
-}
 
 @Composable
 private fun ListItems(abilities: List<Abilities>,modifier: Modifier) {

@@ -25,6 +25,8 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
+    //Ho controllato, questi sono i metodi da usare, non so perchè dica sono deprecati che non lo sono
+    @Suppress("DEPRECATION")
     @Deprecated("Deprecated in Java")
     override fun onNewToken(token: String) {
         super.onNewToken(token)
@@ -51,6 +53,8 @@ class MessagingService : FirebaseMessagingService() {
 }
 
 object TokenReceiver {
+    //Stessa situazione di prima sempre stesso deprecated in Java
+    @Suppress("DEPRECATION")
     fun newToken() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (task.isSuccessful) {
