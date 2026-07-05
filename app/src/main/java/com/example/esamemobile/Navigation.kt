@@ -1,19 +1,20 @@
 package com.example.esamemobile
 
-import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
 import com.example.esamemobile.data.Character
-import com.example.esamemobile.data.firebase.DatabaseServices
 import com.example.esamemobile.screens.CharacterCreationPart1Screen
 import com.example.esamemobile.screens.CharacterCreationPart2Screen
-import com.example.esamemobile.screens.CharacterDetailsScreen
+import com.example.esamemobile.screens.characterDetails.CharacterDetailsScreen
 import com.example.esamemobile.screens.DebugDatabaseScreen
 import com.example.esamemobile.screens.HomeScreen
 import com.example.esamemobile.screens.LoginScreen
+import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewModel
 import kotlinx.serialization.Serializable
 
 sealed interface EsameMobileRoute {
@@ -43,16 +44,18 @@ fun EsameMobileNavGraph(navController: NavHostController) {
         composable<EsameMobileRoute.Login> {
             LoginScreen()
         }
-        composable<EsameMobileRoute.CharacterCreation> {
-            CharacterCreationPart1Screen(navController)
-        }
+//        composable<EsameMobileRoute.CharacterCreation> {
+//            CharacterCreationPart1Screen(navController)
+//        }
         composable<EsameMobileRoute.CharacterDetails> { backStackEntry ->
             //val route = backStackEntry.toRoute<EsameMobileRoute.CharacterDetails>()
-            CharacterDetailsScreen(Character(5,"ciao",""), navController)
+            val characterVm = viewModel<CharacterDetailsViewModel>()
+            val charState by characterVm.state.collectAsStateWithLifecycle()
+            CharacterDetailsScreen(charState,characterVm.actions, navController)
         }
-        composable<EsameMobileRoute.CharacterCreation2> {
-            CharacterCreationPart2Screen(navController)
-        }
+//        composable<EsameMobileRoute.CharacterCreation2> {
+//            CharacterCreationPart2Screen(navController)
+//        }
 //        composable<EsameMobileRoute.CharacterDetails> { backStackEntry ->
 //            val route = backStackEntry.toRoute<EsameMobileRoute.CharacterDetails>()
 //            CharacterDetailsScreen()
