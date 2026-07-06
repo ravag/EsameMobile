@@ -1,4 +1,4 @@
-package com.example.esamemobile.screens
+package com.example.esamemobile.screens.CharacterCreation
 
 import android.widget.Toast
 import com.example.esamemobile.utilities.GenericStepContent
@@ -269,7 +269,11 @@ fun StatisticStepContent(
                     }
 
                     Text(
-                        "Mod: ${if (calculateModifier(stat.value) >= 0) "+" else ""}${calculateModifier(stat.value)}",
+                        "Mod: ${if (calculateModifier(stat.value) >= 0) "+" else ""}${
+                            calculateModifier(
+                                stat.value
+                            )
+                        }",
                         modifier = Modifier.width(60.dp),
                         textAlign = TextAlign.End,
                         fontWeight = FontWeight.SemiBold

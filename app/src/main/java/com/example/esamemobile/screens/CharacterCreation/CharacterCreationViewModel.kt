@@ -1,4 +1,4 @@
-package com.example.esamemobile.screens
+package com.example.esamemobile.screens.CharacterCreation
 
 import android.content.Context
 import android.widget.Toast
@@ -7,6 +7,7 @@ import com.example.esamemobile.utilities.DisplayableItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.util.UUID
 
 enum class CreationStep { STATISTICS, ABILITIES, INVENTORY }
 
@@ -415,14 +416,14 @@ fun calculateModifier(stat: Int): Int {
 }
 
 data class AbilityItem(
-    override val id: String = java.util.UUID.randomUUID().toString(),
+    override val id: String = UUID.randomUUID().toString(),
     override val name: String,
     override val description: String,
     override val numericValue: Int
 ) : DisplayableItem
 
 data class InventoryItem(
-    override val id: String = java.util.UUID.randomUUID().toString(),
+    override val id: String = UUID.randomUUID().toString(),
     override val name: String,
     override val description: String,
     override val numericValue: Int = 1
