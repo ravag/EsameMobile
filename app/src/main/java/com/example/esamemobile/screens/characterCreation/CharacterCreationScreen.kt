@@ -51,6 +51,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.ImeAction
 import android.content.Context
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.FabPosition
@@ -74,6 +75,9 @@ fun StatisticStepContent(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+
+    val ageInt = state.age.toIntOrNull() ?: 0
+    val showAgeMalus = ageInt > 70
 
     Column(
         modifier
@@ -111,6 +115,23 @@ fun StatisticStepContent(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f)
                     )
+
+                    if (showAgeMalus) {
+                        IconButton(
+                            onClick = {
+                                focusManager.clearFocus()
+                                val currentMalusText = state.ageMalusDescription?.let { "${it.name}: ${it.desc}" } ?: "Malus età avanzata attivo"
+                                Toast.makeText(context, currentMalusText, Toast.LENGTH_LONG).show()
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = "Dettagli Malus",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+
                     IconButton(
                         onClick = {
                             focusManager.clearFocus()
@@ -202,6 +223,19 @@ fun StatisticStepContent(
             }
         }
 
+        OutlinedButton(
+            onClick = {
+                focusManager.clearFocus()
+                actions.onRollAllStats()
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isSpendingPEMode
+        ) {
+            Text("Genera Statistiche")
+            Spacer(modifier = Modifier.width(10.dp))
+            Icon(Icons.Default.Refresh, contentDescription = "Genera Statistiche", modifier = Modifier.size(18.dp))
+        }
+
         //Lista delle Statistiche Reattive
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             val stats = listOf(
@@ -220,12 +254,15 @@ fun StatisticStepContent(
                 ) {
                     Text(
                         text = stat.label,
-                        modifier = Modifier.width(100.dp),
+                        modifier = Modifier.weight(1f),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                        ) {
                         IconButton(
                             onClick = { actions.onStatPointBuy(stat.label, false) },
                             enabled = state.isSpendingPEMode && stat.value > stat.baseValue
@@ -269,14 +306,12 @@ fun StatisticStepContent(
                     }
 
                     Text(
-                        "Mod: ${if (calculateModifier(stat.value) >= 0) "+" else ""}${
-                            calculateModifier(
-                                stat.value
-                            )
-                        }",
+                        "Mod:\n ${if (calculateModifier(stat.value) >= 0) "+" else ""}${calculateModifier(stat.value)}",
                         modifier = Modifier.width(60.dp),
-                        textAlign = TextAlign.End,
-                        fontWeight = FontWeight.SemiBold
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        softWrap = true
                     )
                 }
             }

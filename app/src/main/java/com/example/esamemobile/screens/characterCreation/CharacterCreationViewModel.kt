@@ -3,6 +3,8 @@ package com.example.esamemobile.screens.characterCreation
 import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
+import com.example.esamemobile.data.staticData.ALL_AGE_MALUS
+import com.example.esamemobile.data.staticData.AgeMalus
 import com.example.esamemobile.utilities.DisplayableItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,7 +39,9 @@ data class CharacterCreationState(
     val basePower: Int = 1,
 
     val peSpentHP: Int = 0,
-    val hpBase: Int = 0
+    val hpBase: Int = 0,
+
+    val ageMalusDescription: AgeMalus? = null
 ) {
     val strengthModifier: Int get() = calculateModifier(strength)
     val agilityModifier: Int get() = calculateModifier(agility)
@@ -65,6 +69,7 @@ data class CharacterCreationActions(
     val onStatPointBuy: (String, Boolean) -> Unit,
     val onRollHpBase: () -> Unit,
     val onModifyHpPe: (Boolean) -> Unit,
+    val onRollAllStats: () -> Unit,
 
     val onAddAbility: (String, String, Int, Context) -> Unit,
     val onEditAbility: (String, String, String, Int, Context) -> Unit,
@@ -78,6 +83,13 @@ data class CharacterCreationActions(
 class CharacterCreationViewModel: ViewModel() {
     private val _state = MutableStateFlow(CharacterCreationState())
     val state = _state.asStateFlow()
+
+    val malusList = ALL_AGE_MALUS
+
+    private fun getMalusForAge(ageString: String): AgeMalus? {
+        val parsedAge = ageString.toIntOrNull() ?: 0
+        return if (parsedAge > 70) malusList.random() else null
+    }
 
     val actions = CharacterCreationActions(
         onNextStep = { context, onCreationComplete ->
@@ -117,6 +129,7 @@ class CharacterCreationViewModel: ViewModel() {
         },
 
         onAgeChange = { newAge, context ->
+            val malus = getMalusForAge(newAge)
             val parsedAge = newAge.toIntOrNull() ?: 0
             if (parsedAge > 70) {
                 Toast.makeText(
@@ -125,11 +138,12 @@ class CharacterCreationViewModel: ViewModel() {
                     Toast.LENGTH_SHORT
                 ).show()
             }
-            _state.update { it.copy(age = newAge) }
+            _state.update { it.copy(age = newAge, ageMalusDescription = malus) }
         },
 
         onRollAge = { context ->
             val randomAge = (1..100).random()
+            val malus = getMalusForAge(randomAge.toString())
             if (randomAge > 70) {
                 Toast.makeText(
                     context,
@@ -137,7 +151,7 @@ class CharacterCreationViewModel: ViewModel() {
                     Toast.LENGTH_SHORT
                 ).show()
             }
-            _state.update { it.copy(age = randomAge.toString()) }
+            _state.update { it.copy(age = randomAge.toString(), ageMalusDescription = malus) }
         },
 
         onTogglePEMode = { enabled ->
@@ -178,6 +192,32 @@ class CharacterCreationViewModel: ViewModel() {
                     }
                     newState.copy(maxWeightCapacity = newState.inventoryCapacity)
                 }
+            }
+        },
+
+        onRollAllStats = {
+            _state.update { currentState ->
+                val rollStr = (1..6).random()
+                val rollAgi = (1..6).random()
+                val rollInt = (1..6).random()
+                val rollCha = (1..6).random()
+                val rollPow = (1..6).random()
+
+                val newState = currentState.copy(
+                    strength = rollStr,
+                    agility = rollAgi,
+                    intelligence = rollInt,
+                    charisma = rollCha,
+                    power = rollPow,
+
+                    baseStrength = rollStr,
+                    baseAgility = rollAgi,
+                    baseIntelligence = rollInt,
+                    baseCharisma = rollCha,
+                    basePower = rollPow
+                )
+
+                newState.copy(maxWeightCapacity = newState.inventoryCapacity)
             }
         },
 
@@ -386,12 +426,6 @@ class CharacterCreationViewModel: ViewModel() {
         }
     )
 }
-
-data class LocalEditableStats(
-    val label: String,
-    val value: Int,
-    val baseValue: Int
-)
 
 fun calculateBaseDamage(power: Int): String {
     return when (power) {
