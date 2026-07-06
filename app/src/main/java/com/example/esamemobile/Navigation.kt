@@ -17,6 +17,8 @@ import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewMode
 import kotlinx.serialization.Serializable
 import com.example.esamemobile.screens.characterCreation.CharacterCreationViewModel
 import com.example.esamemobile.screens.login.LoginViewModel
+import com.example.esamemobile.screens.settings.SettingsScreen
+import com.example.esamemobile.screens.settings.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
 
 sealed interface EsameMobileRoute {
@@ -25,13 +27,14 @@ sealed interface EsameMobileRoute {
     @Serializable data object Login : EsameMobileRoute
     @Serializable data object Debug : EsameMobileRoute //Questa è momentanea, sarà da rimuovere in futuro
     @Serializable data object CharacterCreation : EsameMobileRoute
+    @Serializable data object Settings: EsameMobileRoute
 }
 
 
 //Prima di fare questa parte bisogna sistemare bene come passare i parametri in giro perché
 //altrimenti non so come passarli in questi costruttori
 @Composable
-fun EsameMobileNavGraph(navController: NavHostController) {
+fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsViewModel) {
     val focusManager = LocalFocusManager.current
     NavHost(
         navController = navController,
@@ -64,6 +67,10 @@ fun EsameMobileNavGraph(navController: NavHostController) {
                 focusManager = focusManager,
                 navController = navController
             )
+        }
+        composable<EsameMobileRoute.Settings> {
+            val settingsState by settingsVm.state.collectAsStateWithLifecycle()
+            SettingsScreen(settingsState,settingsVm.actions,navController)
         }
     }
 }
