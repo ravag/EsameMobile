@@ -17,6 +17,7 @@ interface AuthRepository {
     val currentUser: FirebaseUser?
     suspend fun signInOrRegister(email: String, password: String): AuthenticationResult
     suspend fun singInWithGoogleIdToken(idToken: String): AuthenticationResult
+    fun logout()
 }
 
 //Volevo chiamare la classe AuthResult, ma esiste gia una tale classe,
@@ -71,4 +72,7 @@ class AuthRepositoryImpl( val firebaseAuth: FirebaseAuth): AuthRepository {
 
     }
 
+    override fun logout() {
+        firebaseAuth.signOut()
+    }
 }

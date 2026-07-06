@@ -1,5 +1,6 @@
 package com.example.esamemobile.screens.home
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,6 +47,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.navigation.NavHostController
+import androidx.navigation.toRoute
 import com.example.esamemobile.EsameMobileRoute
 import com.example.esamemobile.data.firebase.DatabaseServices
 import com.example.esamemobile.utilities.composables.SimpleSearchBar
@@ -139,7 +141,8 @@ fun HomeScreen(
             CenterAlignedTopAppBar(
                 title = {Text("HOME")},
                 actions = {
-                    IconButton({/*Naviga*/}) {
+
+                    IconButton({navController.navigate(EsameMobileRoute.Settings)}) {
                         Icon(Icons.Filled.Settings,"Impostazioni")
                     }
                 }
