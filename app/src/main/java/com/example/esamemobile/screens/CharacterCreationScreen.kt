@@ -1,6 +1,7 @@
 package com.example.esamemobile.screens
 
 import android.widget.Toast
+import com.example.esamemobile.utilities.GenericStepContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,16 +39,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -55,120 +51,29 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.ImeAction
 import android.content.Context
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AlertDialogDefaults
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.runtime.mutableIntStateOf
-import kotlin.collections.remove
-import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.navigation.NavController
-import io.ktor.websocket.Frame
-
-data class Ability(
-    val id: String = java.util.UUID.randomUUID().toString(),
-    val name: String,
-    val description: String,
-    val cost: Int
-)
 
 data class EditableStat(
     val label: String,
     val value: Int,
-    val baseValue: Int,
-    val onValueChange: (Int) -> Unit
+    val baseValue: Int
 )
-
-fun calculateBaseDamage(power: Int): String {
-    return when (power) {
-        in Int.MIN_VALUE..1 -> "1d2"
-        in 2..3 -> "1d4"
-        in 4..5 -> "1d6"
-        in 6..7 -> "1d8"
-        in 8..9 -> "1d10"
-        else -> "1d12"
-    }
-}
-
-fun calculateModifier(stat: Int): Int {
-    return when (stat) {
-        in Int.MIN_VALUE..1 -> -1
-        in 2..3 -> 0
-        in 4..5 -> 1
-        in 6..7 -> 2
-        in 8..9 -> 3
-        else -> 4
-    }
-}
 
 @Composable
 fun StatisticStepContent(
-    viewModel: CharacterViewModel,
+    state: CharacterCreationState,
+    actions: CharacterCreationActions,
     focusManager: FocusManager,
     context: Context,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
-
-    //Dati anagrafici
-    var name by remember { mutableStateOf("") }
-    var age by remember { mutableStateOf("") }
-
-    var isSpendingPEMode by remember { mutableStateOf(false) }
-
-    //Stati delle statistiche base
-    var strength by remember { mutableIntStateOf(1) }
-    var agility by remember { mutableIntStateOf(1) }
-    var intelligence by remember { mutableIntStateOf(1) }
-    var charisma by remember { mutableIntStateOf(1) }
-    var power by remember { mutableIntStateOf(1) }
-
-    //Valori base delle stat congelati dai quali si conta la spesa dei PE
-    var baseStrength by remember { mutableIntStateOf(1) }
-    var baseAgility by remember { mutableIntStateOf(1) }
-    var baseIntelligence by remember { mutableIntStateOf(1) }
-    var baseCharisma by remember { mutableIntStateOf(1) }
-    var basePower by remember { mutableIntStateOf(1) }
-
-    var peSpentHP by remember { mutableIntStateOf(0) }
-    var hpBase by remember { mutableIntStateOf(0) }
-
-    //Stati derivati
-    val strengthModifier by remember { derivedStateOf { calculateModifier(strength) } }
-    val agilityModifier by remember { derivedStateOf { calculateModifier(agility) } }
-    val intelligenceModifier by remember { derivedStateOf { calculateModifier(intelligence) } }
-    val charismaModifier by remember { derivedStateOf { calculateModifier(charisma) } }
-    val powerModifier by remember { derivedStateOf { calculateModifier(power) } }
-
-    val hpMax by remember { derivedStateOf { hpBase + strengthModifier + peSpentHP } }
-    val speed by remember { derivedStateOf { 6 + (1.5 * agilityModifier) } }
-    val inventoryCapacity by remember { derivedStateOf { maxOf(1, strengthModifier + 1) } }
-    val baseDamage by remember { derivedStateOf { calculateBaseDamage(power) } }
-
-    //Funzione per gestire il point buy sulle statistiche
-    fun handleStatChange(currentValue: Int, baseValue: Int, increment: Boolean, onUpdate: (Int) -> Unit) {
-        if (!isSpendingPEMode) return
-
-        if (increment) {
-            if (viewModel.peLeft >= 2 && currentValue < 10) {
-                onUpdate(currentValue + 1)
-                viewModel.peLeft -= 2
-            }
-        } else {
-            if (currentValue > baseValue) {
-                onUpdate(currentValue - 1)
-                viewModel.peLeft += 2
-            }
-        }
-    }
 
     Column(
         modifier
@@ -188,8 +93,8 @@ fun StatisticStepContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
+                    value = state.name,
+                    onValueChange = { actions.onNameChange(it) },
                     label = { Text("Nome") },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -200,14 +105,8 @@ fun StatisticStepContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedTextField(
-                        value = age,
-                        onValueChange = {
-                            age = it
-                            val parsedAge = it.toIntOrNull() ?: 0
-                            if (parsedAge > 70) {
-                                Toast.makeText(context, "Età superiore a 70, TODO Malus Casuale", Toast.LENGTH_SHORT).show()
-                            }
-                        },
+                        value = state.age,
+                        onValueChange = { actions.onAgeChange(it, context) },
                         label = { Text("Età") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f)
@@ -215,11 +114,7 @@ fun StatisticStepContent(
                     IconButton(
                         onClick = {
                             focusManager.clearFocus()
-                            val randomAge = (1..100).random()
-                            age = randomAge.toString()
-                            if (randomAge > 70) {
-                                Toast.makeText(context, "Età superiore a 70, TODO Malus Casuale", Toast.LENGTH_SHORT).show()
-                            }
+                            actions.onRollAge(context)
                         },
                         modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer,
                             RoundedCornerShape(8.dp))
@@ -277,7 +172,7 @@ fun StatisticStepContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("Punti Evoluzione Rimasti:", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                Text("${viewModel.peLeft} PE", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                Text("${state.peLeft} PE", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
             }
         }
 
@@ -292,34 +187,17 @@ fun StatisticStepContent(
                 Text(
                     "Inserimento\nManuale",
                     fontSize = 12.sp,
-                    color = if (!isSpendingPEMode) MaterialTheme.colorScheme.primary else Color.Gray
+                    color = if (!state.isSpendingPEMode) MaterialTheme.colorScheme.primary else Color.Gray
                 )
                 Switch(
-                    checked = isSpendingPEMode,
-                    onCheckedChange = { checked ->
-                        focusManager.clearFocus()
-                        isSpendingPEMode = checked
-                        if (checked) {
-                            baseStrength = strength
-                            baseAgility = agility
-                            baseIntelligence = intelligence
-                            baseCharisma = charisma
-                            basePower = power
-                        } else {
-                            strength = baseStrength
-                            agility = baseAgility
-                            intelligence = baseIntelligence
-                            charisma = baseCharisma
-                            power = basePower
-                            viewModel.peLeft = 10 - peSpentHP
-                        }
-                    },
+                    checked = state.isSpendingPEMode,
+                    onCheckedChange = { actions.onTogglePEMode(it) },
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
                 Text(
                     "Aumenta\nStatistiche",
                     fontSize = 12.sp,
-                    color = if (isSpendingPEMode) MaterialTheme.colorScheme.primary else Color.Gray
+                    color = if (state.isSpendingPEMode) MaterialTheme.colorScheme.primary else Color.Gray
                 )
             }
         }
@@ -327,11 +205,11 @@ fun StatisticStepContent(
         //Lista delle Statistiche Reattive
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             val stats = listOf(
-                EditableStat("Forza", strength, baseStrength) { v:Int -> strength = v },
-                EditableStat("Agilità", agility, baseAgility) { v:Int -> agility = v },
-                EditableStat("Intelligenza", intelligence, baseIntelligence) { v:Int -> intelligence = v },
-                EditableStat("Carisma", charisma, baseCharisma) { v:Int -> charisma = v },
-                EditableStat("Potere", power, basePower) { v:Int -> power = v },
+                EditableStat("Forza", state.strength, state.baseStrength),
+                EditableStat("Agilità", state.agility, state.baseAgility),
+                EditableStat("Intelligenza", state.intelligence, state.baseIntelligence),
+                EditableStat("Carisma", state.charisma, state.baseCharisma),
+                EditableStat("Potere", state.power, state.basePower),
             )
 
             stats.forEach { stat ->
@@ -349,20 +227,18 @@ fun StatisticStepContent(
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(
-                            onClick = { handleStatChange(stat.value, stat.baseValue,  false, stat.onValueChange) },
-                            enabled = isSpendingPEMode && stat.value > stat.baseValue
+                            onClick = { actions.onStatPointBuy(stat.label, false) },
+                            enabled = state.isSpendingPEMode && stat.value > stat.baseValue
                         ) {
                             Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Meno")
                         }
 
-                        if (!isSpendingPEMode) {
+                        if (!state.isSpendingPEMode) {
                             OutlinedTextField(
                                 value = if (stat.value == 0) "" else stat.value.toString(),
                                 onValueChange = { input ->
                                     val parsed = input.toIntOrNull() ?: 0
-                                    if (parsed in 1..10 || input.isEmpty()) {
-                                        stat.onValueChange(parsed)
-                                    }
+                                    actions.onStatManualChange(stat.label, parsed)
                                 },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
                                 keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
@@ -385,8 +261,8 @@ fun StatisticStepContent(
                         }
 
                         IconButton(
-                            onClick = { handleStatChange(stat.value, stat.baseValue, true, stat.onValueChange) },
-                            enabled = isSpendingPEMode && viewModel.peLeft >= 2 && stat.value < 10
+                            onClick = { actions.onStatPointBuy(stat.label, true) },
+                            enabled = state.isSpendingPEMode && state.peLeft >= 2 && stat.value < 10
                         ) {
                             Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Più")
                         }
@@ -413,12 +289,12 @@ fun StatisticStepContent(
             ) {
                 Column {
                     Text(
-                        "HP Massimi: $hpMax",
+                        "HP Massimi: ${state.hpMax}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "(Base: $hpBase + Mod For: $strengthModifier + PE Extra: $peSpentHP)",
+                        "(Base: ${state.hpBase} + Mod For: ${state.strengthModifier} + PE Extra: ${state.peSpentHP})",
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
@@ -426,18 +302,15 @@ fun StatisticStepContent(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Button(
-                        onClick = { hpBase = (1..6).random() + (1..6).random() },
+                        onClick = { actions.onRollHpBase() },
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text("2d6", fontSize = 12.sp)
                     }
 
-                    if (peSpentHP > 0) {
+                    if (state.peSpentHP > 0) {
                         IconButton(
-                            onClick = {
-                                peSpentHP --
-                                viewModel.peLeft += 1
-                            }
+                            onClick = { actions.onModifyHpPe(false) }
                         ) {
                             Icon(Icons.Default.KeyboardArrowDown, contentDescription = "Rimuovi PE da HP")
                         }
@@ -446,315 +319,50 @@ fun StatisticStepContent(
                     }
 
                     IconButton(
-                        onClick = {
-                            if (viewModel.peLeft > 0) {
-                                peSpentHP ++
-                                viewModel.peLeft -= 1
-                            }
-                        },
-                        enabled = viewModel.peLeft > 0
+                        onClick = { actions.onModifyHpPe(true) },
+                        enabled = state.peLeft > 0
                     ) {
                         Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Aggiungi PE a HP")
                     }
                 }
             }
 
-            Text("Capacità di Carico: $inventoryCapacity", fontSize = 16.sp)
-            Text("Velocità: $speed m", fontSize = 16.sp)
+            Text("Capacità di Carico: ${state.inventoryCapacity}", fontSize = 16.sp)
+            Text("Velocità: ${state.speed} m", fontSize = 16.sp)
             Text(
-                "Danno Attacco Base: $baseDamage",
+                "Danno Attacco Base: ${state.baseDamage}",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary
             )
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AbilitiesStepContent(
-    viewModel: CharacterViewModel,
-    focusManager: FocusManager,
-    context: Context,
-    showDialog: Boolean,
-    onDialogVisibilityChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val abilitiesList = viewModel.abilitiesList
-
-    var isEditing by remember { mutableStateOf(false) }
-    var abilityIdToEdit by remember { mutableStateOf("") }
-
-    var abilityName by remember { mutableStateOf("") }
-    var abilityDescription by remember { mutableStateOf("") }
-    var abilityCost by remember { mutableStateOf("") }
-
-    fun resetDialogFields() {
-        abilityName = ""
-        abilityDescription = ""
-        abilityCost = ""
-        isEditing = false
-        abilityIdToEdit = ""
-    }
-
-    Column(
-            modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .pointerInput(Unit) { detectTapGestures(onTap = { focusManager.clearFocus() }) },
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            //Header Titolo
-            Text(
-                "ABILITÀ",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
-            )
-
-            //Contatore PE rimasti
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Punti Evoluzione Rimasti: ", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Text("${viewModel.peLeft} PE", fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
-                }
-            }
-
-            //Lista Abilità Aggiunte
-            if (abilitiesList.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        "Nessuna abilità creata.\nUsa il tasto \"+\" in basso per aggiungerne una.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        fontSize = 14.sp
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(abilitiesList) { ability ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "${ability.name} (${ability.cost} PE)",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    if (ability.description.isNotEmpty()) {
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            text = ability.description,
-                                            fontSize = 14.sp,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
-                                        )
-                                    }
-                                }
-
-                                //Tasto Modifica
-                                IconButton(
-                                    onClick = {
-                                        abilityIdToEdit = ability.id
-                                        abilityName = ability.name
-                                        abilityDescription = ability.description
-                                        abilityCost = ability.cost.toString()
-                                        isEditing = true
-                                        onDialogVisibilityChange(true)
-                                    }
-                                ) {
-                                    Icon(Icons.Default.Edit, contentDescription = "Modifica", tint = MaterialTheme.colorScheme.primary)
-                                }
-
-                                //Testo Elimina
-                                IconButton(
-                                    onClick = {
-                                        viewModel.peLeft = viewModel.peLeft + ability.cost
-                                        abilitiesList.remove(ability)
-                                        Toast.makeText(context, "Abilità rimossa", Toast.LENGTH_SHORT).show()
-                                    }
-                                ) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Elimina", tint = MaterialTheme.colorScheme.error)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-    //Dialog di Modifica Abilità
-    if (showDialog) {
-        BasicAlertDialog(
-            onDismissRequest = {
-                onDialogVisibilityChange(false)
-                resetDialogFields()
-            }
-        ) {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = AlertDialogDefaults.containerColor),
-                shape = RoundedCornerShape(28.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    //Titolo
-                    Text(
-                        text = if (isEditing) "Modifica Abilità" else "Nuova Abilità",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    //Campi input
-                    OutlinedTextField(
-                        value = abilityName,
-                        onValueChange = { abilityName = it },
-                        label = { Text("Nome Abilità") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
-                        value = abilityDescription,
-                        onValueChange = { abilityDescription = it },
-                        label = { Text("Descrizione") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    OutlinedTextField(
-                        value = abilityCost,
-                        onValueChange = { input ->
-                            if (input.all { it.isDigit() }) {
-                                abilityCost = input
-                            }
-                        },
-                        label = { Text("Costo in PE") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    //Pulsanti Conferma e Annulla
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                onDialogVisibilityChange(false)
-                                resetDialogFields()
-                            }
-                        ) {
-                            Text("Annulla")
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Button(
-                            onClick = {
-                                val costInt = abilityCost.toIntOrNull() ?: 0
-
-                                if (abilityName.isBlank()) {
-                                    Toast.makeText(context, "Inserisci un nome valido!", Toast.LENGTH_SHORT).show()
-                                    return@Button
-                                }
-
-                                if (costInt < 0) {
-                                    Toast.makeText(context, "Inserisci un costo valido (non negativo)!", Toast.LENGTH_SHORT).show()
-                                    return@Button
-                                }
-
-                                if (isEditing) {
-                                    val oldAbility = abilitiesList.find { it.id == abilityIdToEdit }
-                                    if (oldAbility != null) {
-                                        val currentPePool = viewModel.peLeft + oldAbility.cost
-                                        if (costInt <= currentPePool) {
-                                            viewModel.peLeft = currentPePool - costInt
-                                            val index = abilitiesList.indexOf(oldAbility)
-                                            abilitiesList[index] = Ability(oldAbility.id, abilityName, abilityDescription, costInt)
-                                            onDialogVisibilityChange(false)
-                                            resetDialogFields()
-                                        } else {
-                                            Toast.makeText(context, "PE insufficienti!", Toast.LENGTH_SHORT).show()
-                                        }
-                                    }
-                                } else {
-                                    if (costInt <= viewModel.peLeft) {
-                                        viewModel.peLeft -= costInt
-                                        abilitiesList.add(Ability(name = abilityName, description = abilityDescription, cost = costInt))
-                                        onDialogVisibilityChange(false)
-                                        resetDialogFields()
-                                    } else {
-                                        Toast.makeText(context, "PE insufficienti per questa abilità", Toast.LENGTH_SHORT).show()
-                                    }
-                                }
-                            }
-                        ) {
-                            Text(if (isEditing) "Salva" else "Aggiungi")
-                        }
-
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun InventoryStepContent() {
-    TODO()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharacterCreationScreen(
-    navController: NavController,
-    viewModel: CharacterViewModel
+    creationState: CharacterCreationState,
+    creationActions: CharacterCreationActions,
+    focusManager: FocusManager,
+    navController: NavController
 ) {
     val context = LocalContext.current
-    val focusManager = LocalFocusManager.current
-
-    var currentStep by remember { mutableStateOf(CreationStep.STATISTICS) }
-
-    var showAbilityDialog by remember { mutableStateOf(false) }
 
     Scaffold(
+        floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
-            if (currentStep == CreationStep.ABILITIES) {
+            if (creationState.currentStep == CreationStep.ABILITIES || creationState.currentStep == CreationStep.INVENTORY) {
                 FloatingActionButton(
-                    onClick = { showAbilityDialog = true },
-                    containerColor = MaterialTheme.colorScheme.primary
+                    onClick = {
+                        if (creationState.currentStep == CreationStep.ABILITIES) {
+                            creationActions.onSetAbilityDialogVisible(true)
+                        } else {
+                            creationActions.onSetItemDialogVisible(true)
+                        }
+                              },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 60.dp)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Aggiungi")
                 }
@@ -770,22 +378,74 @@ fun CharacterCreationScreen(
             Box(
                 modifier = Modifier.weight(1f)
             ) {
-                when (currentStep) {
+                when (creationState.currentStep) {
                     CreationStep.STATISTICS -> {
-                        StatisticStepContent(viewModel, focusManager, context, modifier = Modifier.fillMaxSize())
-                    }
-                    CreationStep.ABILITIES -> {
-                        AbilitiesStepContent(
-                            viewModel = viewModel,
+                        StatisticStepContent(
+                            state = creationState,
+                            actions = creationActions,
                             focusManager = focusManager,
                             context = context,
-                            showDialog = showAbilityDialog,
-                            onDialogVisibilityChange = { showAbilityDialog = it },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    CreationStep.ABILITIES -> {
+                        GenericStepContent(
+                            title = "ABILITÀ",
+                            counterTitle = "Punti Evoluzione Rimasti:",
+                            counterValueText = "${creationState.peLeft} PE",
+                            counterContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            counterValueColor = MaterialTheme.colorScheme.primary,
+                            emptyListText = "Nessuna abilità creata.\nUsa il tasto \"+\" in basso per aggiungerne una.",
+                            itemList = creationState.abilitiesList,
+                            showDialog = creationState.showAbilityDialog,
+                            onDialogVisibilityChange = { creationActions.onSetAbilityDialogVisible(it) },
+                            dialogNewTitle = "Nuova Abilità",
+                            dialogEditTitle = "Modifica Abilità",
+                            dialogNameLabel = "Nome Abilità",
+                            dialogNumericLabel = "Costo in PE",
+                            onAddItem = { name, desc, value ->
+                                creationActions.onAddAbility(name, desc, value, context)
+                            },
+                            onEditItem = { id, name, desc, value ->
+                                creationActions.onEditAbility(id, name, desc, value, context)
+                            },
+                            onDeleteItem = { item ->
+                                (item as? AbilityItem)?.let { creationActions.onDeleteAbility(it, context) }
+                            },
+                            focusManager = focusManager,
+                            context = context,
                             modifier = Modifier.fillMaxSize()
                             )
                     }
                     CreationStep.INVENTORY -> {
-                        // TODO: Text("Schermata inventario da aggiungere")
+                        val currentWeight = creationState.inventoryList.sumOf { it.numericValue }
+                        GenericStepContent(
+                            title = "EQUIPAGGIAMENTO",
+                            counterTitle = "Capacità di Carico:",
+                            counterValueText = "${currentWeight} / ${creationState.maxWeightCapacity}",
+                            counterContainerColor = if (currentWeight > creationState.maxWeightCapacity) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
+                            counterValueColor = if (currentWeight > creationState.maxWeightCapacity) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primary,
+                            emptyListText = "L'inventario è vuoto.\nUsa il tasto \"+\" in basso per aggiungere un oggetto.",
+                            itemList = creationState.inventoryList,
+                            showDialog = creationState.showItemDialog,
+                            onDialogVisibilityChange = { creationActions.onSetItemDialogVisible(it) },
+                            dialogNewTitle = "Nuovo Oggetto",
+                            dialogEditTitle = "Modifica Oggetto",
+                            dialogNameLabel = "Nome Oggetto",
+                            dialogNumericLabel = "Peso",
+                            onAddItem = { name, desc, value ->
+                                creationActions.onAddItem(name, desc, value, context)
+                            },
+                            onEditItem = { id, name, desc, value ->
+                                creationActions.onEditItem(id, name, desc, value, context)
+                            },
+                            onDeleteItem = { item ->
+                                (item as? InventoryItem)?.let { creationActions.onDeleteItem(item, context) }
+                            },
+                            focusManager = focusManager,
+                            context = context,
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
                 }
             }
@@ -797,16 +457,12 @@ fun CharacterCreationScreen(
                 OutlinedButton(
                     onClick = {
                         focusManager.clearFocus()
-                        when (currentStep) {
-                            CreationStep.ABILITIES -> currentStep = CreationStep.STATISTICS
-                            CreationStep.INVENTORY -> currentStep = CreationStep.ABILITIES
-                            else -> {}
-                        }
+                        creationActions.onPreviousStep()
                     },
                     modifier = Modifier
                         .weight(1f)
                         .height(50.dp),
-                    enabled = currentStep != CreationStep.STATISTICS
+                    enabled = creationState.currentStep != CreationStep.STATISTICS
                 ) {
                     Text("< Indietro", fontSize = 16.sp)
                 }
@@ -814,17 +470,15 @@ fun CharacterCreationScreen(
                 Button(
                     onClick = {
                         focusManager.clearFocus()
-                        when (currentStep) {
-                            CreationStep.STATISTICS -> currentStep = CreationStep.ABILITIES
-                            CreationStep.ABILITIES -> currentStep = CreationStep.INVENTORY
-                            CreationStep.INVENTORY -> TODO()
+                        creationActions.onNextStep(context) {
+                            navController.popBackStack()
                         }
                     },
                     modifier = Modifier
                         .weight(1f)
                         .height(50.dp),
                 ) {
-                    val buttonText = if (currentStep == CreationStep.INVENTORY) "Conferma" else "Avanti >"
+                    val buttonText = if (creationState.currentStep == CreationStep.INVENTORY) "Conferma" else "Avanti >"
                     Text(buttonText, fontSize = 16.sp)
                 }
             }

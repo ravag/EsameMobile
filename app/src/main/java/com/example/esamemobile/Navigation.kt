@@ -2,25 +2,20 @@ package com.example.esamemobile
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsScreen
-import androidx.navigation.toRoute
-import com.example.esamemobile.data.Character
-import com.example.esamemobile.data.firebase.DatabaseServices
 import com.example.esamemobile.screens.CharacterCreationScreen
-import com.example.esamemobile.screens.CharacterDetailsScreen
-import com.example.esamemobile.screens.CharacterViewModel
 import com.example.esamemobile.screens.DebugDatabaseScreen
 import com.example.esamemobile.screens.HomeScreen
 import com.example.esamemobile.screens.LoginScreen
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewModel
 import kotlinx.serialization.Serializable
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.esamemobile.screens.CharacterCreationViewModel
 
 sealed interface EsameMobileRoute {
     @Serializable data object Home : EsameMobileRoute
@@ -35,6 +30,7 @@ sealed interface EsameMobileRoute {
 //altrimenti non so come passarli in questi costruttori
 @Composable
 fun EsameMobileNavGraph(navController: NavHostController) {
+    val focusManager = LocalFocusManager.current
     NavHost(
         navController = navController,
         startDestination = EsameMobileRoute.Login
@@ -55,7 +51,15 @@ fun EsameMobileNavGraph(navController: NavHostController) {
             CharacterDetailsScreen(charState,characterVm.actions, navController)
         }
         composable<EsameMobileRoute.CharacterCreation> {
-            CharacterCreationScreen(navController, viewModel<CharacterViewModel>())
+            val creationVM = viewModel<CharacterCreationViewModel>()
+            val creationState by creationVM.state.collectAsStateWithLifecycle()
+
+            CharacterCreationScreen(
+                creationState = creationState,
+                creationActions = creationVM.actions,
+                focusManager = focusManager,
+                navController = navController
+            )
         }
     }
 }
