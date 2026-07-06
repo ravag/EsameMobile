@@ -194,6 +194,7 @@ fun CharacterDetailsNavigationBar(
     }
 }
 
+//Mi sa che rimuovo characterList e groupList e metto gli altri metodi in home screen, vengono usati solo li
 @Composable
 fun CharacterList(
     contentPadding: PaddingValues,
