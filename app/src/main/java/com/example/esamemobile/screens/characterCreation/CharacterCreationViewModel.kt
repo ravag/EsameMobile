@@ -1,4 +1,4 @@
-package com.example.esamemobile.screens.CharacterCreation
+package com.example.esamemobile.screens.characterCreation
 
 import android.content.Context
 import android.widget.Toast

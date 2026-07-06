@@ -9,13 +9,15 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsScreen
-import com.example.esamemobile.screens.CharacterCreation.CharacterCreationScreen
+import com.example.esamemobile.screens.characterCreation.CharacterCreationScreen
 import com.example.esamemobile.screens.DebugDatabaseScreen
 import com.example.esamemobile.screens.HomeScreen
-import com.example.esamemobile.screens.LoginScreen
+import com.example.esamemobile.screens.login.LoginScreen
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewModel
 import kotlinx.serialization.Serializable
-import com.example.esamemobile.screens.CharacterCreation.CharacterCreationViewModel
+import com.example.esamemobile.screens.characterCreation.CharacterCreationViewModel
+import com.example.esamemobile.screens.login.LoginViewModel
+import org.koin.androidx.compose.koinViewModel
 
 sealed interface EsameMobileRoute {
     @Serializable data object Home : EsameMobileRoute
@@ -42,7 +44,9 @@ fun EsameMobileNavGraph(navController: NavHostController) {
             DebugDatabaseScreen(navController)
         }
         composable<EsameMobileRoute.Login> {
-            LoginScreen()
+            val loginVm = koinViewModel<LoginViewModel>()
+            val loginState by loginVm.state.collectAsStateWithLifecycle()
+            LoginScreen(loginState,loginVm.actions)
         }
         composable<EsameMobileRoute.CharacterDetails> { backStackEntry ->
             //val route = backStackEntry.toRoute<EsameMobileRoute.CharacterDetails>()
