@@ -1,7 +1,6 @@
 package com.example.esamemobile
 
 import android.app.Application
-import com.example.esamemobile.screens.appModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 

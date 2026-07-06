@@ -11,7 +11,7 @@ import androidx.navigation.compose.composable
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsScreen
 import com.example.esamemobile.screens.characterCreation.CharacterCreationScreen
 import com.example.esamemobile.screens.DebugDatabaseScreen
-import com.example.esamemobile.screens.HomeScreen
+import com.example.esamemobile.screens.home.HomeScreen
 import com.example.esamemobile.screens.login.LoginScreen
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewModel
 import kotlinx.serialization.Serializable

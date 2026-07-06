@@ -1,4 +1,4 @@
-package com.example.esamemobile.screens
+package com.example.esamemobile
 
 import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.firebase.AuthRepositoryImpl
