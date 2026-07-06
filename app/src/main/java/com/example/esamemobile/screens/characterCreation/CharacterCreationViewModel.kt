@@ -21,6 +21,7 @@ data class CharacterCreationState(
     val inventoryList: List<InventoryItem> = emptyList(),
     val showAbilityDialog: Boolean = false,
     val showItemDialog: Boolean = false,
+    val showAgeMalusDialog: Boolean = false,
 
     val name: String = "",
     val age: String = "",
@@ -60,9 +61,10 @@ data class CharacterCreationActions(
     val onPreviousStep: (() -> Unit) -> Unit,
     val onSetAbilityDialogVisible: (Boolean) -> Unit,
     val onSetItemDialogVisible: (Boolean) -> Unit,
+    val onSetAgeMalusDialogVisible: (Boolean) -> Unit,
 
     val onNameChange: (String) -> Unit,
-    val onAgeChange: (String, Context) -> Unit,
+    val onAgeChange: (String) -> Unit,
     val onRollAge: (Context) -> Unit,
     val onTogglePEMode: (Boolean) -> Unit,
     val onStatManualChange: (String, Int) -> Unit,
@@ -128,20 +130,16 @@ class CharacterCreationViewModel: ViewModel() {
             _state.update { it.copy(showItemDialog = visible) }
         },
 
+        onSetAgeMalusDialogVisible = { visible ->
+            _state.update { it.copy(showAgeMalusDialog = visible) }
+        },
+
         onNameChange = { newName ->
             _state.update { it.copy(name = newName) }
         },
 
-        onAgeChange = { newAge, context ->
+        onAgeChange = { newAge ->
             val malus = getMalusForAge(newAge)
-            val parsedAge = newAge.toIntOrNull() ?: 0
-            if (parsedAge > 70) {
-                Toast.makeText(
-                    context,
-                    "Età superiore a 70, TODO: Malus Casuale",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
             _state.update { it.copy(age = newAge, ageMalusDescription = malus) }
         },
 

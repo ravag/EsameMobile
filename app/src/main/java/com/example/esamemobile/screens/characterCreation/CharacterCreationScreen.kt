@@ -61,6 +61,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
+import com.example.esamemobile.utilities.GenericBasicDialog
 
 data class EditableStat(
     val label: String,
@@ -112,7 +113,7 @@ fun StatisticStepContent(
                 ) {
                     OutlinedTextField(
                         value = state.age,
-                        onValueChange = { actions.onAgeChange(it, context) },
+                        onValueChange = { actions.onAgeChange(it) },
                         label = { Text("Età") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f)
@@ -122,8 +123,7 @@ fun StatisticStepContent(
                         IconButton(
                             onClick = {
                                 focusManager.clearFocus()
-                                val currentMalusText = state.ageMalusDescription?.let { "${it.name}: ${it.desc}" } ?: "Malus età avanzata attivo"
-                                Toast.makeText(context, currentMalusText, Toast.LENGTH_LONG).show()
+                                actions.onSetAgeMalusDialogVisible(true)
                             }
                         ) {
                             val malusDrawableId = state.ageMalusDescription?.drawableId
@@ -392,6 +392,14 @@ fun StatisticStepContent(
                 color = MaterialTheme.colorScheme.primary
             )
         }
+
+        GenericBasicDialog(
+            show = state.showAgeMalusDialog,
+            title = state.ageMalusDescription?.name ?: "Malus Età Avanzata",
+            description = state.ageMalusDescription?.desc ?: "Malus età avanzata non pervenuto, probabilmente c'è un errore.",
+            onConfirmText = "Chiudi",
+            onConfirm = { actions.onSetAgeMalusDialogVisible(false) }
+        )
     }
 }
 

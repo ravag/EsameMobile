@@ -17,7 +17,8 @@ val ALL_AGE_MALUS = listOf(
     AgeMalus(
         drawableId = R.drawable.ic_young,
         name = "Spirito da Ragazzino",
-        desc = "Ti rifiuti di accettare l'età che hai. Racconti a tutti che i giovani d'oggi non si divertono più come una volta e provi a fare acrobazie e stunt (spesso fallendo)."
+        desc = "Ti rifiuti di accettare l'età che hai.\n\n" +
+                "Racconti a tutti che i giovani d'oggi non si divertono più come una volta e provi a fare acrobazie e stunt (spesso fallendo)."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_nohand,
@@ -27,7 +28,8 @@ val ALL_AGE_MALUS = listOf(
     AgeMalus(
         drawableId = R.drawable.ic_cognition,
         name = "Nostalgia dei Tempi Andati",
-        desc = "La memoria a breve termine vacilla, ma ricordi nei dettagli nomi e avvenimenti di 50 anni fa. Spesso confondi i nomi dei tuoi alleati con quelli di alleati passati e ricordi i luoghi per come erano e non per come sono adesso."
+        desc = "La memoria a breve termine vacilla, ma ricordi nei dettagli nomi e avvenimenti di 50 anni fa.\n\n" +
+                "Spesso confondi i nomi dei tuoi alleati con quelli di alleati passati e ricordi i luoghi per come erano e non per come sono adesso."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_noeye,
@@ -42,26 +44,31 @@ val ALL_AGE_MALUS = listOf(
     AgeMalus(
         drawableId = R.drawable.ic_waterloss,
         name = "Vescica Impaziente",
-        desc = "Il tuo corpo ha i suoi ritmi e non sente ragioni, nemmeno durante un'imboscata. Il gruppo potrebbe spazientirsi alle tue costanti richieste di \"pause tecniche\"."
+        desc = "Il tuo corpo ha i suoi ritmi e non sente ragioni, nemmeno durante un'imboscata.\n\n" +
+                "Il gruppo potrebbe spazientirsi alle tue costanti richieste di \"pause tecniche\"."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_breath,
         name = "Fiato Corto",
-        desc = "Il tuo cuore è nobile, ma i tuoi polmoni si stancano in fretta. Dopo una corsa o una rampa di scale, hai bisogno di qualche minuto per riprendere fiato."
+        desc = "Il tuo cuore è nobile, ma i tuoi polmoni si stancano in fretta.\n\n" +
+                "Dopo una corsa o una rampa di scale, hai bisogno di qualche minuto per riprendere fiato."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_nomouth,
         name = "Parola Tartaglina",
-        desc = "A volte i pensieri corrono più veloci della tua lingua, facendoti incastrare le parole tra i denti. In momenti di particolare tensione o emozione, potresti incepparti sulle consonanti o parole complesse."
+        desc = "A volte i pensieri corrono più veloci della tua lingua, facendoti incastrare le parole tra i denti.\n\n" +
+                "In momenti di particolare tensione o emozione, potresti incepparti sulle consonanti o parole complesse."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_nohearing,
         name = "Fischi d'Orecchie",
-        desc = "Senti costantemente un ronzio di sottofondo, come se una cicala magica avesse preso dimora nella tua testa. Se un personaggio non ti parla a volume abbastanza alto, potresti rischiare di non capire cosa ti dice."
+        desc = "Senti costantemente un ronzio di sottofondo, come se una cicala magica avesse preso dimora nella tua testa.\n\n" +
+                "Se un personaggio non ti parla a volume abbastanza alto, potresti rischiare di non capire cosa ti dice."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_climate,
         name = "Sensibile al Clima",
-        desc = "Le tue vecchie ginocchia prevedono il tempo meglio dei maghi della natura. Quando ti fanno male le ginocchia, significa che sta per piovere e anche se tutti dicono che ti lamenti e basta, raramente hai torto."
+        desc = "Le tue vecchie ginocchia prevedono il tempo meglio dei maghi della natura.\n\n" +
+                "Quando ti fanno male le ginocchia, significa che sta per piovere e anche se tutti dicono che ti lamenti e basta, raramente hai torto."
     ),
 )
