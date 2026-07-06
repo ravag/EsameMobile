@@ -513,12 +513,13 @@ fun CharacterCreationScreen(
                 OutlinedButton(
                     onClick = {
                         focusManager.clearFocus()
-                        creationActions.onPreviousStep()
+                        creationActions.onPreviousStep {
+                            navController.popBackStack()
+                        }
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .height(50.dp),
-                    enabled = creationState.currentStep != CreationStep.STATISTICS
+                        .height(50.dp)
                 ) {
                     Text("< Indietro", fontSize = 16.sp)
                 }

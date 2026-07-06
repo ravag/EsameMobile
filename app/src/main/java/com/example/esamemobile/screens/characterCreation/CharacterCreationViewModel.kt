@@ -57,7 +57,7 @@ data class CharacterCreationState(
 
 data class CharacterCreationActions(
     val onNextStep: (Context, () -> Unit) -> Unit,
-    val onPreviousStep: () -> Unit,
+    val onPreviousStep: (() -> Unit) -> Unit,
     val onSetAbilityDialogVisible: (Boolean) -> Unit,
     val onSetItemDialogVisible: (Boolean) -> Unit,
 
@@ -106,9 +106,13 @@ class CharacterCreationViewModel: ViewModel() {
             }
         },
 
-        onPreviousStep = {
+        onPreviousStep = { onCancelCreation ->
             _state.update { currentState ->
                 when (currentState.currentStep) {
+                    CreationStep.STATISTICS -> {
+                        onCancelCreation()
+                        currentState
+                    }
                     CreationStep.ABILITIES -> currentState.copy(currentStep = CreationStep.STATISTICS)
                     CreationStep.INVENTORY -> currentState.copy(currentStep = CreationStep.ABILITIES)
                     else -> currentState
