@@ -214,10 +214,8 @@ fun HomeScreen(
                 when (selectedItemIndex) {
                     0 -> {
                         CharacterList(
-                            modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(0.dp),
                             chars = filteredChars,
-                            context = context
                         ) {
                             navController.navigate(EsameMobileRoute.CharacterDetails(5))
                         }
@@ -225,7 +223,6 @@ fun HomeScreen(
 
                     1 -> {
                         GroupList(
-                            modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(0.dp),
                             groups = filteredGroups,
                             context = context

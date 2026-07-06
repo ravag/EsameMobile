@@ -64,7 +64,7 @@ class LoginViewModel (val authRepository: AuthRepository) : ViewModel() {
 }
 
 private fun loginToMessage(result: AuthenticationResult): LoginMessage {
-    when(result) {
+    return when(result) {
         is AuthenticationResult.Success -> {
             LoginMessage.Info(if (result.isNewUser) "Registrato con successo" else "Accesso eseguito")
         }

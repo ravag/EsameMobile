@@ -9,11 +9,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.ui.graphics.vector.ImageVector
 import android.content.Context
-import android.graphics.Paint
 import android.net.Uri
 import android.widget.Toast
-import androidx.biometric.R
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -51,8 +48,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -200,17 +195,32 @@ fun CharacterDetailsNavigationBar(
 }
 
 @Composable
-fun CharacterList(modifier: Modifier = Modifier, contentPadding: PaddingValues, chars: List<Character>,context: Context,onClick: () -> Unit) {
-    GenericList(modifier = modifier, contentPadding,chars,context,true,onClick)
+fun CharacterList(
+    contentPadding: PaddingValues,
+    chars: List<Character>,
+    onClick: () -> Unit) {
+    GenericList( contentPadding,chars) { char ->
+        CharacterItem(char, onClick)
+    }
 }
 
 @Composable
-fun GroupList(modifier: Modifier = Modifier, contentPadding: PaddingValues, groups: List<Group>, context: Context) {
-    GenericList(modifier = modifier, contentPadding, groups, context, false ){}
+fun GroupList(
+    contentPadding: PaddingValues,
+    groups: List<Group>,
+    context: Context) {
+    GenericList(contentPadding, groups ){ group ->
+        GroupItem(group) {
+            Toast.makeText(context, "Cliccato gruppo ${group.id}", Toast.LENGTH_SHORT).show()
+        }
+    }
 }
 
 @Composable
-private fun GenericList(modifier: Modifier = Modifier, contentPadding: PaddingValues, elems: List<Any>, context: Context, isChar: Boolean,onClick: () -> Unit) {
+private fun <T> GenericList(
+    contentPadding: PaddingValues,
+    elems: List<T>,
+    elemContent: @Composable (T) -> Unit) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -218,18 +228,8 @@ private fun GenericList(modifier: Modifier = Modifier, contentPadding: PaddingVa
         contentPadding = PaddingValues(8.dp,8.dp,8.dp,80.dp),
         modifier = Modifier.padding(contentPadding)
     ) {
-        if(isChar) {
-            elems as List<Character>
-            items(elems) { elem ->
-                CharacterItem(elem,onClick)
-            }
-        } else {
-            elems as List<Group>
-            items(elems) {elem ->
-                GroupItem(elem) {
-                    Toast.makeText(context,"Cliccato gruppo ${elem.id}", Toast.LENGTH_SHORT).show()
-                }
-            }
+        items(elems) { elem ->
+            elemContent(elem)
         }
     }
 }
