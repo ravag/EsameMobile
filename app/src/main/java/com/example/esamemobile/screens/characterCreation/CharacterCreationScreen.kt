@@ -1,5 +1,6 @@
 package com.example.esamemobile.screens.characterCreation
 
+import com.example.esamemobile.R
 import android.widget.Toast
 import com.example.esamemobile.utilities.GenericStepContent
 import androidx.compose.foundation.background
@@ -58,6 +59,7 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
 
 data class EditableStat(
@@ -124,11 +126,22 @@ fun StatisticStepContent(
                                 Toast.makeText(context, currentMalusText, Toast.LENGTH_LONG).show()
                             }
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = "Dettagli Malus",
-                                tint = MaterialTheme.colorScheme.error
-                            )
+                            val malusDrawableId = state.ageMalusDescription?.drawableId
+
+                            if (malusDrawableId != null) {
+                                Icon(
+                                    painter = painterResource(id = malusDrawableId),
+                                    contentDescription = "Dettagli Malus",
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = "Dettagli Malus",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
 
@@ -140,7 +153,7 @@ fun StatisticStepContent(
                         modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer,
                             RoundedCornerShape(8.dp))
                     ) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Tira Età")
+                        Icon(painterResource(id = R.drawable.ic_dice), contentDescription = "Genera Età")
                     }
                 }
             }
@@ -233,7 +246,7 @@ fun StatisticStepContent(
         ) {
             Text("Genera Statistiche")
             Spacer(modifier = Modifier.width(10.dp))
-            Icon(Icons.Default.Refresh, contentDescription = "Genera Statistiche", modifier = Modifier.size(18.dp))
+            Icon(painter = painterResource(id = R.drawable.ic_dice), contentDescription = "Genera Statistiche", modifier = Modifier.size(18.dp))
         }
 
         //Lista delle Statistiche Reattive
@@ -344,7 +357,11 @@ fun StatisticStepContent(
                         onClick = { actions.onRollHpBase() },
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                     ) {
-                        Text("2d6", fontSize = 12.sp)
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_dice),
+                            contentDescription = "Tira due dadi",
+                            modifier = Modifier.size(24.dp)
+                            )
                     }
 
                     if (state.peSpentHP > 0) {
