@@ -197,7 +197,7 @@ public fun SettingsScreen(
             ) {
                 Button(
                     onClick = {
-                        Log.i("debug","logout")
+                        settingsActions.onLogOut
                     }
                 ) {
                     Text("Logout")

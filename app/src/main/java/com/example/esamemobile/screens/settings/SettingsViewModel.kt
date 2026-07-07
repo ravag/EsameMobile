@@ -3,6 +3,7 @@ package com.example.esamemobile.screens.settings
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.repositories.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,10 +37,13 @@ data class SettingsActions(
     val cancelChangeName: () -> Unit,
     val onClickChangePassword: () -> Unit,
     val onThemeChange: (ThemeValues) -> Unit,
-    val onDynamicColorsChange: (Boolean) -> Unit
+    val onDynamicColorsChange: (Boolean) -> Unit,
+    val onLogOut: () -> Unit
 )
 
-class SettingsViewModel(repository: SettingsRepository) : ViewModel() {
+class SettingsViewModel(
+    val repository: SettingsRepository,
+    val authRepository: AuthRepository) : ViewModel() {
     private val _state = MutableStateFlow(
         SettingsState(
             username = "Alessandro",
@@ -47,21 +51,16 @@ class SettingsViewModel(repository: SettingsRepository) : ViewModel() {
     val state = combine(
         repository.theme,
         repository.dynamicColors,
+        authRepository.authState,
         _state
-    ) { theme,colors, currentState -> currentState.copy(theme= theme, dynamicColors = colors) }
+    ) { theme,colors,user, currentState -> currentState.copy(
+            theme= theme,
+            dynamicColors = colors,
+            isLoggedIn = user != null) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(),
-            initialValue = SettingsState(
-                username = _state.value.username,
-                tempName = _state.value.tempName,
-                isLoggedIn = _state.value.isLoggedIn,
-                password =_state.value.password,
-                theme = ThemeValues.SYSTEM,
-                dynamicColors = false,
-                changeName = _state.value.changeName,
-                changePassword = _state.value.changePassword
-            )
+            initialValue = _state.value.copy(theme = ThemeValues.SYSTEM, dynamicColors = false)
         )
         
 
@@ -74,6 +73,7 @@ class SettingsViewModel(repository: SettingsRepository) : ViewModel() {
         cancelChangeName = { _state.update { it.copy(changeName = false, tempName = it.username) } },
         onClickChangePassword = { _state.update { it.copy(changePassword = true) } },
         onThemeChange = { themeValue -> viewModelScope.launch { repository.setTheme(themeValue) } },
-        onDynamicColorsChange = {colors -> viewModelScope.launch { repository.setDynamicColors(colors) }}
+        onDynamicColorsChange = {colors -> viewModelScope.launch { repository.setDynamicColors(colors) }},
+        onLogOut = {authRepository.logout()}
     )
 }
