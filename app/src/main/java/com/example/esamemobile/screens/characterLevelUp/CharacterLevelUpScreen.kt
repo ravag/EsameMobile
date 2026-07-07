@@ -14,7 +14,7 @@ fun LevelUpScreen(
     hasAllBase: Boolean,
     viewModel: LevelUpViewModel = viewModel(),
     onNavigateBack: () -> Unit
-) {
+) { 
     LaunchedEffect(Unit) {
         viewModel.initLevelUp(currentLevel, strengthModifier, hasCha3, hasAllBase)
     }
