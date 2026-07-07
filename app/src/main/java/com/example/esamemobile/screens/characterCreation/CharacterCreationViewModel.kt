@@ -22,6 +22,8 @@ data class CharacterCreationState(
     val showAbilityDialog: Boolean = false,
     val showItemDialog: Boolean = false,
     val showAgeMalusDialog: Boolean = false,
+    val showAvatarOptionDialog: Boolean = false,
+    val avatarUri: String? = null,
 
     val name: String = "",
     val age: String = "",
@@ -72,6 +74,8 @@ data class CharacterCreationActions(
     val onRollHpBase: () -> Unit,
     val onModifyHpPe: (Boolean) -> Unit,
     val onRollAllStats: () -> Unit,
+    val onSetAvatarOptionDialogVisible: (Boolean) -> Unit,
+    val onAvatarSelected: (String?) -> Unit,
 
     val onAddAbility: (String, String, Int, Context) -> Unit,
     val onEditAbility: (String, String, String, Int, Context) -> Unit,
@@ -132,6 +136,15 @@ class CharacterCreationViewModel: ViewModel() {
 
         onSetAgeMalusDialogVisible = { visible ->
             _state.update { it.copy(showAgeMalusDialog = visible) }
+        },
+
+        onSetAvatarOptionDialogVisible = { visible ->
+            _state.update { it.copy(showAvatarOptionDialog = visible) }
+        },
+
+        onAvatarSelected = { uriString ->
+            _state.update { it.copy(avatarUri = uriString) }
+
         },
 
         onNameChange = { newName ->

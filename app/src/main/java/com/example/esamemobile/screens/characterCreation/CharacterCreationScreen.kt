@@ -1,6 +1,8 @@
 package com.example.esamemobile.screens.characterCreation
 
+import android.Manifest.permission
 import com.example.esamemobile.R
+import androidx.compose.ui.layout.ContentScale
 import android.widget.Toast
 import com.example.esamemobile.utilities.GenericStepContent
 import androidx.compose.foundation.background
@@ -40,7 +42,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -52,16 +53,33 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.ImeAction
 import android.content.Context
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.core.content.FileProvider
+import androidx.navigation.ActivityNavigatorExtras
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.esamemobile.utilities.GenericBasicDialog
+import java.io.File
 
 data class EditableStat(
     val label: String,
@@ -69,6 +87,7 @@ data class EditableStat(
     val baseValue: Int
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatisticStepContent(
     state: CharacterCreationState,
@@ -79,101 +98,79 @@ fun StatisticStepContent(
 ) {
     val scrollState = rememberScrollState()
 
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            actions.onAvatarSelected(uri.toString())
+        }
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempCameraUri != null) {
+            actions.onAvatarSelected(tempCameraUri.toString())
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            val uri = createTempPictureUri(context)
+            if (uri != null) {
+                tempCameraUri = uri
+                try {
+                    cameraLauncher.launch(uri)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Impossibile avviare la fotocamera", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(context, "Errore nella creazione del file temporaneo", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(context, "Permesso fotocamera negato", Toast.LENGTH_SHORT).show()
+        }
+
+    }
+
     val ageInt = state.age.toIntOrNull() ?: 0
     val showAgeMalus = ageInt > 70
 
+    //Foto Avatar
     Column(
-        modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
             .pointerInput(Unit) { detectTapGestures(onTap = { focusManager.clearFocus() }) }
             .verticalScroll(scrollState),
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Header (Nome, Età, Foto Avatar)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        Box(
+            modifier = Modifier
+                .size(160.dp)
+                .align(Alignment.CenterHorizontally)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.LightGray, RoundedCornerShape(12.dp))
+                .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
+                .clickable {
+                    focusManager.clearFocus()
+                    actions.onSetAvatarOptionDialogVisible(true)
+                },
+            contentAlignment = Alignment.Center
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = state.name,
-                    onValueChange = { actions.onNameChange(it) },
-                    label = { Text("Nome") },
-                    modifier = Modifier.fillMaxWidth()
+            if (state.avatarUri != null) {
+                AsyncImage(
+                    model = state.avatarUri,
+                    contentDescription = "Avatar Personaggio",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = state.age,
-                        onValueChange = { actions.onAgeChange(it) },
-                        label = { Text("Età") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    if (showAgeMalus) {
-                        IconButton(
-                            onClick = {
-                                focusManager.clearFocus()
-                                actions.onSetAgeMalusDialogVisible(true)
-                            }
-                        ) {
-                            val malusDrawableId = state.ageMalusDescription?.drawableId
-
-                            if (malusDrawableId != null) {
-                                Icon(
-                                    painter = painterResource(id = malusDrawableId),
-                                    contentDescription = "Dettagli Malus",
-                                    tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.Warning,
-                                    contentDescription = "Dettagli Malus",
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
-                        }
-                    }
-
-                    IconButton(
-                        onClick = {
-                            focusManager.clearFocus()
-                            actions.onRollAge(context)
-                        },
-                        modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer,
-                            RoundedCornerShape(8.dp))
-                    ) {
-                        Icon(painterResource(id = R.drawable.ic_dice), contentDescription = "Genera Età")
-                    }
-                }
-            }
-
-            // Foto Avatar
-            Box(
-                modifier = Modifier
-                    .size(110.dp)
-                    .background(Color.LightGray, RoundedCornerShape(8.dp))
-                    .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
-                    .clickable {
-                        focusManager.clearFocus()
-                        Toast.makeText(
-                            context,
-                            "TODO Apri Galleria o Fotocamera",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    },
-                contentAlignment = Alignment.Center
-            ) {
+            } else {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -189,6 +186,71 @@ fun StatisticStepContent(
                         textAlign = TextAlign.Center,
                         color = Color.DarkGray
                     )
+                }
+            }
+        }
+
+        //Nome ed Età
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+
+            OutlinedTextField(
+                value = state.name,
+                onValueChange = { actions.onNameChange(it) },
+                label = { Text("Nome") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = state.age,
+                    onValueChange = { actions.onAgeChange(it) },
+                    label = { Text("Età") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.weight(1f)
+                )
+
+                if (showAgeMalus) {
+                    IconButton(
+                        onClick = {
+                            focusManager.clearFocus()
+                            actions.onSetAgeMalusDialogVisible(true)
+                        }
+                    ) {
+                        val malusDrawableId = state.ageMalusDescription?.drawableId
+
+                        if (malusDrawableId != null) {
+                            Icon(
+                                painter = painterResource(id = malusDrawableId),
+                                contentDescription = "Dettagli Malus",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = "Dettagli Malus",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+
+                IconButton(
+                    onClick = {
+                        focusManager.clearFocus()
+                        actions.onRollAge(context)
+                    },
+                    modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer,
+                        RoundedCornerShape(8.dp))
+                ) {
+                    Icon(painterResource(id = R.drawable.ic_dice), contentDescription = "Genera Età")
                 }
             }
         }
@@ -275,7 +337,7 @@ fun StatisticStepContent(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(horizontal = 8.dp)
-                        ) {
+                    ) {
                         IconButton(
                             onClick = { actions.onStatPointBuy(stat.label, false) },
                             enabled = state.isSpendingPEMode && stat.value > stat.baseValue
@@ -361,7 +423,7 @@ fun StatisticStepContent(
                             painter = painterResource(id = R.drawable.ic_dice),
                             contentDescription = "Tira due dadi",
                             modifier = Modifier.size(24.dp)
-                            )
+                        )
                     }
 
                     if (state.peSpentHP > 0) {
@@ -400,6 +462,63 @@ fun StatisticStepContent(
             onConfirmText = "Chiudi",
             onConfirm = { actions.onSetAgeMalusDialogVisible(false) }
         )
+
+        if (state.showAvatarOptionDialog) {
+            val sheetState = rememberModalBottomSheetState()
+
+            ModalBottomSheet(
+                onDismissRequest = { actions.onSetAvatarOptionDialogVisible(false) },
+                sheetState = sheetState,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp)
+                        .navigationBarsPadding(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Seleziona foto avatar",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            actions.onSetAvatarOptionDialogVisible(false)
+                            permissionLauncher.launch(permission.CAMERA)
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = android.R.drawable.ic_menu_camera),
+                            contentDescription = null
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Scatta una foto")
+                    }
+
+                    OutlinedButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            actions.onSetAvatarOptionDialogVisible(false)
+                            galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                            contentDescription = null
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Scegli dalla galleria")
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+            }
+        }
     }
 }
 
@@ -424,7 +543,7 @@ fun CharacterCreationScreen(
                         } else {
                             creationActions.onSetItemDialogVisible(true)
                         }
-                              },
+                    },
                     containerColor = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(bottom = 60.dp)
                 ) {
@@ -479,7 +598,7 @@ fun CharacterCreationScreen(
                             focusManager = focusManager,
                             context = context,
                             modifier = Modifier.fillMaxSize()
-                            )
+                        )
                     }
                     CreationStep.INVENTORY -> {
                         val currentWeight = creationState.inventoryList.sumOf { it.numericValue }
@@ -551,6 +670,19 @@ fun CharacterCreationScreen(
     }
 }
 
+private fun createTempPictureUri(context: Context): Uri? {
+    return try {
+        val tempFile = File.createTempFile("avatar_capture_", ".jpg", context.cacheDir).apply {
+            createNewFile()
+            deleteOnExit()
+        }
 
+        FileProvider.getUriForFile(context, "${context.packageName}.provider", tempFile)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+
+}
 
 
