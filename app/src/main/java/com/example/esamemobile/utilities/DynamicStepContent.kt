@@ -280,7 +280,7 @@ fun GenericStepContent(
 
                         Button(
                             onClick = {
-                                val costInt = inputNumeric.toIntOrNull() ?: 0
+                                val costInt = if (inputNumeric.isBlank()) 1 else inputNumeric.toIntOrNull() ?: 0
 
                                 if (inputName.isBlank()) {
                                     Toast.makeText(context, "Inserisci un nome valido!", Toast.LENGTH_SHORT).show()
@@ -292,10 +292,38 @@ fun GenericStepContent(
                                     return@Button
                                 }
 
-                                if (isEditing) {
-                                    onEditItem(itemIdToEdit, inputName, inputDescription, inputNumeric.toInt())
+                                val isInventory = dialogNumericLabel.lowercase().contains("peso")
+
+                                if (isInventory) {
+                                    val parts = counterValueText.split("/")
+                                    if (parts.size == 2) {
+                                        val currentWeight = parts[0].trim().toIntOrNull() ?: 0
+                                        val maxWeight = parts[1].trim().toIntOrNull() ?: 0
+                                        val oldWeight = if (isEditing) {
+                                            itemList.find { it.id == itemIdToEdit }?.numericValue ?: 0
+                                        } else 0
+
+                                        if ((currentWeight - oldWeight) + costInt > maxWeight) {
+                                            Toast.makeText(context, "Supereresti il peso massimo!", Toast.LENGTH_SHORT).show()
+                                            return@Button
+                                        }
+                                    }
                                 } else {
-                                    onAddItem(inputName, inputDescription, inputNumeric.toInt())
+                                    val peLeft = counterValueText.replace("PE", "").trim().toIntOrNull() ?: 0
+                                    val oldCost = if (isEditing) {
+                                        itemList.find { it.id == itemIdToEdit }?.numericValue ?: 0
+                                    } else 0
+
+                                    if (costInt > (peLeft + oldCost)) {
+                                        Toast.makeText(context, "Punti Evoluzione Insufficienti!",Toast.LENGTH_SHORT).show()
+                                        return@Button
+                                    }
+                                }
+
+                                if (isEditing) {
+                                    onEditItem(itemIdToEdit, inputName, inputDescription, costInt)
+                                } else {
+                                    onAddItem(inputName, inputDescription, costInt)
                                 }
                                 onDialogVisibilityChange(false)
                                 resetDialogFields()

@@ -376,14 +376,16 @@ class CharacterCreationViewModel: ViewModel() {
         },
 
         onAddItem = { name, desc, weight, context ->
+            val safeWeight = if (weight < 0) 0 else weight
+
             _state.update { currentState ->
                 val currentWeight = currentState.inventoryList.sumOf { it.numericValue }
-                if (currentWeight + weight <= currentState.maxWeightCapacity) {
+                if (currentWeight + safeWeight <= currentState.maxWeightCapacity) {
                     currentState.copy(
                         inventoryList = currentState.inventoryList + InventoryItem(
                             name = name,
                             description = desc,
-                            numericValue = weight
+                            numericValue = safeWeight
                         )
                     )
                 } else {
@@ -395,14 +397,15 @@ class CharacterCreationViewModel: ViewModel() {
         },
 
         onEditItem = { id, name, desc, newWeight, context ->
+            val safeNewWeight = if (newWeight < 0) 0 else newWeight
             _state.update { currentState ->
                 val old = currentState.inventoryList.find { it.id == id }
                 if (old != null) {
                     val weightWithoutOld =
                         currentState.inventoryList.sumOf { it.numericValue } - old.numericValue
-                    if (weightWithoutOld + newWeight <= currentState.maxWeightCapacity) {
+                    if (weightWithoutOld + safeNewWeight <= currentState.maxWeightCapacity) {
                         val updatedList = currentState.inventoryList.map {
-                            if (it.id == id) InventoryItem(id, name, desc, newWeight) else it
+                            if (it.id == id) InventoryItem(id, name, desc, safeNewWeight) else it
                         }
                         currentState.copy(inventoryList = updatedList)
                     } else {
