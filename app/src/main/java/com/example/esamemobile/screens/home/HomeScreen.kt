@@ -40,6 +40,8 @@ import com.example.esamemobile.utilities.NavigationBottomBarWithFAB
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.navigation.NavHostController
 import com.example.esamemobile.EsameMobileRoute
+import com.example.esamemobile.utilities.CharacterItem
+import com.example.esamemobile.utilities.GenericList
 import com.example.esamemobile.utilities.composables.SimpleSearchBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -155,11 +157,11 @@ fun HomeScreen(
             ) {
                 when (homeState.homePage) {
                     HomePage.CHARACTERS -> {
-                        CharacterList(
+                        GenericList(
                             contentPadding = PaddingValues(0.dp),
-                            chars = homeState.filteredCharacters,
-                        ) {
-                            navController.navigate(EsameMobileRoute.CharacterDetails(5))
+                            elems = homeState.filteredCharacters,
+                        ) {character ->
+                            CharacterItem(character) { navController.navigate(EsameMobileRoute.CharacterDetails(character.id)) }
                         }
                     }
 

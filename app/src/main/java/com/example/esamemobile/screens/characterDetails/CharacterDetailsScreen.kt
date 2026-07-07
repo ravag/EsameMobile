@@ -81,7 +81,7 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            CharacterHeader(detailsState.character.name,0,"a ne so",0,detailsState.character.imageUri, Modifier) {
+            CharacterHeader(detailsState.character!!.name,0,"a ne so",0,detailsState.character.imageUri, Modifier) {
                 detailsActions.onLevelUp(context)
             }
             when (detailsState.selectedTab) {

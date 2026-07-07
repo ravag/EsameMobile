@@ -11,6 +11,7 @@ import com.example.esamemobile.data.firebase.firestore.GroupRepositoryImpl
 import com.example.esamemobile.data.firebase.firestore.UserRepository
 import com.example.esamemobile.data.firebase.firestore.UserRepositoryImpl
 import com.example.esamemobile.data.repositories.SettingsRepository
+import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewModel
 import com.example.esamemobile.screens.home.HomeViewModel
 import com.example.esamemobile.screens.login.LoginViewModel
 import com.example.esamemobile.screens.settings.SettingsViewModel
@@ -36,4 +37,5 @@ val appModule = module {
     viewModel { SettingsViewModel(get(),get()) }
     viewModel { SessionViewModel(get(),get()) }
     viewModel { HomeViewModel(get(),get(), get()) }
+    viewModel { CharacterDetailsViewModel(get(),get()) }
 }
