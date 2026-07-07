@@ -195,9 +195,10 @@ public fun SettingsScreen(
                     .fillMaxWidth()
                     .weight(0.1f)
             ) {
+                //Bottone logout
                 Button(
                     onClick = {
-                        settingsActions.onLogOut
+                        settingsActions.onLogOut()
                     }
                 ) {
                     Text("Logout")
@@ -206,6 +207,7 @@ public fun SettingsScreen(
 
                 Spacer(Modifier.width(10.dp))
 
+                //Bottone elimina account
                 Button(
                     onClick = {
                         Log.i("debug","Elimina")

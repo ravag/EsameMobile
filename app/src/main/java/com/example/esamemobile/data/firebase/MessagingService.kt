@@ -3,11 +3,20 @@ package com.example.esamemobile.data.firebase
 import android.app.NotificationManager
 import androidx.core.app.NotificationCompat
 import com.example.esamemobile.R
+import com.example.esamemobile.data.firebase.firestore.UserRepository
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
+import org.koin.core.component.KoinComponent
 
-class MessagingService : FirebaseMessagingService() {
+class MessagingService : FirebaseMessagingService(), KoinComponent {
+
+    private val userRepository: UserRepository by inject()
 
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
@@ -27,12 +36,12 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     //Ho controllato, questi sono i metodi da usare, non so perchè dica sono deprecati che non lo sono
-    @Suppress("DEPRECATION")
-    @Deprecated("Deprecated in Java")
+    //Messaggio di deprecated in java
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         // il token è cambiato: va rimandato al tuo backend Java
-        TokenReceiver.sendTokenToServer(token)
+        TokenReceiver.sendTokenToServer(token, userRepository)
     }
 
     private fun showNotification(title: String?, body: String?) {
@@ -55,18 +64,20 @@ class MessagingService : FirebaseMessagingService() {
 }
 
 object TokenReceiver {
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     //Stessa situazione di prima sempre stesso deprecated in Java
     @Suppress("DEPRECATION")
-    fun newToken() {
+    fun newToken(userRepository: UserRepository) {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val token = task.result
-                sendTokenToServer(token)
+                sendTokenToServer(token,userRepository)
             }
         }
     }
 
-    fun sendTokenToServer(token: String) {
-        DatabaseServices.updateToken(token)
+    fun sendTokenToServer(token: String, userRepository: UserRepository) {
+        scope.launch { userRepository.updateToken(token) }
     }
 }

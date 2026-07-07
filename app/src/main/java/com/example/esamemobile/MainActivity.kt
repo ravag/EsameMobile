@@ -26,7 +26,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.esamemobile.data.firebase.DatabaseServices
 import com.example.esamemobile.screens.settings.SettingsViewModel
 import com.example.esamemobile.screens.settings.ThemeValues
 import org.koin.androidx.compose.koinViewModel
@@ -41,6 +40,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settingsVm = koinViewModel<SettingsViewModel>()
             val settingsState by settingsVm.state.collectAsStateWithLifecycle()
+            val sessionVm = koinViewModel<SessionViewModel>()
+            val sessionState by sessionVm.isLoggedIn.collectAsStateWithLifecycle()
 
             EsameMobileTheme(
                 darkTheme = when(settingsState.theme) {
@@ -83,8 +84,8 @@ class MainActivity : ComponentActivity() {
                 val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 manager.createNotificationChannel(channel)
 
-                DatabaseServices.Test(navController,context)
                 EsameMobileNavGraph(navController,settingsVm)
+                SessionEffect(navController,sessionState)
             }
         }
     }

@@ -29,8 +29,9 @@ val appModule = module {
     single<AuthRepository> { AuthRepositoryImpl(get()) }
     single<CharacterRepository> { CharacterRepositoryImpl(get()) }
     single<GroupRepository> { GroupRepositoryImpl(get()) }
-    single<UserRepository> { UserRepositoryImpl(get()) }
+    single<UserRepository> { UserRepositoryImpl(get(),get()) }
 
     viewModel { LoginViewModel(get()) }
     viewModel { SettingsViewModel(get(),get()) }
+    viewModel { SessionViewModel(get(),get()) }
 }

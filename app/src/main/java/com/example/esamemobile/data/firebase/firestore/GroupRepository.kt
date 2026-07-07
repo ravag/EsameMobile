@@ -2,8 +2,6 @@ package com.example.esamemobile.data.firebase.firestore
 
 import android.util.Log
 import com.example.esamemobile.data.Group
-import com.example.esamemobile.data.firebase.DatabaseServices.auth
-import com.example.esamemobile.data.firebase.DatabaseServices.db
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObject
 import kotlinx.coroutines.tasks.await

@@ -49,7 +49,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.navigation.NavHostController
 import androidx.navigation.toRoute
 import com.example.esamemobile.EsameMobileRoute
-import com.example.esamemobile.data.firebase.DatabaseServices
 import com.example.esamemobile.utilities.composables.SimpleSearchBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -109,28 +108,28 @@ fun HomeScreen(
 
     //DatabaseServices.insertNewUser()
     //DatabaseServices.insertNewCharacter(charactersTest[2])
-    DatabaseServices.readCharacter(1) { c ->
-        if (c != null) {
-            Toast.makeText(context, "nome: ${c.name}", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(context, "ERRORAZZO", Toast.LENGTH_SHORT).show()
-        }
-    }
-    DatabaseServices.getAllUserGroups { l ->
-        if (l != null) {
-            groupsTest = l
-        } else {
-            Toast.makeText(context, "ERRORAZZO gruppi", Toast.LENGTH_SHORT).show()
-        }
-    }
-    DatabaseServices.getAllUserCharacters { l ->
-        if (l != null) {
-            charactersTest = l
-            Toast.makeText(context, l.toString(), Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(context, "ERRORAZZO personaggi", Toast.LENGTH_SHORT).show()
-        }
-    }
+//    DatabaseServices.readCharacter(1) { c ->
+//        if (c != null) {
+//            Toast.makeText(context, "nome: ${c.name}", Toast.LENGTH_SHORT).show()
+//        } else {
+//            Toast.makeText(context, "ERRORAZZO", Toast.LENGTH_SHORT).show()
+//        }
+//    }
+//    DatabaseServices.getAllUserGroups { l ->
+//        if (l != null) {
+//            groupsTest = l
+//        } else {
+//            Toast.makeText(context, "ERRORAZZO gruppi", Toast.LENGTH_SHORT).show()
+//        }
+//    }
+//    DatabaseServices.getAllUserCharacters { l ->
+//        if (l != null) {
+//            charactersTest = l
+//            Toast.makeText(context, l.toString(), Toast.LENGTH_SHORT).show()
+//        } else {
+//            Toast.makeText(context, "ERRORAZZO personaggi", Toast.LENGTH_SHORT).show()
+//        }
+//    }
 
     LaunchedEffect(selectedItemIndex) {
         focusManager.clearFocus()
@@ -197,21 +196,20 @@ fun HomeScreen(
                 }
 
                 //Bottone di logout
-                Button(
-                    onClick = {
-                        FirebaseMessaging.getInstance().unsubscribeFromTopic("tutti")
-                        DatabaseServices.logout()
-                        Toast.makeText(context, "Logout effettuato", Toast.LENGTH_SHORT).show()
-                        navController.navigate(EsameMobileRoute.Login)
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                ) {
-                    Text(
-                        text = "Logout",
-                        color = Color.White,
-                        fontSize = 16.sp
-                    )
-                }
+//                Button(
+//                    onClick = {
+//                        FirebaseMessaging.getInstance().unsubscribeFromTopic("tutti")
+//                        Toast.makeText(context, "Logout effettuato", Toast.LENGTH_SHORT).show()
+//                        navController.navigate(EsameMobileRoute.Login)
+//                    },
+//                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+//                ) {
+//                    Text(
+//                        text = "Logout",
+//                        color = Color.White,
+//                        fontSize = 16.sp
+//                    )
+//                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

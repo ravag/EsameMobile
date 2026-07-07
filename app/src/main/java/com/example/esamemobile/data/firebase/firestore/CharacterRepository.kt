@@ -1,8 +1,6 @@
 package com.example.esamemobile.data.firebase.firestore
 
 import com.example.esamemobile.data.Character
-import com.example.esamemobile.data.firebase.DatabaseServices
-import com.example.esamemobile.data.firebase.DatabaseServices.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObject
 import kotlinx.coroutines.tasks.await
@@ -14,10 +12,7 @@ interface CharacterRepository {
 }
 
 class CharacterRepositoryImpl(private val db: FirebaseFirestore): CharacterRepository {
-    override suspend fun insertNewCharacter(
-        userId: String,
-        char: Character
-    ): Result<Unit> {
+    override suspend fun insertNewCharacter(userId: String, char: Character): Result<Unit> {
         return try {
             db.collection("users").document(userId)
                 .collection("characters").document("${char.id}")
@@ -28,10 +23,7 @@ class CharacterRepositoryImpl(private val db: FirebaseFirestore): CharacterRepos
         }
     }
 
-    override suspend fun readCharacter(
-        userId: String,
-        charId: Int
-    ): Result<Character?> {
+    override suspend fun readCharacter(userId: String, charId: Int): Result<Character?> {
         return try {
             val doc = db.collection("users").document(userId)
                 .collection("characters").document("$charId")
