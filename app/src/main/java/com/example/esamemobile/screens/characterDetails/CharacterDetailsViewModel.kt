@@ -1,12 +1,19 @@
 package com.example.esamemobile.screens.characterDetails
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.esamemobile.data.Character
+import com.example.esamemobile.data.firebase.AuthRepository
+import com.example.esamemobile.data.firebase.firestore.CharacterRepository
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 enum class CharacterDetailsTab {
     STATS,POWERS,INVENTORY
@@ -15,17 +22,18 @@ enum class CharacterDetailsTab {
 //Al momento importo ability sbagliato, sarà da sistemare una volta fatte le abilità per bene
 //Come anche molte delle cose inserite qui saranno semplicemente da mettere all'interno del personaggio
 data class CharacterDetailsState(
-    val character: Character,
+    val character: Character? = null,
     var selectedTab: CharacterDetailsTab = CharacterDetailsTab.STATS,
-    val hp: Int,
-    val maxHp: Int,
-    val abilities: List<Abilities>,
-    val stats: List<Int>,
-    val abilityUsageCurrent: Int,
-    val abilityUsageMax: Int,
-    val inventoryCapacityCurrent: Int,
-    val inventoryCapacityMax: Int,
-    val normalizedStats: List<Float>
+    val hp: Int = 0,
+    val maxHp: Int = 0,
+    val abilities: List<Abilities> = emptyList(),
+    val stats: List<Int> = emptyList(),
+    val abilityUsageCurrent: Int = 0,
+    val abilityUsageMax: Int = 0,
+    val inventoryCapacityCurrent: Int = 0,
+    val inventoryCapacityMax: Int = 0,
+    val normalizedStats: List<Float> = emptyList(),
+    val isLoading: Boolean = false
 )
 
 data class CharacterDetailsActions(
@@ -40,7 +48,12 @@ data class CharacterDetailsActions(
     //val onUseItem: () -> Unit, //Al momento non utilizzata, bisogna capire come e quando usarla
 )
 
-class CharacterDetailsViewModel () : ViewModel() {
+class CharacterDetailsViewModel (
+    characterRepository: CharacterRepository,
+    authRepository: AuthRepository
+) : ViewModel() {
+
+    val charId = MutableStateFlow<Int?>(null)
     private val _state = MutableStateFlow(CharacterDetailsState(
         character = Character(5,"ciao",""),
         hp = 10,
@@ -56,7 +69,27 @@ class CharacterDetailsViewModel () : ViewModel() {
         inventoryCapacityMax = 2,
         normalizedStats = normalizeStats(listOf(15,10,7,5,3)) //Al momento questo è fatto male, sarà da sistemare quando il personaggio avrà le statistiche
     ))
-    val state = _state.asStateFlow()
+    val state = combine(_state,charId) {currentState,id ->
+        val result = characterRepository.readCharacter(authRepository.currentUser!!.uid,id)
+        result.fold(
+            onSuccess = { char ->
+                if (char != null) {
+                    currentState.copy(character = char, isLoading = false)
+                } else {
+                    Log.w("debug","Caricamento personaggio fallito")
+                    currentState.copy()
+                }
+            },
+            onFailure = { exception ->
+                Log.w("debug","Errorazzo ${exception.message}")
+                currentState.copy()
+            }
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(),
+        initialValue = _state.value.copy(isLoading = true)
+    )
 
     val actions = CharacterDetailsActions(
         onTabSelected = { index -> _state.update { it.copy(selectedTab = CharacterDetailsTab.entries[index]) } },

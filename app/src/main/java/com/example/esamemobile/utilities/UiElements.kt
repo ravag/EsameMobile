@@ -223,7 +223,7 @@ fun GroupList(
 }
 
 @Composable
-private fun <T> GenericList(
+fun <T> GenericList(
     contentPadding: PaddingValues,
     elems: List<T>,
     elemContent: @Composable (T) -> Unit) {

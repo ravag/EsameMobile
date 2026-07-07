@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsScreen
 import com.example.esamemobile.screens.characterCreation.CharacterCreationScreen
 import com.example.esamemobile.screens.DebugDatabaseScreen
@@ -55,8 +56,9 @@ fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsVi
             LoginScreen(loginState,loginVm.actions)
         }
         composable<EsameMobileRoute.CharacterDetails> { backStackEntry ->
-            //val route = backStackEntry.toRoute<EsameMobileRoute.CharacterDetails>()
-            val characterVm = viewModel<CharacterDetailsViewModel>()
+            val route = backStackEntry.toRoute<EsameMobileRoute.CharacterDetails>()
+            val characterVm = koinViewModel<CharacterDetailsViewModel>()
+            characterVm.charId.value = route.charId
             val charState by characterVm.state.collectAsStateWithLifecycle()
             CharacterDetailsScreen(charState,characterVm.actions, navController)
         }

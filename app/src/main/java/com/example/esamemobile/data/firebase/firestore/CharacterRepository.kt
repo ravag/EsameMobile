@@ -7,7 +7,7 @@ import kotlinx.coroutines.tasks.await
 
 interface CharacterRepository {
     suspend fun insertNewCharacter(userId: String, char: Character): Result<Unit>
-    suspend fun readCharacter(userId: String, charId: Int): Result<Character?>
+    suspend fun readCharacter(userId: String, charId: Int?): Result<Character?>
     suspend fun getAllUserCharacters(userId: String): Result<List<Character>>
 }
 
@@ -23,7 +23,8 @@ class CharacterRepositoryImpl(private val db: FirebaseFirestore): CharacterRepos
         }
     }
 
-    override suspend fun readCharacter(userId: String, charId: Int): Result<Character?> {
+    override suspend fun readCharacter(userId: String, charId: Int?): Result<Character?> {
+        if (charId == null) return Result.failure(IllegalStateException("Nessun personaggio selezionato"))
         return try {
             val doc = db.collection("users").document(userId)
                 .collection("characters").document("$charId")
