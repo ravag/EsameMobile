@@ -59,7 +59,7 @@ data class CharacterCreationState(
 }
 
 data class CharacterCreationActions(
-    val onNextStep: (Context, () -> Unit) -> Unit,
+    val onNextStep: (Context, (com.example.esamemobile.data.Character) -> Unit) -> Unit,
     val onPreviousStep: (() -> Unit) -> Unit,
     val onSetAbilityDialogVisible: (Boolean) -> Unit,
     val onSetItemDialogVisible: (Boolean) -> Unit,
@@ -104,8 +104,9 @@ class CharacterCreationViewModel: ViewModel() {
                     CreationStep.STATISTICS -> currentState.copy(currentStep = CreationStep.ABILITIES)
                     CreationStep.ABILITIES -> currentState.copy(currentStep = CreationStep.INVENTORY)
                     CreationStep.INVENTORY -> {
+                        val newCharacter = currentState.toCharacter()
                         Toast.makeText(context, "Personaggio Creato!", Toast.LENGTH_SHORT).show()
-                        onCreationComplete()
+                        onCreationComplete(newCharacter)
                         currentState
                     }
                 }
@@ -465,6 +466,30 @@ fun calculateModifier(stat: Int): Int {
         in 8..9 -> 3
         else -> 4
     }
+}
+
+fun CharacterCreationState.toCharacter(): com.example.esamemobile.data.Character {
+    return com.example.esamemobile.data.Character(
+        name = this.name.ifBlank { "Soggetto Ignoto" },
+        level = 0,
+        age = this.age.toIntOrNull() ?: 0,
+        ageMalus = this.ageMalusDescription,
+        chosenClass = null,
+        peAvailable = this.peLeft,
+        strength = this.strength,
+        agility = this.agility,
+        intelligence = this.intelligence,
+        charisma = this.charisma,
+        power = this.power,
+        currentHP = this.hpMax,
+        maxHP = this.hpMax,
+        abilitiesList = this.abilitiesList,
+        classAbilitiesList = emptyList(),
+        inventoryList = this.inventoryList,
+        speed = this.speed,
+        maxCapacity = this.maxWeightCapacity,
+        armor = null
+    )
 }
 
 data class AbilityItem(
