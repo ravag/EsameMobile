@@ -3,6 +3,8 @@ package com.example.esamemobile.screens.characterCreation
 import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
+import com.example.esamemobile.data.staticData.ALL_AGE_MALUS
+import com.example.esamemobile.data.staticData.AgeMalus
 import com.example.esamemobile.utilities.DisplayableItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +21,9 @@ data class CharacterCreationState(
     val inventoryList: List<InventoryItem> = emptyList(),
     val showAbilityDialog: Boolean = false,
     val showItemDialog: Boolean = false,
+    val showAgeMalusDialog: Boolean = false,
+    val showAvatarOptionDialog: Boolean = false,
+    val avatarUri: String? = null,
 
     val name: String = "",
     val age: String = "",
@@ -37,7 +42,9 @@ data class CharacterCreationState(
     val basePower: Int = 1,
 
     val peSpentHP: Int = 0,
-    val hpBase: Int = 0
+    val hpBase: Int = 0,
+
+    val ageMalusDescription: AgeMalus? = null
 ) {
     val strengthModifier: Int get() = calculateModifier(strength)
     val agilityModifier: Int get() = calculateModifier(agility)
@@ -53,18 +60,22 @@ data class CharacterCreationState(
 
 data class CharacterCreationActions(
     val onNextStep: (Context, () -> Unit) -> Unit,
-    val onPreviousStep: () -> Unit,
+    val onPreviousStep: (() -> Unit) -> Unit,
     val onSetAbilityDialogVisible: (Boolean) -> Unit,
     val onSetItemDialogVisible: (Boolean) -> Unit,
+    val onSetAgeMalusDialogVisible: (Boolean) -> Unit,
 
     val onNameChange: (String) -> Unit,
-    val onAgeChange: (String, Context) -> Unit,
+    val onAgeChange: (String) -> Unit,
     val onRollAge: (Context) -> Unit,
     val onTogglePEMode: (Boolean) -> Unit,
     val onStatManualChange: (String, Int) -> Unit,
     val onStatPointBuy: (String, Boolean) -> Unit,
     val onRollHpBase: () -> Unit,
     val onModifyHpPe: (Boolean) -> Unit,
+    val onRollAllStats: () -> Unit,
+    val onSetAvatarOptionDialogVisible: (Boolean) -> Unit,
+    val onAvatarSelected: (String?) -> Unit,
 
     val onAddAbility: (String, String, Int, Context) -> Unit,
     val onEditAbility: (String, String, String, Int, Context) -> Unit,
@@ -78,6 +89,13 @@ data class CharacterCreationActions(
 class CharacterCreationViewModel: ViewModel() {
     private val _state = MutableStateFlow(CharacterCreationState())
     val state = _state.asStateFlow()
+
+    val malusList = ALL_AGE_MALUS
+
+    private fun getMalusForAge(ageString: String): AgeMalus? {
+        val parsedAge = ageString.toIntOrNull() ?: 0
+        return if (parsedAge > 70) malusList.random() else null
+    }
 
     val actions = CharacterCreationActions(
         onNextStep = { context, onCreationComplete ->
@@ -94,9 +112,13 @@ class CharacterCreationViewModel: ViewModel() {
             }
         },
 
-        onPreviousStep = {
+        onPreviousStep = { onCancelCreation ->
             _state.update { currentState ->
                 when (currentState.currentStep) {
+                    CreationStep.STATISTICS -> {
+                        onCancelCreation()
+                        currentState
+                    }
                     CreationStep.ABILITIES -> currentState.copy(currentStep = CreationStep.STATISTICS)
                     CreationStep.INVENTORY -> currentState.copy(currentStep = CreationStep.ABILITIES)
                     else -> currentState
@@ -112,24 +134,31 @@ class CharacterCreationViewModel: ViewModel() {
             _state.update { it.copy(showItemDialog = visible) }
         },
 
+        onSetAgeMalusDialogVisible = { visible ->
+            _state.update { it.copy(showAgeMalusDialog = visible) }
+        },
+
+        onSetAvatarOptionDialogVisible = { visible ->
+            _state.update { it.copy(showAvatarOptionDialog = visible) }
+        },
+
+        onAvatarSelected = { uriString ->
+            _state.update { it.copy(avatarUri = uriString) }
+
+        },
+
         onNameChange = { newName ->
             _state.update { it.copy(name = newName) }
         },
 
-        onAgeChange = { newAge, context ->
-            val parsedAge = newAge.toIntOrNull() ?: 0
-            if (parsedAge > 70) {
-                Toast.makeText(
-                    context,
-                    "Età superiore a 70, TODO: Malus Casuale",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-            _state.update { it.copy(age = newAge) }
+        onAgeChange = { newAge ->
+            val malus = getMalusForAge(newAge)
+            _state.update { it.copy(age = newAge, ageMalusDescription = malus) }
         },
 
         onRollAge = { context ->
             val randomAge = (1..100).random()
+            val malus = getMalusForAge(randomAge.toString())
             if (randomAge > 70) {
                 Toast.makeText(
                     context,
@@ -137,7 +166,7 @@ class CharacterCreationViewModel: ViewModel() {
                     Toast.LENGTH_SHORT
                 ).show()
             }
-            _state.update { it.copy(age = randomAge.toString()) }
+            _state.update { it.copy(age = randomAge.toString(), ageMalusDescription = malus) }
         },
 
         onTogglePEMode = { enabled ->
@@ -178,6 +207,32 @@ class CharacterCreationViewModel: ViewModel() {
                     }
                     newState.copy(maxWeightCapacity = newState.inventoryCapacity)
                 }
+            }
+        },
+
+        onRollAllStats = {
+            _state.update { currentState ->
+                val rollStr = (1..6).random()
+                val rollAgi = (1..6).random()
+                val rollInt = (1..6).random()
+                val rollCha = (1..6).random()
+                val rollPow = (1..6).random()
+
+                val newState = currentState.copy(
+                    strength = rollStr,
+                    agility = rollAgi,
+                    intelligence = rollInt,
+                    charisma = rollCha,
+                    power = rollPow,
+
+                    baseStrength = rollStr,
+                    baseAgility = rollAgi,
+                    baseIntelligence = rollInt,
+                    baseCharisma = rollCha,
+                    basePower = rollPow
+                )
+
+                newState.copy(maxWeightCapacity = newState.inventoryCapacity)
             }
         },
 
@@ -321,14 +376,16 @@ class CharacterCreationViewModel: ViewModel() {
         },
 
         onAddItem = { name, desc, weight, context ->
+            val safeWeight = if (weight < 0) 0 else weight
+
             _state.update { currentState ->
                 val currentWeight = currentState.inventoryList.sumOf { it.numericValue }
-                if (currentWeight + weight <= currentState.maxWeightCapacity) {
+                if (currentWeight + safeWeight <= currentState.maxWeightCapacity) {
                     currentState.copy(
                         inventoryList = currentState.inventoryList + InventoryItem(
                             name = name,
                             description = desc,
-                            numericValue = weight
+                            numericValue = safeWeight
                         )
                     )
                 } else {
@@ -340,14 +397,15 @@ class CharacterCreationViewModel: ViewModel() {
         },
 
         onEditItem = { id, name, desc, newWeight, context ->
+            val safeNewWeight = if (newWeight < 0) 0 else newWeight
             _state.update { currentState ->
                 val old = currentState.inventoryList.find { it.id == id }
                 if (old != null) {
                     val weightWithoutOld =
                         currentState.inventoryList.sumOf { it.numericValue } - old.numericValue
-                    if (weightWithoutOld + newWeight <= currentState.maxWeightCapacity) {
+                    if (weightWithoutOld + safeNewWeight <= currentState.maxWeightCapacity) {
                         val updatedList = currentState.inventoryList.map {
-                            if (it.id == id) InventoryItem(id, name, desc, newWeight) else it
+                            if (it.id == id) InventoryItem(id, name, desc, safeNewWeight) else it
                         }
                         currentState.copy(inventoryList = updatedList)
                     } else {
@@ -386,12 +444,6 @@ class CharacterCreationViewModel: ViewModel() {
         }
     )
 }
-
-data class LocalEditableStats(
-    val label: String,
-    val value: Int,
-    val baseValue: Int
-)
 
 fun calculateBaseDamage(power: Int): String {
     return when (power) {
