@@ -17,60 +17,60 @@ data class AgeMalus(
 val ALL_AGE_MALUS = listOf(
     AgeMalus(
         drawableId = R.drawable.ic_young,
-        name = "Spirito da Ragazzino",
-        desc = "Ti rifiuti di accettare l'età che hai.\n\n" +
-                "Racconti a tutti che i giovani d'oggi non si divertono più come una volta e provi a fare acrobazie e stunt (spesso fallendo)."
+        name = "Negazione dell'Età",
+        desc = "Ti rifiuti di accettare il declino biologico.\n\n" +
+                "Tendi a sovrastimare le tue attuali capacità fisiche, cimentandoti in manovre acrobatiche e sforzi strutturali che spesso mettono a dura prova le tue articolazioni."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_nohand,
-        name = "Mani di Burro",
-        desc = "I riflessi sono intatti, ma la precisione non è più quella di una vota: gli oggetti piccoli tendono a scivolarti di mano."
+        name = "Deficit Motorio Fine",
+        desc = "I riflessi istintivi sono intatti, ma la precisione neuromuscolare periferica è ridotta: gli oggetti di piccole dimensioni tendono a sfuggire alla presa."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_cognition,
-        name = "Nostalgia dei Tempi Andati",
-        desc = "La memoria a breve termine vacilla, ma ricordi nei dettagli nomi e avvenimenti di 50 anni fa.\n\n" +
-                "Spesso confondi i nomi dei tuoi alleati con quelli di alleati passati e ricordi i luoghi per come erano e non per come sono adesso."
+        name = "Anacronismo Mnemonico",
+        desc = "La memoria a breve termine subisce sporadici scompensi, lasciando spazio a vividi ricordi di decenni passati.\n\n" +
+                "Spesso confondi le identità dei tuoi alleati con quelli di vecchi compagni e analizzi la topografia per come appariva prima del cataclisma."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_noeye,
         name = "Vista Appannata",
-        desc = "Purtroppo la vista non è più quella di un tempo: vedi il mondo come se fosse coperto da una lieve nebbia di alta quota."
+        desc = "L'apparato visivo mostra i segni della senescenza: la tua percezione dell'ambiente circostante è alterata, come se l'orizzonte fosse costantemente coperto da una lieve nebbia."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_badbone,
-        name = "Ossa Scricchiolanti",
-        desc = "Le tue articolazioni fanno rumore ad ogni passo falso o movimento brusco. Muoverti furtivamente ti richiede una cautela molto maggiore."
+        name = "Sindrome Reumatica Preveniente",
+        desc = "Le articolazioni emettono frizioni sonore avvertibili ad ogni sollecitazione brusca. L'esecuzione di manovre furtive richiede un dispendio di tempo e cautela nettamente superiore."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_waterloss,
-        name = "Vescica Impaziente",
-        desc = "Il tuo corpo ha i suoi ritmi e non sente ragioni, nemmeno durante un'imboscata.\n\n" +
-                "Il gruppo potrebbe spazientirsi alle tue costanti richieste di \"pause tecniche\"."
+        name = "Scompenso Fisiologico",
+        desc = "I ritmi biologici del tuo organismo non tollerano rinvii, ignorando le priorità tattiche o le condizioni di ingaggio.\n\n" +
+                "Il team potrebbe risentire alle tue frequenti e improrogabili necessità di \"sosta tecnica\"."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_breath,
-        name = "Fiato Corto",
-        desc = "Il tuo cuore è nobile, ma i tuoi polmoni si stancano in fretta.\n\n" +
-                "Dopo una corsa o una rampa di scale, hai bisogno di qualche minuto per riprendere fiato."
+        name = "Insufficienza Respiratoria",
+        desc = "L'efficienza cardiaca è stabile, ma la capacità polmonare si eusarisce rapidamente sotto stress.\n\n" +
+                "Al termine di uno scatto o di un dislivello verticale, necessiti di una sosta temporanea per ristabilire i normali parametri di ossigenazione."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_nomouth,
-        name = "Parola Tartaglina",
-        desc = "A volte i pensieri corrono più veloci della tua lingua, facendoti incastrare le parole tra i denti.\n\n" +
-                "In momenti di particolare tensione o emozione, potresti incepparti sulle consonanti o parole complesse."
+        name = "Inibizione Fonetica",
+        desc = "La formulazione dei pensieri supera la velocità di risposta dei muscoli facciali, generando blocchi verbali.\n\n" +
+                "In condizioni di elevata pressione psicologica o minaccia imminente, potresti riscontrare difficoltà nell'articolazione di lemmi complessi."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_nohearing,
-        name = "Fischi d'Orecchie",
-        desc = "Senti costantemente un ronzio di sottofondo, come se una cicala magica avesse preso dimora nella tua testa.\n\n" +
-                "Se un personaggio non ti parla a volume abbastanza alto, potresti rischiare di non capire cosa ti dice."
+        name = "Tinnitus Cronico",
+        desc = "Un ronzio a frequenza costante occupa il tuo spettro uditivo, simulando una perturbazione elettromagnetica permanente.\n\n" +
+                "Se i dati vocali degli alleati non vengono emessi a un livello di decibel adeguato, rischi di decodificare erroneamente le informazioni."
     ),
     AgeMalus(
         drawableId = R.drawable.ic_climate,
-        name = "Sensibile al Clima",
-        desc = "Le tue vecchie ginocchia prevedono il tempo meglio dei maghi della natura.\n\n" +
-                "Quando ti fanno male le ginocchia, significa che sta per piovere e anche se tutti dicono che ti lamenti e basta, raramente hai torto."
+        name = "Sensibilità Barometrica",
+        desc = "I tuoi recettori articolari anticipano i cambiamenti metereologici con una precisione superiore ai sistemi di rilevamento ambientali.\n\n" +
+                "L'insorgere di fitte acute preannuncia perturbazioni atmosferiche imminenti: nonostante lo scetticismo del team, le tue stime biologiche sono infallibili."
     ),
 )
 
