@@ -21,13 +21,14 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SimpleSearchBar(
     textFieldState: TextFieldState,
+    onQuery: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     TextField(
             value = textFieldState.text.toString(),
             onValueChange = { text ->
-                textFieldState.edit { replace(0,this.length, text) }
-                            },
+                textFieldState.edit { replace(0,this.length, text)
+                onQuery(text) } },
             readOnly = false,
             placeholder = { Text("Cerca") },
             modifier = modifier.fillMaxWidth()

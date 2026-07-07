@@ -16,6 +16,7 @@ import com.example.esamemobile.screens.login.LoginScreen
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewModel
 import kotlinx.serialization.Serializable
 import com.example.esamemobile.screens.characterCreation.CharacterCreationViewModel
+import com.example.esamemobile.screens.home.HomeViewModel
 import com.example.esamemobile.screens.login.LoginViewModel
 import com.example.esamemobile.screens.settings.SettingsScreen
 import com.example.esamemobile.screens.settings.SettingsViewModel
@@ -41,7 +42,9 @@ fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsVi
         startDestination = EsameMobileRoute.Login
     ) {
         composable<EsameMobileRoute.Home> {
-            HomeScreen(navController)
+            val homeVm = koinViewModel<HomeViewModel>()
+            val homeState by homeVm.state.collectAsStateWithLifecycle()
+            HomeScreen(homeState,homeVm.actions,navController)
         }
         composable<EsameMobileRoute.Debug> {
             DebugDatabaseScreen(navController)
