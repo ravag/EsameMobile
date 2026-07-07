@@ -29,17 +29,21 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import com.example.esamemobile.utilities.composables.ImageWithPlaceholder
 import com.example.esamemobile.utilities.composables.Size
@@ -65,6 +69,48 @@ public fun SettingsScreen(
         },
         modifier = Modifier.background(MaterialTheme.colorScheme.background)
     ) { innerPadding ->
+
+        //Popup cambio nome
+        if (settingsState.changeName) {
+            Dialog(
+                onDismissRequest = settingsActions.cancelChangeName,
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .padding(16.dp)
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.Top,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Spacer(Modifier.height(25.dp))
+                        OutlinedTextField(
+                            value = settingsState.tempName,
+                            onValueChange = settingsActions.onUsernameChange,
+                            label = { Text("Nome") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Row() {
+                            Button(
+                                onClick = settingsActions.cancelChangeName
+                            ) {
+                                Text("Annulla")
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Button(
+                                onClick = settingsActions.onConfirmNameChange
+                            ) {
+                                Text("Conferma")
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+
         Column(
             modifier = Modifier.padding(innerPadding).fillMaxSize()
         ) {
@@ -91,7 +137,7 @@ public fun SettingsScreen(
                     .weight(0.1f)
                     .fillMaxWidth()
                     .clickable(onClick = {
-                        settingsActions.onClickChangeName
+                        settingsActions.onClickChangeName()
                         Log.i("debug","premuto cambio nome")
                     })
             ) {
@@ -127,42 +173,20 @@ public fun SettingsScreen(
             ) {
                 Text("Tema applicazione:")
                 ThemeValues.entries.forEach { theme ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = theme == settingsState.theme,
-                                onClick = { settingsActions.onThemeChange(theme) },
-                                role = Role.RadioButton
-                            ),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = theme == settingsState.theme,
-                            onClick = { settingsActions.onThemeChange(theme) }
-                        )
-                        Text(theme.text, style = MaterialTheme.typography.bodyLarge)
-                    }
+                    RadioItem(
+                        selected = theme == settingsState.theme,
+                        text = theme.text,
+                        onClick = { settingsActions.onThemeChange(theme) }
+                    )
                 }
 
                 Text("Colori dinamici:")
                 listOf(true,false).forEach { color ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = color == settingsState.dynamicColors,
-                                onClick = { settingsActions.onDynamicColorsChange(color) },
-                                role = Role.RadioButton
-                            ),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = color == settingsState.dynamicColors,
-                            onClick = { settingsActions.onDynamicColorsChange(color) }
-                        )
-                        Text(if (color) "Colori di sistema" else "Colori dinamici?", style = MaterialTheme.typography.bodyLarge)
-                    }
+                    RadioItem(
+                        selected = color == settingsState.dynamicColors,
+                        text = if (color) "Colori di sistema" else "colori personalizzati",
+                        onClick = { settingsActions.onDynamicColorsChange(color) }
+                    )
                 }
             }
 
@@ -173,12 +197,15 @@ public fun SettingsScreen(
             ) {
                 Button(
                     onClick = {
-                        Log.i("debug","logout")
+                        settingsActions.onLogOut
                     }
                 ) {
                     Text("Logout")
                     Icon(Icons.AutoMirrored.Filled.Logout,"Logout")
                 }
+
+                Spacer(Modifier.width(10.dp))
+
                 Button(
                     onClick = {
                         Log.i("debug","Elimina")
@@ -189,5 +216,25 @@ public fun SettingsScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun RadioItem(selected: Boolean, text: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(
+                selected = selected,
+                onClick = onClick,
+                role = Role.RadioButton
+            ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = onClick
+        )
+        Text(text, style = MaterialTheme.typography.bodyLarge)
     }
 }

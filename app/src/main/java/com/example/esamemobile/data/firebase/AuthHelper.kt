@@ -1,12 +1,16 @@
 package com.example.esamemobile.data.firebase
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuth.AuthStateListener
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 enum class AuthErrorType {
@@ -15,6 +19,7 @@ enum class AuthErrorType {
 
 interface AuthRepository {
     val currentUser: FirebaseUser?
+    val authState: Flow<FirebaseUser?>
     suspend fun signInOrRegister(email: String, password: String): AuthenticationResult
     suspend fun singInWithGoogleIdToken(idToken: String): AuthenticationResult
     fun logout()
@@ -31,6 +36,14 @@ class AuthRepositoryImpl( val firebaseAuth: FirebaseAuth): AuthRepository {
 
     override val currentUser: FirebaseUser?
         get() = firebaseAuth.currentUser
+
+    override val authState: Flow<FirebaseUser?> = callbackFlow {
+        val listener = FirebaseAuth.AuthStateListener { auth ->
+            trySend(auth.currentUser)
+        }
+        firebaseAuth.addAuthStateListener(listener)
+        awaitClose { firebaseAuth.removeAuthStateListener(listener) }
+    }
 
     override suspend fun signInOrRegister(
         email: String,

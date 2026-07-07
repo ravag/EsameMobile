@@ -3,6 +3,7 @@ package com.example.esamemobile.screens.settings
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.repositories.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,18 +21,11 @@ enum class ThemeValues(val text: String) {
 
 data class SettingsState(
     val username: String,
+    val tempName: String = username,
     val isLoggedIn: Boolean,
     val password: String = "",
-    val theme: ThemeValues,
-    val dynamicColors: Boolean,
-    val changeName: Boolean = false,
-    val changePassword: Boolean = false
-)
-
-data class IncompleteSettingsState(
-    val username: String,
-    val isLoggedIn: Boolean,
-    val password: String = "",
+    val theme: ThemeValues = ThemeValues.SYSTEM,
+    val dynamicColors: Boolean = false,
     val changeName: Boolean = false,
     val changePassword: Boolean = false
 )
@@ -40,43 +34,46 @@ data class SettingsActions(
     val onClickChangeName: () -> Unit,
     val onUsernameChange: (String) -> Unit,
     val onConfirmNameChange: () -> Unit,
+    val cancelChangeName: () -> Unit,
     val onClickChangePassword: () -> Unit,
     val onThemeChange: (ThemeValues) -> Unit,
-    val onDynamicColorsChange: (Boolean) -> Unit
+    val onDynamicColorsChange: (Boolean) -> Unit,
+    val onLogOut: () -> Unit
 )
 
-class SettingsViewModel(repository: SettingsRepository) : ViewModel() {
+class SettingsViewModel(
+    val repository: SettingsRepository,
+    val authRepository: AuthRepository) : ViewModel() {
     private val _state = MutableStateFlow(
-        IncompleteSettingsState(
+        SettingsState(
             username = "Alessandro",
             isLoggedIn = true))
     val state = combine(
         repository.theme,
         repository.dynamicColors,
+        authRepository.authState,
         _state
-    ) { theme,colors, state -> SettingsState(
-            state.username,
-            state.isLoggedIn,
-            state.password,
-            theme,
-            colors) }
+    ) { theme,colors,user, currentState -> currentState.copy(
+            theme= theme,
+            dynamicColors = colors,
+            isLoggedIn = user != null) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(),
-            initialValue = SettingsState(
-                username = _state.value.username,
-                isLoggedIn = _state.value.isLoggedIn,
-                theme = ThemeValues.SYSTEM,
-                dynamicColors = false
-            )
+            initialValue = _state.value.copy(theme = ThemeValues.SYSTEM, dynamicColors = false)
         )
+        
 
     val actions = SettingsActions(
-        onClickChangeName = { _state.update { it.copy(changeName = true) } },
-        onUsernameChange = {name -> _state.update { it.copy(username = name) } },
-        onConfirmNameChange = { Log.i("debug","Cambia nome a ${_state.value.username}") },
+        onClickChangeName = { _state.update { it.copy(changeName = true) }
+                            Log.i("debug",state.value.changeName.toString())},
+        onUsernameChange = {name -> _state.update { it.copy(tempName = name) } },
+        onConfirmNameChange = { Log.i("debug","Cambia nome a ${_state.value.username}")
+                              _state.update { it.copy(changeName = false, username = it.tempName) }},
+        cancelChangeName = { _state.update { it.copy(changeName = false, tempName = it.username) } },
         onClickChangePassword = { _state.update { it.copy(changePassword = true) } },
         onThemeChange = { themeValue -> viewModelScope.launch { repository.setTheme(themeValue) } },
-        onDynamicColorsChange = {colors -> viewModelScope.launch { repository.setDynamicColors(colors) }}
+        onDynamicColorsChange = {colors -> viewModelScope.launch { repository.setDynamicColors(colors) }},
+        onLogOut = {authRepository.logout()}
     )
 }
