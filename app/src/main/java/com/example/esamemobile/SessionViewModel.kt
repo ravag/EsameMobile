@@ -27,7 +27,6 @@ class SessionViewModel (
         viewModelScope.launch {
             authRepository.authState.collect { user ->
                 if (user != null ) {
-                    userRepository.insertNewUser(user.uid )
                     TokenReceiver.newToken(userRepository)
                 }
             }

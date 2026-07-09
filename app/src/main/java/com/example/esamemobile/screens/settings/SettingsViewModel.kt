@@ -1,14 +1,22 @@
 package com.example.esamemobile.screens.settings
 
 import android.util.Log
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.esamemobile.data.firebase.AuthRepository
+import com.example.esamemobile.data.firebase.firestore.UserRepository
 import com.example.esamemobile.data.repositories.SettingsRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -20,9 +28,9 @@ enum class ThemeValues(val text: String) {
 }
 
 data class SettingsState(
-    val username: String,
-    val tempName: String = username,
-    val isLoggedIn: Boolean,
+    val username: String = "",
+    val tempName: String = "",
+    val isLoggedIn: Boolean = true,
     val password: String = "",
     val theme: ThemeValues = ThemeValues.SYSTEM,
     val dynamicColors: Boolean = false,
@@ -41,19 +49,29 @@ data class SettingsActions(
     val onLogOut: () -> Unit
 )
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModel(
     val repository: SettingsRepository,
-    val authRepository: AuthRepository) : ViewModel() {
-    private val _state = MutableStateFlow(
-        SettingsState(
-            username = "Alessandro",
-            isLoggedIn = true))
+    val authRepository: AuthRepository,
+    val userRepository: UserRepository) : ViewModel() {
+
+    private val name: Flow<String> = authRepository.authState.flatMapLatest { user ->
+        if (user == null) {
+            flowOf("")
+        } else {
+            userRepository.usernameObserver(user.uid)
+        }
+    }
+    private val _state = MutableStateFlow(SettingsState())
     val state = combine(
         repository.theme,
         repository.dynamicColors,
         authRepository.authState,
+        name,
         _state
-    ) { theme,colors,user, currentState -> currentState.copy(
+    ) { theme,colors,user, fetchedName,currentState -> currentState.copy(
+            username = fetchedName,
+            tempName = if (currentState.changeName) currentState.tempName else fetchedName,
             theme= theme,
             dynamicColors = colors,
             isLoggedIn = user != null) }
@@ -68,8 +86,22 @@ class SettingsViewModel(
         onClickChangeName = { _state.update { it.copy(changeName = true) }
                             Log.i("debug",state.value.changeName.toString())},
         onUsernameChange = {name -> _state.update { it.copy(tempName = name) } },
-        onConfirmNameChange = { Log.i("debug","Cambia nome a ${_state.value.username}")
-                              _state.update { it.copy(changeName = false, username = it.tempName) }},
+        onConfirmNameChange = {
+            viewModelScope.launch {
+                val result = userRepository.updateUsername(
+                    userId = authRepository.currentUser!!.uid,
+                    username = _state.value.tempName)
+                result.fold(
+                    onSuccess = {
+                        Log.i("debug","Nome cambiato con successo")
+                        _state.update { it.copy(changeName = false, username = it.tempName) }
+                    },
+                    onFailure = {
+                        Log.w("debug","Errore a cambiare nome nel db")
+                    }
+                )
+            }
+            },
         cancelChangeName = { _state.update { it.copy(changeName = false, tempName = it.username) } },
         onClickChangePassword = { _state.update { it.copy(changePassword = true) } },
         onThemeChange = { themeValue -> viewModelScope.launch { repository.setTheme(themeValue) } },

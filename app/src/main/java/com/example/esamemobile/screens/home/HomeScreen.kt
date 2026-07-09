@@ -57,14 +57,7 @@ fun HomeScreen(
     val focusManager = LocalFocusManager.current
     val textFieldState = rememberTextFieldState()
 
-//    var charactersTest by remember { mutableStateOf(listOf<Character>())
-//        listOf(
-//            Character(id = 1, name = "Joe Jostino", ""),
-//            Character(id = 2, name = "Gigi Pancetta", ""),
-//            Character(id = 3, name = "Ettore Pelacane", "")
-//        )
-//    }
-
+    //Soluzione temporanea per refresh dopo creazione personaggio
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         homeActions.getAllCharacters()
     }
@@ -78,7 +71,6 @@ fun HomeScreen(
             CenterAlignedTopAppBar(
                 title = {Text("HOME")},
                 actions = {
-
                     IconButton({navController.navigate(EsameMobileRoute.Settings)}) {
                         Icon(Icons.Filled.Settings,"Impostazioni")
                     }

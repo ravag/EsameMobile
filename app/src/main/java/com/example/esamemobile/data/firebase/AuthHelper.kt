@@ -38,7 +38,7 @@ class AuthRepositoryImpl( val firebaseAuth: FirebaseAuth): AuthRepository {
         get() = firebaseAuth.currentUser
 
     override val authState: Flow<FirebaseUser?> = callbackFlow {
-        val listener = FirebaseAuth.AuthStateListener { auth ->
+        val listener = AuthStateListener { auth ->
             trySend(auth.currentUser)
         }
         firebaseAuth.addAuthStateListener(listener)

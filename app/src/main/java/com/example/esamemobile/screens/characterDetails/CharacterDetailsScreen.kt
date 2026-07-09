@@ -18,8 +18,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,6 +51,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.esamemobile.EsameMobileRoute
 import com.example.esamemobile.data.staticData.ClassAbility
 import com.example.esamemobile.screens.characterCreation.AbilityItem
 import com.example.esamemobile.screens.characterCreation.InventoryItem
@@ -75,7 +80,17 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {Text("")}
+                title = {Text("")},
+                navigationIcon = {
+                    IconButton(onClick = {navController.navigateUp()}) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack,"Indietro")
+                    }
+                },
+                actions = {
+                    IconButton({}) {
+                        Icon(Icons.Outlined.Star,"Inserisci tra i preferiti")
+                    }
+                }
             )
         },
         bottomBar = {

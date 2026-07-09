@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.esamemobile.data.firebase.AuthErrorType
 import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.firebase.AuthenticationResult
+import com.example.esamemobile.data.firebase.firestore.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -31,7 +32,9 @@ data class LoginActions(
     val onMessageShown: () -> Unit
 )
 
-class LoginViewModel (val authRepository: AuthRepository) : ViewModel() {
+class LoginViewModel (
+    private val authRepository: AuthRepository,
+    private val userRepository: UserRepository) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginState())
     val state = _state.asStateFlow()
@@ -61,22 +64,35 @@ class LoginViewModel (val authRepository: AuthRepository) : ViewModel() {
         onGoogleSignInError = { _state.update { it.copy(message = LoginMessage.Error("Errore login Google")) } },
         onMessageShown = { _state.update { it.copy(message = null) } }
     )
-}
 
-private fun loginToMessage(result: AuthenticationResult): LoginMessage {
-    return when(result) {
-        is AuthenticationResult.Success -> {
-            LoginMessage.Info(if (result.isNewUser) "Registrato con successo" else "Accesso eseguito")
-        }
-        is AuthenticationResult.Error -> {
-            LoginMessage.Error(
-                when(result.type) {
-                    AuthErrorType.WEAK_PASSWORD -> "Password Debole! Usa lettere, numeri e simboli."
-                    AuthErrorType.USER_COLLISION -> "Password Errata. Nome utente già esistente."
-                    AuthErrorType.INVALID_CREDENTIALS -> "Password errata o account non valido"
-                    AuthErrorType.UNKNOWN -> "Errore: ${result.message}"
+    private suspend fun loginToMessage(result: AuthenticationResult): LoginMessage {
+        return when(result) {
+            is AuthenticationResult.Success -> {
+                var msg: String = ""
+                if (result.isNewUser) {
+                    val res = userRepository.insertNewUser(authRepository.currentUser!!.uid)
+                    res.fold(
+                        onSuccess = { msg = "Registrato con successo"},
+                        onFailure = { msg = "Errore nel salvataggio dell'utente"}
+                    )
+                } else {
+                    msg = "Accesso eseguito"
                 }
-            )
+                LoginMessage.Info(msg)
+            }
+            is AuthenticationResult.Error -> {
+                LoginMessage.Error(
+                    when(result.type) {
+                        AuthErrorType.WEAK_PASSWORD -> "Password Debole! Usa lettere, numeri e simboli."
+                        AuthErrorType.USER_COLLISION -> "Password Errata. Nome utente già esistente."
+                        AuthErrorType.INVALID_CREDENTIALS -> "Password errata o account non valido"
+                        AuthErrorType.UNKNOWN -> "Errore: ${result.message}"
+                    }
+                )
+            }
         }
     }
+
 }
+
+

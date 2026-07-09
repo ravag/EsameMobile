@@ -32,11 +32,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun DebugDatabaseScreen(
-//    displayedName: String,
-//    currentUser: com.google.firebase.auth.FirebaseUser?,
-//    db: com.google.firebase.firestore.FirebaseFirestore,
-//    context: android.content.Context,
-//    onCloseDebug: () -> Unit
       navController: NavHostController
 ) {
     val context = LocalContext.current
