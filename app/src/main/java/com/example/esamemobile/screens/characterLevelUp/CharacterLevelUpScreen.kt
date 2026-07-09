@@ -8,15 +8,12 @@ import androidx.compose.runtime.getValue
 
 @Composable
 fun LevelUpScreen(
-    currentLevel: Int,
-    strengthModifier: Int,
-    hasCha3: Boolean,
-    hasAllBase: Boolean,
-    viewModel: LevelUpViewModel = viewModel(),
+    charId: String,
+    viewModel: LevelUpViewModel,
     onNavigateBack: () -> Unit
 ) { 
-    LaunchedEffect(Unit) {
-        viewModel.initLevelUp(currentLevel, strengthModifier, hasCha3, hasAllBase)
+    LaunchedEffect(charId) {
+        viewModel.initLevelUp(charId)
     }
 
     val state by viewModel.state.collectAsState()

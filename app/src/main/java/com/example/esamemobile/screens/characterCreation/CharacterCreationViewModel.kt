@@ -10,11 +10,13 @@ import com.example.esamemobile.data.repositories.StaticDataRepository
 import com.example.esamemobile.data.staticData.AgeMalus
 import com.example.esamemobile.utilities.DisplayableItem
 import com.example.esamemobile.data.Character
+import com.example.esamemobile.data.calculateModifier
 import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.firebase.firestore.CharacterRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.Serializable
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -489,16 +491,7 @@ fun calculateBaseDamage(power: Int): String {
     }
 }
 
-fun calculateModifier(stat: Int): Int {
-    return when (stat) {
-        in Int.MIN_VALUE..1 -> -1
-        in 2..3 -> 0
-        in 4..5 -> 1
-        in 6..7 -> 2
-        in 8..9 -> 3
-        else -> 4
-    }
-}
+
 
 fun CharacterCreationState.toCharacter(): Character {
     return Character(
@@ -524,6 +517,7 @@ fun CharacterCreationState.toCharacter(): Character {
     )
 }
 
+@Serializable
 data class AbilityItem(
     override val id: String = UUID.randomUUID().toString(),
     override val name: String = "",
@@ -531,6 +525,7 @@ data class AbilityItem(
     override val numericValue: Int = 0
 ) : DisplayableItem
 
+@Serializable
 data class InventoryItem(
     override val id: String = UUID.randomUUID().toString(),
     override val name: String = "",
