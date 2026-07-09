@@ -19,5 +19,5 @@ data class UiCharacter(
     )
 
     val normalizedStats: List<Float>
-        get() = stats.map { it.toFloat() / 15 }
+        get() = stats.map { it.toFloat() / 10 }
 }

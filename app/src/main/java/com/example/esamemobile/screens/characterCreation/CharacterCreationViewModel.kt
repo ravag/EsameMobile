@@ -1,16 +1,21 @@
 package com.example.esamemobile.screens.characterCreation
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.esamemobile.data.ArmorTypes
 import com.example.esamemobile.data.repositories.StaticDataRepository
 import com.example.esamemobile.data.staticData.AgeMalus
 import com.example.esamemobile.utilities.DisplayableItem
 import com.example.esamemobile.data.Character
+import com.example.esamemobile.data.firebase.AuthRepository
+import com.example.esamemobile.data.firebase.firestore.CharacterRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 enum class CreationStep { STATISTICS, ABILITIES, INVENTORY }
@@ -62,7 +67,7 @@ data class CharacterCreationState(
 }
 
 data class CharacterCreationActions(
-    val onNextStep: (Context, (com.example.esamemobile.data.Character) -> Unit) -> Unit,
+    val onNextStep: (Context, (Character) -> Unit) -> Unit,
     val onPreviousStep: (() -> Unit) -> Unit,
     val onSetAbilityDialogVisible: (Boolean) -> Unit,
     val onSetItemDialogVisible: (Boolean) -> Unit,
@@ -90,7 +95,9 @@ data class CharacterCreationActions(
 )
 
 class CharacterCreationViewModel(
-    private val staticDataRepository: StaticDataRepository
+    private val staticDataRepository: StaticDataRepository,
+    private val characterRepository: CharacterRepository,
+    private val authRepository: AuthRepository
 ): ViewModel() {
     private val _state = MutableStateFlow(CharacterCreationState())
     val state = _state.asStateFlow()
@@ -114,8 +121,18 @@ class CharacterCreationViewModel(
                     CreationStep.ABILITIES -> currentState.copy(currentStep = CreationStep.INVENTORY)
                     CreationStep.INVENTORY -> {
                         val newCharacter = currentState.toCharacter()
-                        Toast.makeText(context, "Personaggio Creato!", Toast.LENGTH_SHORT).show()
-                        onCreationComplete(newCharacter)
+                        viewModelScope.launch {
+                            val result = characterRepository.insertNewCharacter(authRepository.currentUser?.uid,newCharacter)
+                            result.fold(
+                                onSuccess = {
+                                    Toast.makeText(context, "Personaggio Creato!", Toast.LENGTH_SHORT).show()
+                                    onCreationComplete(newCharacter)
+                                },
+                                onFailure = { exception ->
+                                    Log.w("debug","Errore ${exception.message}")
+                                }
+                            )
+                        }
                         currentState
                     }
                 }
@@ -488,7 +505,7 @@ fun CharacterCreationState.toCharacter(): Character {
         name = this.name.ifBlank { "Soggetto Ignoto" },
         level = 0,
         age = this.age.toIntOrNull() ?: 0,
-        ageMalus = this.ageMalusDescription?.desc,
+        ageMalus = this.ageMalusDescription?.id,
         chosenClass = null,
         peAvailable = this.peLeft,
         strength = this.strength,
