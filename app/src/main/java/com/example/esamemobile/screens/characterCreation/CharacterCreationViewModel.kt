@@ -3,7 +3,7 @@ package com.example.esamemobile.screens.characterCreation
 import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
-import com.example.esamemobile.data.staticData.ALL_AGE_MALUS
+import com.example.esamemobile.data.repositories.StaticDataRepository
 import com.example.esamemobile.data.staticData.AgeMalus
 import com.example.esamemobile.utilities.DisplayableItem
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,7 +44,8 @@ data class CharacterCreationState(
     val peSpentHP: Int = 0,
     val hpBase: Int = 0,
 
-    val ageMalusDescription: AgeMalus? = null
+    val ageMalusDescription: AgeMalus? = null,
+    val ageMalusId: Int? = null
 ) {
     val strengthModifier: Int get() = calculateModifier(strength)
     val agilityModifier: Int get() = calculateModifier(agility)
@@ -86,15 +87,21 @@ data class CharacterCreationActions(
     val onDeleteItem: (InventoryItem, Context) -> Unit,
 )
 
-class CharacterCreationViewModel: ViewModel() {
+class CharacterCreationViewModel(
+    private val staticDataRepository: StaticDataRepository
+): ViewModel() {
     private val _state = MutableStateFlow(CharacterCreationState())
     val state = _state.asStateFlow()
 
-    val malusList = ALL_AGE_MALUS
+    val malusList = staticDataRepository.allAgeMalus
 
     private fun getMalusForAge(ageString: String): AgeMalus? {
         val parsedAge = ageString.toIntOrNull() ?: 0
         return if (parsedAge > 70) malusList.random() else null
+    }
+
+    private fun getMalusDrawableId(malus: AgeMalus?): Int? {
+        return malus?.drawableId?.let { staticDataRepository.getDrawableId(it) }
     }
 
     val actions = CharacterCreationActions(
@@ -154,7 +161,10 @@ class CharacterCreationViewModel: ViewModel() {
 
         onAgeChange = { newAge ->
             val malus = getMalusForAge(newAge)
-            _state.update { it.copy(age = newAge, ageMalusDescription = malus) }
+            _state.update { it.copy(
+                age = newAge,
+                ageMalusDescription = malus,
+                ageMalusId = getMalusDrawableId(malus)) }
         },
 
         onRollAge = { context ->
@@ -167,7 +177,10 @@ class CharacterCreationViewModel: ViewModel() {
                     Toast.LENGTH_SHORT
                 ).show()
             }
-            _state.update { it.copy(age = randomAge.toString(), ageMalusDescription = malus) }
+            _state.update { it.copy(
+                age = randomAge.toString(),
+                ageMalusDescription = malus,
+                ageMalusId = getMalusDrawableId(malus)) }
         },
 
         onTogglePEMode = { enabled ->
@@ -473,7 +486,7 @@ fun CharacterCreationState.toCharacter(): com.example.esamemobile.data.Character
         name = this.name.ifBlank { "Soggetto Ignoto" },
         level = 0,
         age = this.age.toIntOrNull() ?: 0,
-        ageMalus = this.ageMalusDescription,
+        ageMalus = this.ageMalusDescription?.desc,
         chosenClass = null,
         peAvailable = this.peLeft,
         strength = this.strength,
@@ -494,14 +507,14 @@ fun CharacterCreationState.toCharacter(): com.example.esamemobile.data.Character
 
 data class AbilityItem(
     override val id: String = UUID.randomUUID().toString(),
-    override val name: String,
-    override val description: String,
-    override val numericValue: Int
+    override val name: String = "",
+    override val description: String = "",
+    override val numericValue: Int = 0
 ) : DisplayableItem
 
 data class InventoryItem(
     override val id: String = UUID.randomUUID().toString(),
-    override val name: String,
-    override val description: String,
+    override val name: String = "",
+    override val description: String = "",
     override val numericValue: Int = 1
 ) : DisplayableItem

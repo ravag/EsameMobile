@@ -10,13 +10,16 @@ import com.example.esamemobile.data.firebase.firestore.GroupRepository
 import com.example.esamemobile.data.firebase.firestore.GroupRepositoryImpl
 import com.example.esamemobile.data.firebase.firestore.UserRepository
 import com.example.esamemobile.data.firebase.firestore.UserRepositoryImpl
+import com.example.esamemobile.data.repositories.CharacterSolver
 import com.example.esamemobile.data.repositories.SettingsRepository
+import com.example.esamemobile.data.repositories.StaticDataRepository
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewModel
 import com.example.esamemobile.screens.home.HomeViewModel
 import com.example.esamemobile.screens.login.LoginViewModel
 import com.example.esamemobile.screens.settings.SettingsViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -26,7 +29,8 @@ val appModule = module {
     single { FirebaseAuth.getInstance() }
     single { FirebaseFirestore.getInstance() }
 
-
+    single { StaticDataRepository(androidContext()) }
+    single { CharacterSolver(get()) }
     single { SettingsRepository(get()) }
     single<AuthRepository> { AuthRepositoryImpl(get()) }
     single<CharacterRepository> { CharacterRepositoryImpl(get()) }
@@ -37,5 +41,5 @@ val appModule = module {
     viewModel { SettingsViewModel(get(),get()) }
     viewModel { SessionViewModel(get(),get()) }
     viewModel { HomeViewModel(get(),get(), get()) }
-    viewModel { CharacterDetailsViewModel(get(),get()) }
+    viewModel { CharacterDetailsViewModel(get(),get(),get(),get()) }
 }

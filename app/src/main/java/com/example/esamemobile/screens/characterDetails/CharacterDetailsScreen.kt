@@ -1,9 +1,9 @@
 package com.example.esamemobile.screens.characterDetails
 
-import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -19,16 +19,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -43,17 +42,16 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.esamemobile.data.Character
+import com.example.esamemobile.data.staticData.ClassAbility
+import com.example.esamemobile.screens.characterCreation.AbilityItem
+import com.example.esamemobile.screens.characterCreation.InventoryItem
 import com.example.esamemobile.utilities.CharacterDetailsNavigationBar
 import com.example.esamemobile.utilities.CharacterHeader
+import com.example.esamemobile.utilities.DisplayableItem
 import kotlin.math.cos
 import kotlin.math.sin
 
-class Abilities(
-    val name: String,
-    val description: String,
-    val cost: Int
-)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: CharacterDetailsActions, navController: NavHostController) {
 
@@ -69,6 +67,11 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
 //    val maxHp = 10
 
     Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {Text("")}
+            )
+        },
         bottomBar = {
             CharacterDetailsNavigationBar(
                 selectedIndex = detailsState.selectedTab.ordinal,
@@ -76,54 +79,80 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            CharacterHeader(detailsState.character!!.name,0,"a ne so",0,detailsState.character.imageUri, Modifier) {
-                detailsActions.onLevelUp(context)
-            }
-            when (detailsState.selectedTab) {
-                CharacterDetailsTab.STATS  -> {
-                    StatSection(
-                        hp = detailsState.hp,
-                        maxHp = detailsState.maxHp,
-                        onDecrease = detailsActions.onDecreaseHp,
-                        onIncrease = detailsActions.onIncreaseHp,
-                        stats = detailsState.stats,
-                        normalizedStats = detailsState.normalizedStats
-                    )
-                }
-
-                CharacterDetailsTab.POWERS ->  {
-                    EvolutionPowersSection(
-                        abilities = detailsState.abilities,
-                        modifier = Modifier.weight(1f),
-                        onAddPower = { detailsActions.onAddPower(context) }
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    AbilitiesSection(
-                        abilities = detailsState.abilities,
-                        usageCurrent = detailsState.abilityUsageCurrent,
-                        usageMax = detailsState.abilityUsageMax,
-                        modifier = Modifier.weight(1f),
-                        onDecreaseUsage = detailsActions.onDecreaseUsage,
-                        onIncreaseUsage = detailsActions.onIncreaseUsage
-                    )
-                }
-
-                CharacterDetailsTab.INVENTORY ->  {
-                    InventorySection(
-                        items = detailsState.abilities,
-                        capacityCurrent = detailsState.inventoryCapacityCurrent,
-                        capacityMax = detailsState.inventoryCapacityMax,
-                        onAddItem = { detailsActions.onAddItem(context) }
-                    )
+        when {
+            detailsState.isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
             }
+            (detailsState.character == null) -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center) {
+                    Text("Errore nel caricamento personaggio")
+                }
+            }
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    CharacterHeader(
+                        name = detailsState.character.character.name,
+                        age = detailsState.character.character.age,
+                        ageMalusSign = detailsState.malusDrawableId,
+                        characterClass = detailsState.character.chosenClass!!.name,
+                        level = detailsState.character.character.level,
+                        imageUri = detailsState.character.character.imageUri,
+                        modifier = Modifier) {
+                        detailsActions.onLevelUp(context)
+                    }
+                    when (detailsState.selectedTab) {
+                        CharacterDetailsTab.STATS  -> {
+                            StatSection(
+                                hp = detailsState.character.character.currentHP,
+                                maxHp = detailsState.character.character.maxHP,
+                                onDecrease = detailsActions.onDecreaseHp,
+                                onIncrease = detailsActions.onIncreaseHp,
+                                stats = detailsState.character.stats,
+                                normalizedStats = detailsState.character.normalizedStats
+                            )
+                        }
 
+                        CharacterDetailsTab.POWERS ->  {
+                            EvolutionPowersSection(
+                                abilities = detailsState.character.character.abilitiesList,
+                                modifier = Modifier.weight(1f),
+                                onAddPower = { detailsActions.onAddPower(context) }
+                            )
+                            Spacer(Modifier.height(10.dp))
+                            AbilitiesSection(
+                                abilities = detailsState.character.classAbilities,
+                                usageCurrent = detailsState.abilityUsageCurrent,
+                                usageMax = detailsState.abilityUsageMax,
+                                modifier = Modifier.weight(1f),
+                                onDecreaseUsage = detailsActions.onDecreaseUsage,
+                                onIncreaseUsage = detailsActions.onIncreaseUsage
+                            )
+                        }
+
+                        CharacterDetailsTab.INVENTORY ->  {
+                            InventorySection(
+                                items = detailsState.character.character.inventoryList,
+                                capacityCurrent = detailsState.character.character.inventoryList.sumOf { it.numericValue }, // Se numeric value è il peso
+                                capacityMax = detailsState.character.character.maxCapacity,
+                                onAddItem = { detailsActions.onAddItem(context) }
+                            )
+                        }
+                    }
+
+                }
+            }
         }
+
 
     }
 }
@@ -209,7 +238,7 @@ private fun InventoryHeader(
 
 @Composable
 private fun EvolutionPowersSection(
-    abilities: List<Abilities>,
+    abilities: List<AbilityItem>,
     modifier: Modifier,
     onAddPower: () -> Unit
 ) {
@@ -227,7 +256,7 @@ private fun EvolutionPowersSection(
 
 @Composable
 private fun AbilitiesSection(
-    abilities: List<Abilities>,
+    abilities: List<ClassAbility>,
     usageCurrent: Int,
     usageMax: Int,
     modifier: Modifier,
@@ -244,14 +273,19 @@ private fun AbilitiesSection(
             onDecrease = onDecreaseUsage,
             onIncrease = onIncreaseUsage
         )
-        ListItems(abilities, Modifier.fillMaxWidth().weight(1f))
+        ListItems(
+            elements = abilities.map {
+                AbilityItem(
+                    name = it.name,
+                    description = it.description,
+                    numericValue = 0) }, Modifier.fillMaxWidth().weight(1f))
     }
 }
 
 //Per testare tengo capacità a 2 al momento
 @Composable
 private fun InventorySection(
-    items: List<Abilities>, //Al momento uso abilities per testare, sarà da costruire anche un nuovo metodo per le liste quando faremo gli oggetti
+    items: List<InventoryItem>, //Al momento uso abilities per testare, sarà da costruire anche un nuovo metodo per le liste quando faremo gli oggetti
     capacityCurrent: Int,   //Da reperire dal personaggio
     capacityMax: Int,       //Da reperire dal personaggio
     onAddItem: () -> Unit
@@ -279,7 +313,7 @@ private fun StatSection(
     //Questa è la soluzione più rapida che ho trovato, si potrebbe provare se no a usare due rettangoli sovrapposti per fare l'effetto, ci si pensa
     LinearProgressIndicator(
         modifier = Modifier.height(15.dp).fillMaxWidth(),
-        progress = { hp.toFloat()/maxHp },
+        progress = { if (maxHp > 0) hp.toFloat()/maxHp else 0f },
         color = Color.Green,
         trackColor = Color.Red
     )
@@ -339,20 +373,20 @@ private fun StatSection(
 
 
 @Composable
-private fun ListItems(abilities: List<Abilities>,modifier: Modifier) {
+private fun ListItems(elements: List<DisplayableItem>, modifier: Modifier) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(10.dp)
     ) {
-        items(abilities) { ability ->
-            AbilityItem(ability)
+        items(elements) { element ->
+            AbilityItem(element)
             Spacer(Modifier.height(5.dp))
         }
     }
 }
 
 @Composable
-private fun AbilityItem(ability: Abilities) {
+private fun AbilityItem(item: DisplayableItem) {
     Column() {
         Row(
             modifier = Modifier
@@ -369,13 +403,13 @@ private fun AbilityItem(ability: Abilities) {
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(ability.name, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text(ability.description, fontSize = 16.sp)
+                Text(item.name, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(item.description, fontSize = 16.sp)
             }
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            Text("${ability.cost} PE", fontSize = 18.sp)
+            Text("${item.numericValue} PE", fontSize = 18.sp)
         }
     }
 }

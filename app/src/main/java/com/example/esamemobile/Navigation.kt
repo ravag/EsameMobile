@@ -25,7 +25,7 @@ import org.koin.androidx.compose.koinViewModel
 
 sealed interface EsameMobileRoute {
     @Serializable data object Home : EsameMobileRoute
-    @Serializable data class CharacterDetails(val charId: Int) : EsameMobileRoute
+    @Serializable data class CharacterDetails(val charId: String) : EsameMobileRoute
     @Serializable data object Login : EsameMobileRoute
     @Serializable data object Debug : EsameMobileRoute //Questa è momentanea, sarà da rimuovere in futuro
     @Serializable data object CharacterCreation : EsameMobileRoute

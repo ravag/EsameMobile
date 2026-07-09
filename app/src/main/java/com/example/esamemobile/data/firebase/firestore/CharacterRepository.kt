@@ -7,7 +7,7 @@ import kotlinx.coroutines.tasks.await
 
 interface CharacterRepository {
     suspend fun insertNewCharacter(userId: String, char: Character): Result<Unit>
-    suspend fun readCharacter(userId: String, charId: Int?): Result<Character?>
+    suspend fun readCharacter(userId: String, charId: String?): Result<Character?>
     suspend fun getAllUserCharacters(userId: String): Result<List<Character>>
 }
 
@@ -15,7 +15,7 @@ class CharacterRepositoryImpl(private val db: FirebaseFirestore): CharacterRepos
     override suspend fun insertNewCharacter(userId: String, char: Character): Result<Unit> {
         return try {
             db.collection("users").document(userId)
-                .collection("characters").document("${char.id}")
+                .collection("characters").document(char.id)
                 .set(char).await()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -23,11 +23,11 @@ class CharacterRepositoryImpl(private val db: FirebaseFirestore): CharacterRepos
         }
     }
 
-    override suspend fun readCharacter(userId: String, charId: Int?): Result<Character?> {
+    override suspend fun readCharacter(userId: String, charId: String?): Result<Character?> {
         if (charId == null) return Result.failure(IllegalStateException("Nessun personaggio selezionato"))
         return try {
             val doc = db.collection("users").document(userId)
-                .collection("characters").document("$charId")
+                .collection("characters").document(charId)
                 .get().await()
             Result.success(doc.toObject<Character>())
         } catch (e: Exception) {

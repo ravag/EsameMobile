@@ -35,7 +35,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -44,6 +43,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -306,6 +307,7 @@ fun CharacterItem(char: Character, onClick: () -> Unit) {
 fun CharacterHeader(
     name: String,
     age: Int,
+    ageMalusSign: Int?,
     characterClass: String,
     level: Int,
     imageUri: String?,
@@ -336,7 +338,16 @@ fun CharacterHeader(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text("Nome: $name", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text("Età: $age", color = Color.White, fontSize = 16.sp)
+                Row() {
+                    Text("Età: $age", color = Color.White, fontSize = 16.sp)
+                    IconButton(
+                        onClick = {}
+                    ) {
+                        if (ageMalusSign != null) {
+                            Icon(painter = painterResource(ageMalusSign), "age malus")
+                        }
+                    }
+                }
                 Text("Classe: $characterClass", color = Color.White, fontSize = 16.sp)
                 Text("Livello: $level", color = Color.White, fontSize = 16.sp)
             }

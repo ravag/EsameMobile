@@ -223,7 +223,7 @@ fun StatisticStepContent(
                             actions.onSetAgeMalusDialogVisible(true)
                         }
                     ) {
-                        val malusDrawableId = state.ageMalusDescription?.drawableId
+                        val malusDrawableId = state.ageMalusId
 
                         if (malusDrawableId != null) {
                             Icon(
