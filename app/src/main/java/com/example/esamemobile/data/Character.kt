@@ -35,8 +35,8 @@ data class Character(
 
     val speed: Double = 0.0,
     val maxCapacity: Int = 0,
-    val armor: ArmorTypes? = null,
+    val armor: ArmorTypes = ArmorTypes.NONE,
     val imageUri: String = ""
 )
 
-enum class ArmorTypes { LIGHT, MEDIUM, HEAVY }
+enum class ArmorTypes(val text: String) { LIGHT("leggera"), MEDIUM("media"), HEAVY("pesante"), NONE("nessuna") }

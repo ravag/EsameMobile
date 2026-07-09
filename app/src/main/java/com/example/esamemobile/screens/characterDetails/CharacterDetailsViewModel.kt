@@ -11,6 +11,7 @@ import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.firebase.firestore.CharacterRepository
 import com.example.esamemobile.data.repositories.CharacterSolver
 import com.example.esamemobile.data.repositories.StaticDataRepository
+import com.example.esamemobile.screens.characterCreation.InventoryItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,19 +32,21 @@ data class CharacterDetailsState(
     val abilityUsageCurrent: Int = 2,
     val abilityUsageMax: Int = 2,
     val malusDrawableId: Int? = null,
+    val ageMalusDialog: Boolean = false,
     val isLoading: Boolean = true
 )
 
 data class CharacterDetailsActions(
     val onTabSelected: (Int) -> Unit,
     val onLevelUp: (Context) -> Unit,   //Da modificare una volta che si ha la schermata di levelUp
+    val onMalusButton: () -> Unit,
     val onDecreaseHp: () -> Unit,
     val onIncreaseHp: () -> Unit,
     val onAddPower: (Context) -> Unit,  //Da modificare una volta che si hanno i poteri fatti bene e un idea di cosa dovrebbe fare questo pulsante
     val onDecreaseUsage: () -> Unit,
     val onIncreaseUsage: () -> Unit,
     val onAddItem: (Context) -> Unit,   //Stessa cosa dei poteri, tanto sono entrambi solo nome, descrizione, costo/peso
-    //val onUseItem: () -> Unit, //Al momento non utilizzata, bisogna capire come e quando usarla
+    val onUseItem: (InventoryItem) -> Unit, //Al momento non utilizzata, bisogna capire come e quando usarla
 )
 
 class CharacterDetailsViewModel (
@@ -86,12 +89,14 @@ class CharacterDetailsViewModel (
     val actions = CharacterDetailsActions(
         onTabSelected = { index -> _state.update { it.copy(selectedTab = CharacterDetailsTab.entries[index]) } },
         onLevelUp = { context -> Toast.makeText(context,"Level up", Toast.LENGTH_SHORT).show() },
+        onMalusButton = { _state.update { it.copy(ageMalusDialog = !_state.value.ageMalusDialog) } },
         onDecreaseHp = { updateCharacter { it.copy(currentHP = (it.currentHP - 1).coerceAtLeast(0)) } },
         onIncreaseHp = { updateCharacter { it.copy(currentHP = (it.currentHP + 1).coerceAtMost(it.maxHP)) } },
         onAddPower = { context -> Toast.makeText(context, "aggiungi potere", Toast.LENGTH_SHORT).show() },
         onDecreaseUsage = { _state.update { it.copy(abilityUsageCurrent = (it.abilityUsageCurrent-1).coerceAtLeast(0)) } },
         onIncreaseUsage = { _state.update { it.copy(abilityUsageCurrent = (it.abilityUsageCurrent+1).coerceAtMost(it.abilityUsageMax)) }},
-        onAddItem = {context -> Toast.makeText(context, "aggiungi oggetto", Toast.LENGTH_SHORT).show() }
+        onAddItem = {context -> Toast.makeText(context, "aggiungi oggetto", Toast.LENGTH_SHORT).show() },
+        onUseItem = { item -> updateCharacter { it.copy(inventoryList = it.inventoryList.filter { obj -> obj != item }) } }
     )
 
 

@@ -2,6 +2,7 @@ package com.example.esamemobile.screens.characterDetails
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,10 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -48,6 +53,7 @@ import com.example.esamemobile.screens.characterCreation.InventoryItem
 import com.example.esamemobile.utilities.CharacterDetailsNavigationBar
 import com.example.esamemobile.utilities.CharacterHeader
 import com.example.esamemobile.utilities.DisplayableItem
+import com.example.esamemobile.utilities.GenericBasicDialog
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -79,6 +85,16 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
             )
         }
     ) { innerPadding ->
+
+        if (detailsState.ageMalusDialog) {
+            GenericBasicDialog(
+                show = true,
+                title = detailsState.character!!.ageMalus!!.name,
+                description = detailsState.character.ageMalus.desc,
+                onConfirm = detailsActions.onMalusButton
+            )
+        }
+
         when {
             detailsState.isLoading -> {
                 Box(
@@ -107,6 +123,7 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                         characterClass = detailsState.character.chosenClass!!.name,
                         level = detailsState.character.character.level,
                         imageUri = detailsState.character.character.imageUri,
+                        onMalusClick = detailsActions.onMalusButton,
                         modifier = Modifier) {
                         detailsActions.onLevelUp(context)
                     }
@@ -118,6 +135,8 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                                 onDecrease = detailsActions.onDecreaseHp,
                                 onIncrease = detailsActions.onIncreaseHp,
                                 stats = detailsState.character.stats,
+                                speed = detailsState.character.character.speed,
+                                armor = detailsState.character.character.armor.text,
                                 normalizedStats = detailsState.character.normalizedStats
                             )
                         }
@@ -144,7 +163,8 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                                 items = detailsState.character.character.inventoryList,
                                 capacityCurrent = detailsState.character.character.inventoryList.sumOf { it.numericValue }, // Se numeric value è il peso
                                 capacityMax = detailsState.character.character.maxCapacity,
-                                onAddItem = { detailsActions.onAddItem(context) }
+                                onAddItem = { detailsActions.onAddItem(context) },
+                                onUseItem = detailsActions.onUseItem
                             )
                         }
                     }
@@ -250,7 +270,10 @@ private fun EvolutionPowersSection(
             onAddClick = onAddPower,
             titleWeight = 0.9f
         )
-        ListItems(abilities, Modifier.fillMaxWidth().weight(1f))
+        ListItems(
+            elements = abilities,
+            modifier =  Modifier.fillMaxWidth().weight(1f),
+            costText = { item -> Text("${item.numericValue} PE", fontSize = 18.sp) })
     }
 }
 
@@ -288,7 +311,8 @@ private fun InventorySection(
     items: List<InventoryItem>, //Al momento uso abilities per testare, sarà da costruire anche un nuovo metodo per le liste quando faremo gli oggetti
     capacityCurrent: Int,   //Da reperire dal personaggio
     capacityMax: Int,       //Da reperire dal personaggio
-    onAddItem: () -> Unit
+    onAddItem: () -> Unit,
+    onUseItem: (InventoryItem) -> Unit
 ) {
     Column {
         InventoryHeader(
@@ -296,7 +320,11 @@ private fun InventorySection(
             max = capacityMax,
             onAddClick = onAddItem
         )
-        ListItems(items, Modifier.fillMaxWidth().weight(1f))
+        ListItems(
+            elements = items,
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            onUseItem = onUseItem,
+            costText = { item -> Text("Peso: ${item.numericValue}", fontSize = 18.sp) })
     }
 }
 
@@ -307,6 +335,8 @@ private fun StatSection(
     onDecrease: () -> Unit,
     onIncrease: () -> Unit,
     stats: List<Int>,
+    speed: Double,
+    armor: String,
     normalizedStats: List<Float>
 ) {
     CountRow("HP",hp,maxHp,onDecrease,onIncrease)
@@ -329,7 +359,7 @@ private fun StatSection(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Velocità")
-            Text("6m", fontSize = 25.sp)
+            Text("${speed}m", fontSize = 25.sp)
         }
 
         Column(
@@ -338,7 +368,7 @@ private fun StatSection(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Armatura")
-            Text("media", fontSize = 25.sp)
+            Text(armor, fontSize = 25.sp)
         }
     }
 
@@ -353,12 +383,11 @@ private fun StatSection(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Statistiche")
-            //Da sostituire con il nome corretto delle statistiche, me le sono dimenticate
             Text("Forza ${stats[0]}")
-            Text("Forza ${stats[1]}")
-            Text("Forza ${stats[2]}")
-            Text("Forza ${stats[3]}")
-            Text("Forza ${stats[4]}")
+            Text("Agilità ${stats[1]}")
+            Text("Intelligenza ${stats[2]}")
+            Text("Carisma ${stats[3]}")
+            Text("Potenza ${stats[4]}")
         }
 
         Column(
@@ -366,27 +395,59 @@ private fun StatSection(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            statChart(normalizedStats,listOf("EDO","E M","OLT","O S","CEM"), lineColor = Color.Magenta, fillColor = Color.Magenta.copy(alpha = 0.3f))
+            statChart(normalizedStats,listOf("FOR","AGI","INT","CAR","POT"), lineColor = Color.Magenta, fillColor = Color.Magenta.copy(alpha = 0.3f))
         }
     }
 }
 
 
 @Composable
-private fun ListItems(elements: List<DisplayableItem>, modifier: Modifier) {
+private fun ListItems(
+    elements: List<DisplayableItem>,
+    modifier: Modifier,
+    costText: @Composable (DisplayableItem) -> Unit = { },
+    onUseItem: ((InventoryItem) -> Unit)? = null) { //Per quando avremo oggetti funzionanti e utilizzabili
+    var selectedItem by remember { mutableStateOf<DisplayableItem?>(null) }
+
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(10.dp)
     ) {
         items(elements) { element ->
-            AbilityItem(element)
+            GenericListElement(
+                item = element,
+                onClick = { selectedItem = element },
+                costText = costText
+            )
             Spacer(Modifier.height(5.dp))
         }
+    }
+
+    selectedItem?.let { item ->
+        val usable = item as? InventoryItem
+
+        GenericBasicDialog(
+            show = true,
+            title = item.name,
+            description = item.description,
+            onConfirm = {
+                if (usable != null && onUseItem != null) {
+                    onUseItem(item)
+                }
+                selectedItem = null
+            },
+            onConfirmText = if (usable != null && onUseItem != null) "Usa" else "Chiudi",
+            onDismissText = if (usable != null && onUseItem != null) "Chiudi" else null,
+            onDismiss = if (usable != null && onUseItem != null) { {selectedItem = null} } else null
+        )
     }
 }
 
 @Composable
-private fun AbilityItem(item: DisplayableItem) {
+private fun GenericListElement(
+    item: DisplayableItem,
+    onClick: () -> Unit,
+    costText: @Composable (DisplayableItem) -> Unit = { }) {
     Column() {
         Row(
             modifier = Modifier
@@ -395,7 +456,8 @@ private fun AbilityItem(item: DisplayableItem) {
                     color = Color.Magenta
                 )
                 .padding(8.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .clickable(onClick = onClick),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top
         ) {
@@ -409,7 +471,7 @@ private fun AbilityItem(item: DisplayableItem) {
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            Text("${item.numericValue} PE", fontSize = 18.sp)
+            costText(item)
         }
     }
 }

@@ -3,9 +3,11 @@ package com.example.esamemobile.screens.characterCreation
 import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
+import com.example.esamemobile.data.ArmorTypes
 import com.example.esamemobile.data.repositories.StaticDataRepository
 import com.example.esamemobile.data.staticData.AgeMalus
 import com.example.esamemobile.utilities.DisplayableItem
+import com.example.esamemobile.data.Character
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -481,8 +483,8 @@ fun calculateModifier(stat: Int): Int {
     }
 }
 
-fun CharacterCreationState.toCharacter(): com.example.esamemobile.data.Character {
-    return com.example.esamemobile.data.Character(
+fun CharacterCreationState.toCharacter(): Character {
+    return Character(
         name = this.name.ifBlank { "Soggetto Ignoto" },
         level = 0,
         age = this.age.toIntOrNull() ?: 0,
@@ -501,7 +503,7 @@ fun CharacterCreationState.toCharacter(): com.example.esamemobile.data.Character
         inventoryList = this.inventoryList,
         speed = this.speed,
         maxCapacity = this.maxWeightCapacity,
-        armor = null
+        armor = ArmorTypes.NONE
     )
 }
 

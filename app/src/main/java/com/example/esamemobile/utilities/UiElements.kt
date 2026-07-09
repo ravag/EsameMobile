@@ -33,6 +33,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.BasicAlertDialog
@@ -312,6 +313,7 @@ fun CharacterHeader(
     level: Int,
     imageUri: String?,
     modifier: Modifier = Modifier,
+    onMalusClick: () -> Unit,
     onLevelUpClick: () -> Unit,
 ) {
     val parsedUri = remember(imageUri) {
@@ -338,13 +340,29 @@ fun CharacterHeader(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text("Nome: $name", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Row() {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text("Età: $age", color = Color.White, fontSize = 16.sp)
-                    IconButton(
-                        onClick = {}
-                    ) {
-                        if (ageMalusSign != null) {
-                            Icon(painter = painterResource(ageMalusSign), "age malus")
+                    if (age > 70) {
+                        IconButton(
+                            onClick = onMalusClick
+                        ) {
+                            if (ageMalusSign != null) {
+                                Icon(
+                                    painter = painterResource(ageMalusSign),
+                                    "age malus",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.Warning,
+                                    contentDescription = "Dettagli Malus",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
                 }
