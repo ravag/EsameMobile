@@ -6,14 +6,15 @@ import com.google.firebase.firestore.toObject
 import kotlinx.coroutines.tasks.await
 
 interface CharacterRepository {
-    suspend fun insertNewCharacter(userId: String, char: Character): Result<Unit>
+    suspend fun insertNewCharacter(userId: String?, char: Character): Result<Unit>
     suspend fun readCharacter(userId: String, charId: String?): Result<Character?>
     suspend fun getAllUserCharacters(userId: String): Result<List<Character>>
     suspend fun updateCharacter(userId: String, character: Character): Result<Unit>
 }
 
 class CharacterRepositoryImpl(private val db: FirebaseFirestore): CharacterRepository {
-    override suspend fun insertNewCharacter(userId: String, char: Character): Result<Unit> {
+    override suspend fun insertNewCharacter(userId: String?, char: Character): Result<Unit> {
+        if (userId == null) return Result.failure(IllegalStateException("Nessun utente loggato"))
         return try {
             db.collection("users").document(userId)
                 .collection("characters").document(char.id)

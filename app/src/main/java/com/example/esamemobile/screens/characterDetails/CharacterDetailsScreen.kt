@@ -120,7 +120,7 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                         name = detailsState.character.character.name,
                         age = detailsState.character.character.age,
                         ageMalusSign = detailsState.malusDrawableId,
-                        characterClass = detailsState.character.chosenClass!!.name,
+                        characterClass = detailsState.character.chosenClass?.name,
                         level = detailsState.character.character.level,
                         imageUri = detailsState.character.character.imageUri,
                         onMalusClick = detailsActions.onMalusButton,
@@ -383,11 +383,11 @@ private fun StatSection(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Statistiche")
-            Text("Forza ${stats[0]}")
-            Text("Agilità ${stats[1]}")
-            Text("Intelligenza ${stats[2]}")
-            Text("Carisma ${stats[3]}")
-            Text("Potenza ${stats[4]}")
+            Text("Forza ${stats[0]}  (${calculateModifier(stats[0])})")
+            Text("Agilità ${stats[1]} (${calculateModifier(stats[1])})")
+            Text("Intelligenza ${stats[2]} (${calculateModifier(stats[2])})")
+            Text("Carisma ${stats[3]} (${calculateModifier(stats[3])})")
+            Text("Potenza ${stats[4]} (${calculateModifier(stats[4])})")
         }
 
         Column(
@@ -473,6 +473,17 @@ private fun GenericListElement(
 
             costText(item)
         }
+    }
+}
+
+private fun calculateModifier(stat: Int): Int {
+    return when (stat) {
+        in Int.MIN_VALUE..1 -> -1
+        in 2..3 -> 0
+        in 4..5 -> 1
+        in 6..7 -> 2
+        in 8..9 -> 3
+        else -> 4
     }
 }
 

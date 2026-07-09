@@ -13,6 +13,7 @@ import com.example.esamemobile.data.firebase.firestore.UserRepositoryImpl
 import com.example.esamemobile.data.repositories.CharacterSolver
 import com.example.esamemobile.data.repositories.SettingsRepository
 import com.example.esamemobile.data.repositories.StaticDataRepository
+import com.example.esamemobile.screens.characterCreation.CharacterCreationViewModel
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewModel
 import com.example.esamemobile.screens.home.HomeViewModel
 import com.example.esamemobile.screens.login.LoginViewModel
@@ -42,4 +43,5 @@ val appModule = module {
     viewModel { SessionViewModel(get(),get()) }
     viewModel { HomeViewModel(get(),get(), get()) }
     viewModel { CharacterDetailsViewModel(get(),get(),get(),get()) }
+    viewModel { CharacterCreationViewModel(get(),get(),get()) }
 }

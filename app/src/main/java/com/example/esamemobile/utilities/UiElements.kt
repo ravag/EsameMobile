@@ -309,7 +309,7 @@ fun CharacterHeader(
     name: String,
     age: Int,
     ageMalusSign: Int?,
-    characterClass: String,
+    characterClass: String?,
     level: Int,
     imageUri: String?,
     modifier: Modifier = Modifier,
@@ -366,7 +366,7 @@ fun CharacterHeader(
                         }
                     }
                 }
-                Text("Classe: $characterClass", color = Color.White, fontSize = 16.sp)
+                Text("Classe: ${characterClass ?: "nessuna"}", color = Color.White, fontSize = 16.sp)
                 Text("Livello: $level", color = Color.White, fontSize = 16.sp)
             }
 

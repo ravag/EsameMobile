@@ -46,7 +46,7 @@ class HomeViewModel(
 
     val actions = HomeActions(
         onPageSelect = {index -> _state.update { it.copy(homePage = HomePage.entries[index]) }},
-        getAllCharacters = {},
+        getAllCharacters = { loadCharacters() },
         getAllGroups = {},
         onCharactersSearch = { text -> _state.update {
             it.copy(filteredCharacters = if(text.isBlank()) it.characters else it.characters.filter { char -> char.name.contains(text,ignoreCase = true) } ) } },
@@ -55,11 +55,12 @@ class HomeViewModel(
     )
 
     init {
-        load()
+        loadCharacters()
+        loadGroups()
     }
 
     //Funzione che carica tutti i personaggi e i gruppi
-    private fun load() {
+    private fun loadCharacters() {
         val userId = authRepository.currentUser?.uid ?: return
 
         viewModelScope.launch {
@@ -68,29 +69,32 @@ class HomeViewModel(
                     _state.update { it.copy(characters = loadedCharacters, filteredCharacters = loadedCharacters) }
                 }
                 .onFailure { exception -> Log.w("debug","OOPSIE ${exception.message}")}
-            _state.update { it.copy(groups = listOf(
-                    Group(id = "1", name = "I Zingari", ""),
-                    Group(id = "2", name = "I fantastici 2", ""),
-                    Group(id = "3", name = "I tre moschettoni", ""),
-                    Group(id = "4", name = "I quattro gatti", ""),
-                    Group(id = "5", name = "I cojo(n)ti", ""),
-                    Group(id = "6", name = "Giovanni", ""),
-                    Group(id = "7", name = "Miku club", ""),
-                    Group(id = "8", name = "Il gioco perso", ""),
-                    Group(id = "9", name = "Ci piacciono i treni", ""),
-                    Group(id = "10", name = "Impottibile!", "")),
-                filteredGroups = listOf(
-                    Group(id = "1", name = "I Zingari", ""),
-                    Group(id = "2", name = "I fantastici 2", ""),
-                    Group(id = "3", name = "I tre moschettoni", ""),
-                    Group(id = "4", name = "I quattro gatti", ""),
-                    Group(id = "5", name = "I cojo(n)ti", ""),
-                    Group(id = "6", name = "Giovanni", ""),
-                    Group(id = "7", name = "Miku club", ""),
-                    Group(id = "8", name = "Il gioco perso", ""),
-                    Group(id = "9", name = "Ci piacciono i treni", ""),
-                    Group(id = "10", name = "Impottibile!", ""))
-                ) }
         }
+    }
+
+    private fun loadGroups() {
+        _state.update { it.copy(groups = listOf(
+                Group(id = "1", name = "I Zingari", ""),
+                Group(id = "2", name = "I fantastici 2", ""),
+                Group(id = "3", name = "I tre moschettoni", ""),
+                Group(id = "4", name = "I quattro gatti", ""),
+                Group(id = "5", name = "I cojo(n)ti", ""),
+                Group(id = "6", name = "Giovanni", ""),
+                Group(id = "7", name = "Miku club", ""),
+                Group(id = "8", name = "Il gioco perso", ""),
+                Group(id = "9", name = "Ci piacciono i treni", ""),
+                Group(id = "10", name = "Impottibile!", "")),
+            filteredGroups = listOf(
+                Group(id = "1", name = "I Zingari", ""),
+                Group(id = "2", name = "I fantastici 2", ""),
+                Group(id = "3", name = "I tre moschettoni", ""),
+                Group(id = "4", name = "I quattro gatti", ""),
+                Group(id = "5", name = "I cojo(n)ti", ""),
+                Group(id = "6", name = "Giovanni", ""),
+                Group(id = "7", name = "Miku club", ""),
+                Group(id = "8", name = "Il gioco perso", ""),
+                Group(id = "9", name = "Ci piacciono i treni", ""),
+                Group(id = "10", name = "Impottibile!", ""))
+        ) }
     }
 }

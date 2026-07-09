@@ -68,7 +68,7 @@ fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsVi
             CharacterDetailsScreen(charState,characterVm.actions, navController)
         }
         composable<EsameMobileRoute.CharacterCreation> {
-            val creationVM = viewModel<CharacterCreationViewModel>()
+            val creationVM = koinViewModel<CharacterCreationViewModel>()
             val creationState by creationVM.state.collectAsStateWithLifecycle()
 
             CharacterCreationScreen(
