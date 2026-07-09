@@ -65,7 +65,15 @@ fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsVi
             val characterVm = koinViewModel<CharacterDetailsViewModel>()
             characterVm.charId.value = route.charId
             val charState by characterVm.state.collectAsStateWithLifecycle()
-            CharacterDetailsScreen(charState,characterVm.actions, navController)
+            CharacterDetailsScreen(
+                charState,
+                characterVm.actions.copy(
+                    onLevelUp = {
+                        navController.navigate(EsameMobileRoute.LevelUp(charId = route.charId))
+                    }
+                ),
+                navController
+            )
         }
         composable<EsameMobileRoute.CharacterCreation> {
             val creationVM = koinViewModel<CharacterCreationViewModel>()

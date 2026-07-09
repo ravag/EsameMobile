@@ -38,7 +38,7 @@ data class CharacterDetailsState(
 
 data class CharacterDetailsActions(
     val onTabSelected: (Int) -> Unit,
-    val onLevelUp: (Context) -> Unit,   //Da modificare una volta che si ha la schermata di levelUp
+    val onLevelUp: () -> Unit,   //Da modificare una volta che si ha la schermata di levelUp
     val onMalusButton: () -> Unit,
     val onDecreaseHp: () -> Unit,
     val onIncreaseHp: () -> Unit,
@@ -88,7 +88,7 @@ class CharacterDetailsViewModel (
 
     val actions = CharacterDetailsActions(
         onTabSelected = { index -> _state.update { it.copy(selectedTab = CharacterDetailsTab.entries[index]) } },
-        onLevelUp = { context -> Toast.makeText(context,"Level up", Toast.LENGTH_SHORT).show() },
+        onLevelUp = { },
         onMalusButton = { _state.update { it.copy(ageMalusDialog = !_state.value.ageMalusDialog) } },
         onDecreaseHp = { updateCharacter { it.copy(currentHP = (it.currentHP - 1).coerceAtLeast(0)) } },
         onIncreaseHp = { updateCharacter { it.copy(currentHP = (it.currentHP + 1).coerceAtMost(it.maxHP)) } },

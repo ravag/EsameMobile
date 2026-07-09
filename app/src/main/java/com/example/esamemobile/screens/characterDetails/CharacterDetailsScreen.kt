@@ -125,7 +125,7 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                         imageUri = detailsState.character.character.imageUri,
                         onMalusClick = detailsActions.onMalusButton,
                         modifier = Modifier) {
-                        detailsActions.onLevelUp(context)
+                        detailsActions.onLevelUp()
                     }
                     when (detailsState.selectedTab) {
                         CharacterDetailsTab.STATS  -> {
