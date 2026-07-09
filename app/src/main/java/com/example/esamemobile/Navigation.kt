@@ -1,6 +1,7 @@
 package com.example.esamemobile
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -18,6 +19,8 @@ import com.example.esamemobile.screens.login.LoginScreen
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewModel
 import kotlinx.serialization.Serializable
 import com.example.esamemobile.screens.characterCreation.CharacterCreationViewModel
+import com.example.esamemobile.screens.characterLevelUp.LevelUpScreen
+import com.example.esamemobile.screens.characterLevelUp.LevelUpViewModel
 import com.example.esamemobile.screens.home.HomeViewModel
 import com.example.esamemobile.screens.login.LoginViewModel
 import com.example.esamemobile.screens.settings.SettingsScreen
@@ -31,7 +34,7 @@ sealed interface EsameMobileRoute {
     @Serializable data object Debug : EsameMobileRoute //Questa è momentanea, sarà da rimuovere in futuro
     @Serializable data object CharacterCreation : EsameMobileRoute
     @Serializable data object Settings: EsameMobileRoute
-    @Serializable data class LevelUp(val character: Character) : EsameMobileRoute
+    @Serializable data class LevelUp(val charId: String) : EsameMobileRoute
 }
 
 
@@ -78,6 +81,25 @@ fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsVi
         composable<EsameMobileRoute.Settings> {
             val settingsState by settingsVm.state.collectAsStateWithLifecycle()
             SettingsScreen(settingsState,settingsVm.actions,navController)
+        }
+        composable<EsameMobileRoute.LevelUp> { bakcStackEntry ->
+            val route = bakcStackEntry.toRoute<EsameMobileRoute.LevelUp>()
+
+            val levelUpVM = koinViewModel<LevelUpViewModel>()
+
+            LaunchedEffect(route.charId) {
+                levelUpVM.initLevelUp(route.charId)
+            }
+
+            val levelUpState by levelUpVM.state.collectAsStateWithLifecycle()
+
+            levelUpState?.let { state ->
+                LevelUpScreen(
+                    charId = route.charId,
+                    viewModel = levelUpVM,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

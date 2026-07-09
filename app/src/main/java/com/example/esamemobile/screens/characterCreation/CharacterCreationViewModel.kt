@@ -8,6 +8,7 @@ import com.example.esamemobile.data.repositories.StaticDataRepository
 import com.example.esamemobile.data.staticData.AgeMalus
 import com.example.esamemobile.utilities.DisplayableItem
 import com.example.esamemobile.data.Character
+import com.example.esamemobile.data.calculateModifier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -470,17 +471,6 @@ fun calculateBaseDamage(power: Int): String {
         in 6..7 -> "1d8"
         in 8..9 -> "1d10"
         else -> "1d12"
-    }
-}
-
-fun calculateModifier(stat: Int): Int {
-    return when (stat) {
-        in Int.MIN_VALUE..1 -> -1
-        in 2..3 -> 0
-        in 4..5 -> 1
-        in 6..7 -> 2
-        in 8..9 -> 3
-        else -> 4
     }
 }
 

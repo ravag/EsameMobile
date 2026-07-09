@@ -9,6 +9,7 @@ interface CharacterRepository {
     suspend fun insertNewCharacter(userId: String, char: Character): Result<Unit>
     suspend fun readCharacter(userId: String, charId: String?): Result<Character?>
     suspend fun getAllUserCharacters(userId: String): Result<List<Character>>
+    suspend fun updateCharacter(userId: String, character: Character): Result<Unit>
 }
 
 class CharacterRepositoryImpl(private val db: FirebaseFirestore): CharacterRepository {
@@ -41,6 +42,17 @@ class CharacterRepositoryImpl(private val db: FirebaseFirestore): CharacterRepos
                 .collection("characters").get()
                 .await()
             Result.success(docs.map { it.toObject<Character>() })
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateCharacter(userId: String, character: Character): Result<Unit> {
+        return try {
+            db.collection("users").document(userId)
+                .collection("characters").document(character.id)
+                .set(character).await()
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }

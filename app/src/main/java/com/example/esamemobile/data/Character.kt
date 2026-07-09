@@ -42,3 +42,14 @@ data class Character(
 )
 
 enum class ArmorTypes(val text: String) { LIGHT("leggera"), MEDIUM("media"), HEAVY("pesante"), NONE("nessuna") }
+
+fun calculateModifier(stat: Int): Int {
+    return when (stat) {
+        in Int.MIN_VALUE..1 -> -1
+        in 2..3 -> 0
+        in 4..5 -> 1
+        in 6..7 -> 2
+        in 8..9 -> 3
+        else -> 4
+    }
+}

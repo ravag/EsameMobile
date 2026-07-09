@@ -78,6 +78,7 @@ import androidx.core.content.FileProvider
 import androidx.navigation.ActivityNavigatorExtras
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.esamemobile.data.calculateModifier
 import com.example.esamemobile.utilities.GenericBasicDialog
 import java.io.File
 
