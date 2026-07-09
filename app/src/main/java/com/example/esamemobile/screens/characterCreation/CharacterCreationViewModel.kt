@@ -11,6 +11,7 @@ import com.example.esamemobile.data.Character
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.Serializable
 import java.util.UUID
 
 enum class CreationStep { STATISTICS, ABILITIES, INVENTORY }
@@ -507,6 +508,7 @@ fun CharacterCreationState.toCharacter(): Character {
     )
 }
 
+@Serializable
 data class AbilityItem(
     override val id: String = UUID.randomUUID().toString(),
     override val name: String = "",
@@ -514,6 +516,7 @@ data class AbilityItem(
     override val numericValue: Int = 0
 ) : DisplayableItem
 
+@Serializable
 data class InventoryItem(
     override val id: String = UUID.randomUUID().toString(),
     override val name: String = "",

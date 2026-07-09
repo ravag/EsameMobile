@@ -9,6 +9,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.example.esamemobile.data.Character
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsScreen
 import com.example.esamemobile.screens.characterCreation.CharacterCreationScreen
 import com.example.esamemobile.screens.DebugDatabaseScreen
@@ -30,6 +31,7 @@ sealed interface EsameMobileRoute {
     @Serializable data object Debug : EsameMobileRoute //Questa è momentanea, sarà da rimuovere in futuro
     @Serializable data object CharacterCreation : EsameMobileRoute
     @Serializable data object Settings: EsameMobileRoute
+    @Serializable data class LevelUp(val character: Character) : EsameMobileRoute
 }
 
 

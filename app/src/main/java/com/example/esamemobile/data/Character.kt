@@ -6,8 +6,10 @@ import com.example.esamemobile.data.staticData.GameClass
 import com.example.esamemobile.screens.characterCreation.AbilityItem
 import com.example.esamemobile.screens.characterCreation.InventoryItem
 import com.google.firebase.firestore.DocumentId
+import kotlinx.serialization.Serializable
 import java.util.UUID
 
+@Serializable
 data class Character(
     @DocumentId
     val id: String = UUID.randomUUID().toString(),
