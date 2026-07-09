@@ -38,6 +38,8 @@ import com.example.esamemobile.utilities.CharacterList
 import com.example.esamemobile.utilities.GroupList
 import com.example.esamemobile.utilities.NavigationBottomBarWithFAB
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavHostController
 import com.example.esamemobile.EsameMobileRoute
 import com.example.esamemobile.utilities.CharacterItem
@@ -62,6 +64,10 @@ fun HomeScreen(
 //            Character(id = 3, name = "Ettore Pelacane", "")
 //        )
 //    }
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        homeActions.getAllCharacters()
+    }
 
     LaunchedEffect(homeState.homePage) {
         focusManager.clearFocus()
