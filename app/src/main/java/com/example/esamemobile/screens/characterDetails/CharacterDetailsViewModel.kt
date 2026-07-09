@@ -38,7 +38,7 @@ data class CharacterDetailsState(
 
 data class CharacterDetailsActions(
     val onTabSelected: (Int) -> Unit,
-    val onLevelUp: () -> Unit,   //Da modificare una volta che si ha la schermata di levelUp
+    val onLevelUp: () -> Unit,
     val onMalusButton: () -> Unit,
     val onDecreaseHp: () -> Unit,
     val onIncreaseHp: () -> Unit,
@@ -88,7 +88,7 @@ class CharacterDetailsViewModel (
 
     val actions = CharacterDetailsActions(
         onTabSelected = { index -> _state.update { it.copy(selectedTab = CharacterDetailsTab.entries[index]) } },
-        onLevelUp = { },
+        onLevelUp = { /*Non capisco pk io debba lasciare sta funzione vuota ma se la riempio non va e se la tolgo non va, sarà il mio talismano finché non lo capirò*/},
         onMalusButton = { _state.update { it.copy(ageMalusDialog = !_state.value.ageMalusDialog) } },
         onDecreaseHp = { updateCharacter { it.copy(currentHP = (it.currentHP - 1).coerceAtLeast(0)) } },
         onIncreaseHp = { updateCharacter { it.copy(currentHP = (it.currentHP + 1).coerceAtMost(it.maxHP)) } },

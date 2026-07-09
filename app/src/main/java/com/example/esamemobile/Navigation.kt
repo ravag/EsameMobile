@@ -67,12 +67,11 @@ fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsVi
             val charState by characterVm.state.collectAsStateWithLifecycle()
             CharacterDetailsScreen(
                 charState,
-                characterVm.actions.copy(
-                    onLevelUp = {
-                        navController.navigate(EsameMobileRoute.LevelUp(charId = route.charId))
-                    }
-                ),
-                navController
+                characterVm.actions.copy(),
+                navController,
+                onNavigateToLevelup = {
+                    navController.navigate(EsameMobileRoute.LevelUp(charId = route.charId))
+                }
             )
         }
         composable<EsameMobileRoute.CharacterCreation> {
@@ -92,22 +91,13 @@ fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsVi
         }
         composable<EsameMobileRoute.LevelUp> { bakcStackEntry ->
             val route = bakcStackEntry.toRoute<EsameMobileRoute.LevelUp>()
-
             val levelUpVM = koinViewModel<LevelUpViewModel>()
 
-            LaunchedEffect(route.charId) {
-                levelUpVM.initLevelUp(route.charId)
-            }
-
-            val levelUpState by levelUpVM.state.collectAsStateWithLifecycle()
-
-            levelUpState?.let { state ->
-                LevelUpScreen(
-                    charId = route.charId,
-                    viewModel = levelUpVM,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
+            LevelUpScreen(
+                charId = route.charId,
+                viewModel = levelUpVM,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

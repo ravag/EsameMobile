@@ -64,7 +64,7 @@ import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: CharacterDetailsActions, navController: NavHostController) {
+fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: CharacterDetailsActions, navController: NavHostController, onNavigateToLevelup: () -> Unit) {
 
     val context = LocalContext.current
     //var selectedIndex by remember { mutableStateOf(0) }
@@ -139,9 +139,11 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                         level = detailsState.character.character.level,
                         imageUri = detailsState.character.character.imageUri,
                         onMalusClick = detailsActions.onMalusButton,
-                        modifier = Modifier) {
-                        detailsActions.onLevelUp()
-                    }
+                        modifier = Modifier,
+                        onLevelUpClick = {
+                            onNavigateToLevelup()
+                        }
+                        )
                     when (detailsState.selectedTab) {
                         CharacterDetailsTab.STATS  -> {
                             StatSection(

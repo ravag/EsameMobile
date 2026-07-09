@@ -15,6 +15,14 @@ import java.util.logging.Level
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.calculateModifier
 
+enum class LevelUpStep {
+    CHOOSE_CLASS,
+    CHOOSE_PERK_TYPE,
+    EDIT_STATISTICS,
+    EDIT_ABILITIES
+    // Potrebbero servirmi lo step subclass e lo step rollHP
+}
+
 enum class LevelUpOption {
     GAIN_PE_CHAR_3,
     GAIN_PE_CHAR_5,
@@ -28,6 +36,8 @@ enum class LevelUpOption {
 
 data class LevelUpState(
     val character: Character? = null,
+    val currentStep: LevelUpStep = LevelUpStep.CHOOSE_PERK_TYPE,
+
     val currentLevel: Int = 1,
     val strengthModifier: Int = 0,
     val hpRolled: Int = 0,
