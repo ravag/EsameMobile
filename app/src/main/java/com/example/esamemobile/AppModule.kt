@@ -45,5 +45,5 @@ val appModule = module {
     viewModel { HomeViewModel(get(),get(), get()) }
     viewModel { CharacterDetailsViewModel(get(),get(),get(),get()) }
     viewModel { CharacterCreationViewModel(get(),get(),get()) }
-    viewModel { LevelUpViewModel(get(),get()) }
+    viewModel { LevelUpViewModel(get(),get(), get()) }
 }
