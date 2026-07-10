@@ -137,7 +137,11 @@ class CharacterCreationViewModel(
                                 val bytes = fileRepository.readBytes(currentState.avatarUri.toUri())
 
                                 bytes?.let {
-                                    url = imagesRepository.uploadImage(it,id,"characters")
+                                    val result = imagesRepository.uploadImage(it,id,"characters")
+                                    result.fold(
+                                        onSuccess = { res -> url = res },
+                                        onFailure = { exception -> Log.w("debug","Errore salvataggio supabase ${exception.message}") }
+                                    )
                                 }
                             }
                             val newCharacter = currentState.toCharacter(id,url)

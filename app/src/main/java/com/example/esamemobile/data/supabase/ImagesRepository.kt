@@ -4,19 +4,26 @@ import android.util.Log
 import io.github.jan.supabase.storage.Storage
 
 interface ImagesRepository {
-    suspend fun uploadImage(fileBytes: ByteArray, fileName: String, path: String): String
+    suspend fun uploadImage(fileBytes: ByteArray, fileName: String, path: String): Result<String>
 }
 
 class ImagesRepositoryImpl(private val storage: Storage): ImagesRepository {
 
-    override suspend fun uploadImage(fileBytes: ByteArray, fileName: String, path: String): String {
-        val bucket = storage.from("images")
+    override suspend fun uploadImage(fileBytes: ByteArray, fileName: String, path: String): Result<String> {
+        return try {
+            val bucket = storage.from("images")
+            val filePath = "$path/${fileName}.jpg"
 
-        bucket.upload("$path/${fileName}.jpg",fileBytes) {
-            upsert = false
+            bucket.upload(filePath,fileBytes) {
+                upsert = true
+            }
+
+            val url = "${bucket.publicUrl(filePath)}?t=${System.currentTimeMillis()}"
+            Result.success(url)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
 
-        return   bucket.publicUrl("$path/${fileName}.jpg")
     }
 
 }

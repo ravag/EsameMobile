@@ -127,10 +127,14 @@ class SettingsViewModel(
                     val bytes = fileRepository.readBytes(uri.toUri())
 
                     bytes?.let {
-                        url = imagesRepository.uploadImage(
+                        val result = imagesRepository.uploadImage(
                             it,
                             authRepository.currentUser!!.uid,
                             "users"
+                        )
+                        result.fold(
+                            onSuccess = { path -> url = path },
+                            onFailure = {exception -> Log.w("debug","Errore salvataggio supabase ${exception.message}") }
                         )
                     }
                     val result = userRepository.updateUserImage(
