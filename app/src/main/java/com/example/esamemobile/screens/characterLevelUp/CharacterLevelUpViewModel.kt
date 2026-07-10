@@ -14,6 +14,8 @@ import kotlinx.coroutines.launch
 import java.util.logging.Level
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.calculateModifier
+import com.example.esamemobile.data.repositories.StaticDataRepository
+import com.example.esamemobile.data.staticData.GameClass
 
 enum class LevelUpStep {
     CHOOSE_CLASS,
@@ -54,6 +56,8 @@ data class LevelUpState(
     val selectedClassId: String? = null,
     val selectedSubClassId: String? = null,
 
+    val gameClasses: List<GameClass>,
+
     val isLevelUpComplete: Boolean = false
 )
 
@@ -69,7 +73,8 @@ data class LevelUpActions(
 
 class LevelUpViewModel(
     private val characterRepository: CharacterRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val staticDataRepository: StaticDataRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow<LevelUpState?>(null)
     val state = _state.asStateFlow()
@@ -103,10 +108,20 @@ class LevelUpViewModel(
                 options.add(LevelUpOption.STAT_BONUS_2)
             }
 
+            val initialStep = if (character.level == 0) {
+                LevelUpStep.CHOOSE_CLASS
+            } else {
+                LevelUpStep.CHOOSE_PERK_TYPE
+            }
+
+            val classesFromJson = staticDataRepository.allGameClasses
+
             _state.value = LevelUpState(
                 character = character,
+                currentStep = initialStep,
                 currentLevel = nextLevel,
-                availableOptions = options
+                availableOptions = options,
+                gameClasses = classesFromJson
             )
         }
     }

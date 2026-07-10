@@ -1,20 +1,33 @@
 package com.example.esamemobile.screens.characterLevelUp
 
 import android.text.Layout
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +44,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.esamemobile.data.staticData.GameClass
+import com.example.esamemobile.screens.characterCreation.AbilityItem
 import com.example.esamemobile.utilities.GenericStepContent
 import java.util.logging.Level
 
@@ -154,7 +169,7 @@ fun LevelUpScreen(
 
             when (currentStep) {
                 LevelUpStep.CHOOSE_CLASS -> {
-                    ChooseClassContent(state = currentState, actions = actions)
+                    ChooseClassContent(state = currentState, actions = actions, allClasses = currentState.gameClasses)
                 }
 
                 LevelUpStep.CHOOSE_PERK_TYPE -> {
@@ -177,10 +192,13 @@ fun LevelUpScreen(
 @Composable
 fun ChooseClassContent(
     state: LevelUpState,
-    actions: LevelUpActions
+    actions: LevelUpActions,
+    allClasses: List<GameClass>
 ) {
+    var expandedClassId by remember { mutableStateOf<String?>(null) }
     Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Text(
             text = if (state.selectedClassId == null) "Seleziona Classe" else "Seleziona Sotto-Classe",
@@ -192,7 +210,150 @@ fun ChooseClassContent(
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        //TODO: Inserisci la struttura delle liste di abilità qui sotto prendendole dai json
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+        allClasses.forEach { gameClass ->
+            val isExpanded = expandedClassId == gameClass.id
+            val isSelected = state.selectedClassId == gameClass.id
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                        else MaterialTheme.colorScheme.surfaceVariant
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                expandedClassId = if (isExpanded) null else gameClass.id
+                            }
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = gameClass.name,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = gameClass.description,
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Icon(
+                            imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (isExpanded) "Riduci" else "Espandi",
+                            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    AnimatedVisibility(visible = isExpanded) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+                            Text(
+                                text = "Abilità di Base",
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 14.sp
+                            )
+                            gameClass.baseAbilities.forEach { ability ->
+                                ClassAbilityPreviewItem(name = ability.name, description = ability.description)
+                            }
+
+                            Spacer(Modifier.height(4.dp))
+
+                            Text(
+                                text = "Abilità Avanzate",
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontSize = 14.sp
+                            )
+                            gameClass.advancedAbilities.forEach { ability ->
+                                ClassAbilityPreviewItem(name = ability.name, description = ability.description)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 4.dp))
+
+        Text(
+            "Fai la tua scelta:",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(12.dp))
+                .padding(8.dp)
+        ) {
+            allClasses.forEach { gameClass ->
+                val isSelected = state.selectedClassId == gameClass.id
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { actions.onSelectedClass(gameClass.id) }
+                        .padding(vertical = 8.dp, horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = isSelected,
+                        onClick = { actions.onSelectedClass(gameClass.id) }
+                    )
+                    Text(
+                        text = gameClass.name,
+                        fontSize = 16.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ClassAbilityPreviewItem(name: String, description: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(8.dp))
+            .padding(10.dp)
+    ) {
+        Text(
+            text = name,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = description,
+            fontSize = 12.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            lineHeight = 16.sp
+        )
     }
 }
 
