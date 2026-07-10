@@ -42,7 +42,7 @@ data class LevelUpState(
 
     val currentLevel: Int = 1,
     val strengthModifier: Int = 0,
-    val hpRolled: Int = 0,
+    val hpRolled: Int? = null,
     val isHpRolled: Boolean = false,
 
     val selectedOption: LevelUpOption? = null,
@@ -59,7 +59,21 @@ data class LevelUpState(
     val gameClasses: List<GameClass>,
 
     val isLevelUpComplete: Boolean = false
-)
+) {
+    val isCurrentStepValid: Boolean
+        get() = when (currentStep) {
+            LevelUpStep.CHOOSE_CLASS -> {
+                if (character?.level == 0) selectedClassId != null
+                else if (currentLevel >= 6) selectedSubClassId != null
+                else true
+            }
+            LevelUpStep.CHOOSE_PERK_TYPE -> {
+                isHpRolled && selectedOption != null
+            }
+            LevelUpStep.EDIT_STATISTICS -> selectedStatToUpgrade != null
+            LevelUpStep.EDIT_ABILITIES -> selectedAbilityToUpgrade != null
+        }
+}
 
 data class LevelUpActions(
     val onRollHp: () -> Unit,
@@ -68,7 +82,9 @@ data class LevelUpActions(
     val onSelectAbilityToUpgrade: (String) -> Unit,
     val onSelectedClass: (String) -> Unit,
     val onSelectedSubClass: (String) -> Unit,
-    val onConfirmLevelUp: (Context, () -> Unit) -> Unit
+    val onConfirmLevelUp: (Context, () -> Unit) -> Unit,
+    val onNextStep: () -> Unit,
+    val onBackStep: (() -> Unit) -> Unit
 )
 
 class LevelUpViewModel(
@@ -97,24 +113,35 @@ class LevelUpViewModel(
                 options.add(LevelUpOption.GAIN_PE_CHAR_5)
             }
             options.add(LevelUpOption.UPGRADE_ABILITY)
-            options.add(LevelUpOption.BASE_CLASS_ABILITY)
+
+            val classesFromJson = staticDataRepository.allGameClasses
+            val currentCharacterClass = classesFromJson.find { it.id == character.chosenClass }
+
+            val hasAllBaseAbilities = if (currentCharacterClass != null) {
+                currentCharacterClass.baseAbilities.all { baseAbility ->
+                    character.classAbilitiesList.contains(baseAbility.name)
+                }
+            } else {
+                false
+            }
+
+            if (!hasAllBaseAbilities) {
+                options.add(LevelUpOption.BASE_CLASS_ABILITY)
+            }
 
             if (nextLevel >= 6) {
-                val hasAllBase = checkVisualIfHasAllBaseAbilities(character)
-                if (hasAllBase) {
+                if (hasAllBaseAbilities) {
                     options.add(LevelUpOption.ADVANCED_CLASS_ABILITY)
                 }
                 options.add(LevelUpOption.NEW_CLASS_BASE_ABILITY)
                 options.add(LevelUpOption.STAT_BONUS_2)
             }
 
-            val initialStep = if (character.level == 0) {
-                LevelUpStep.CHOOSE_CLASS
-            } else {
-                LevelUpStep.CHOOSE_PERK_TYPE
+            val initialStep = when {
+                character.level == 0 -> LevelUpStep.CHOOSE_CLASS
+                nextLevel == 6 -> LevelUpStep.CHOOSE_CLASS
+                else -> LevelUpStep.CHOOSE_PERK_TYPE
             }
-
-            val classesFromJson = staticDataRepository.allGameClasses
 
             _state.value = LevelUpState(
                 character = character,
@@ -185,8 +212,8 @@ class LevelUpViewModel(
 
             var updatedChar = char.copy(
                 level = currentState.currentLevel,
-                maxHP = char.maxHP + currentState.hpRolled,
-                currentHP = char.currentHP + currentState.hpRolled
+                maxHP = char.maxHP + (currentState.hpRolled ?: 0),
+                currentHP = char.currentHP + (currentState.hpRolled ?: 0)
             )
 
             if (char.level == 0 && currentState.selectedClassId != null) {
@@ -204,14 +231,14 @@ class LevelUpViewModel(
                     val pe = charismaModifier + 3
                     updatedChar.copy(
                         peAvailable = updatedChar.peAvailable + pe,
-                        classAbilitiesList = updatedChar.classAbilitiesList + "BOUNS_PE_3"
+                        classAbilitiesList = updatedChar.classAbilitiesList + "BONUS_PE_3"
                     )
                 }
                 LevelUpOption.GAIN_PE_CHAR_5 -> {
                     val pe = charismaModifier + 5
                     updatedChar.copy(
                         peAvailable = updatedChar.peAvailable + pe,
-                        classAbilitiesList = updatedChar.classAbilitiesList + "BOUNS_PE_5"
+                        classAbilitiesList = updatedChar.classAbilitiesList + "BONUS_PE_5"
                     )
                 }
                 LevelUpOption.STAT_BONUS_2 -> {
@@ -244,11 +271,53 @@ class LevelUpViewModel(
                     Toast.makeText(context, "Errore durante il salvataggio: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
                 }
             }
+        },
+
+        onNextStep = {
+            _state.update { currentState ->
+                if (currentState == null || !currentState.isCurrentStepValid) return@update currentState
+
+                val nextStep = when (currentState.currentStep) {
+                    LevelUpStep.CHOOSE_CLASS -> LevelUpStep.CHOOSE_PERK_TYPE
+                    LevelUpStep.CHOOSE_PERK_TYPE -> {
+                        when (currentState.selectedOption) {
+                            LevelUpOption.STAT_BONUS_2 -> LevelUpStep.EDIT_STATISTICS
+                            LevelUpOption.UPGRADE_ABILITY,
+                            LevelUpOption.BASE_CLASS_ABILITY,
+                            LevelUpOption.ADVANCED_CLASS_ABILITY,
+                            LevelUpOption.NEW_CLASS_BASE_ABILITY -> LevelUpStep.EDIT_ABILITIES
+                            else -> currentState.currentStep
+                        }
+                    }
+                    else -> currentState.currentStep
+                }
+                currentState.copy(currentStep = nextStep)
+            }
+        },
+
+        onBackStep = { onNavigateBack ->
+            _state.update { currentState ->
+                if (currentState == null) return@update currentState
+
+                when (currentState.currentStep) {
+                    LevelUpStep.CHOOSE_CLASS -> {
+                        onNavigateBack()
+                        currentState
+                    }
+                    LevelUpStep.CHOOSE_PERK_TYPE -> {
+                        if (currentState.character?.level == 0) {
+                            currentState.copy(currentStep = LevelUpStep.CHOOSE_CLASS)
+                        } else {
+                            onNavigateBack()
+                            currentState
+                        }
+                    }
+                    LevelUpStep.EDIT_STATISTICS, LevelUpStep.EDIT_ABILITIES -> {
+                        currentState.copy(currentStep = LevelUpStep.CHOOSE_PERK_TYPE)
+                    }
+                }
+            }
         }
     )
-
-    private fun checkVisualIfHasAllBaseAbilities(character: Character): Boolean {
-        return false
-    }
 }
 

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -41,9 +42,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.esamemobile.R
+import com.example.esamemobile.data.calculateModifier
 import com.example.esamemobile.data.staticData.GameClass
 import com.example.esamemobile.screens.characterCreation.AbilityItem
 import com.example.esamemobile.utilities.GenericStepContent
@@ -75,7 +79,7 @@ fun LevelUpScreen(
         return
     }
 
-    var currentStep by remember(currentState.currentStep) { mutableStateOf(currentState.currentStep) }
+    val currentStep = currentState.currentStep
 
     Scaffold(
         bottomBar = {
@@ -86,18 +90,7 @@ fun LevelUpScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 OutlinedButton(
-                    onClick = {
-                        when (currentStep) {
-                            LevelUpStep.CHOOSE_CLASS -> onNavigateBack()
-                            LevelUpStep.CHOOSE_PERK_TYPE -> {
-                                if (currentState.character?.level == 0) currentStep = LevelUpStep.CHOOSE_CLASS
-                                else onNavigateBack()
-                            }
-                            LevelUpStep.EDIT_STATISTICS, LevelUpStep.EDIT_ABILITIES -> {
-                                currentStep = LevelUpStep.CHOOSE_PERK_TYPE
-                            }
-                        }
-                    },
+                    onClick = { actions.onBackStep(onNavigateBack) },
                     modifier = Modifier.weight(1f).height(50.dp)
                 ) {
                     Text(
@@ -116,6 +109,7 @@ fun LevelUpScreen(
                 if (isFinalStep) {
                     Button(
                         onClick = { actions.onConfirmLevelUp(context, onNavigateBack) },
+                        enabled = currentState.isCurrentStepValid,
                         modifier = Modifier
                             .weight(1f)
                             .height(50.dp)
@@ -124,24 +118,8 @@ fun LevelUpScreen(
                     }
                 } else {
                     Button(
-                        onClick = {
-                            when (currentStep) {
-                                LevelUpStep.CHOOSE_CLASS -> {
-                                        currentStep = LevelUpStep.CHOOSE_PERK_TYPE
-                                }
-                                LevelUpStep.CHOOSE_PERK_TYPE -> {
-                                    if (currentState.selectedOption == LevelUpOption.STAT_BONUS_2) {
-                                        currentStep = LevelUpStep.EDIT_STATISTICS
-                                    } else if (currentState.selectedOption == LevelUpOption.UPGRADE_ABILITY ||
-                                        currentState.selectedOption == LevelUpOption.BASE_CLASS_ABILITY ||
-                                        currentState.selectedOption == LevelUpOption.ADVANCED_CLASS_ABILITY ||
-                                        currentState.selectedOption == LevelUpOption.NEW_CLASS_BASE_ABILITY) {
-                                        currentStep = LevelUpStep.EDIT_ABILITIES
-                                    }
-                                }
-                                else -> {}
-                            }
-                        },
+                        onClick = { actions.onNextStep() },
+                        enabled = currentState.isCurrentStepValid,
                         modifier = Modifier
                             .weight(1f)
                             .height(50.dp)
@@ -362,8 +340,14 @@ fun ChoosePerkContent(
     state: LevelUpState,
     actions: LevelUpActions
 ) {
+    val strengthValue = state.character?.strength ?: 0
+    val strengthModifier = calculateModifier(strengthValue)
+    val charismaValue = state.character?.charisma ?: 0
+    val charismaModifier = calculateModifier(charismaValue)
+
     Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Text(
             text = "Incremento HP e Scelta del Perk di Livello",
@@ -371,9 +355,166 @@ fun ChoosePerkContent(
             fontWeight = FontWeight.SemiBold
         )
 
-        //TODO: Parte 1: Interfaccia di roll del dado per nuovi HP massimi con magari preview dell'aggiornamento dei HP totali
+        //.::PARTE 1: ROLL HP::.
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "1. Incrememnto HP",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
 
-        //TODO: Parte 2: Elenco delle opzioni di level up disponibili con breve disclaimer per avvertire che ognuna è selezionabile una singola volta
+                Text(
+                    text = "Lancia il dado per determinare di quanti HP aumenterà il massimo dei tuoi HP (1d6 + Modificatore di Forza)",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                val hpRollValue = state.hpRolled
+                val currentMaxHp = state.character?.maxHP ?: 0
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "HP Attuali: $currentMaxHp",
+                            fontSize = 14.sp
+                        )
+                        if (hpRollValue != null) {
+                            val totalNewHp = currentMaxHp + hpRollValue + strengthModifier
+                            Text(
+                                "Nuovi HP totali: $totalNewHp",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "Dettaglio: $currentMaxHp (Base) + $hpRollValue (Dado) + $strengthModifier (Modificatore di Forza) = $totalNewHp",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                lineHeight = 14.sp
+                            )
+                        }
+                    }
+
+                    if (hpRollValue == null) {
+                        Card(
+                            modifier = Modifier
+                                .clickable { actions.onRollHp() }
+                                .padding(4.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier.padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_dice),
+                                    contentDescription = "Lancia il dado",
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    MaterialTheme.colorScheme.primary,
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .padding(horizontal = 20.dp, vertical = 12.dp)
+                        ) {
+                            Text(
+                                "+${hpRollValue + strengthModifier} HP",
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                fontSize = 18.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+        //.::PARTE 2: SCELTA BONUS::.
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                "2. Seleziona un Perk di Livello",
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                "Attenzione: puoi selezionare ciascuna opzione una sola volta per livello.\n" +
+                        "Se un'opzione appare più volte significa che quella scelta può essere ripetuta più volte nel corso dei diversi livelli.\n\n" +
+                        "Scegli il bonus che preferisci ottenere:",
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(Modifier.height(4.dp))
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        MaterialTheme.colorScheme.surfaceContainerLow,
+                        RoundedCornerShape(12.dp)
+                    )
+                    .padding(8.dp)
+            ) {
+                state.availableOptions.forEachIndexed { index, availableOption ->
+                    val isSelected = state.selectedOption == availableOption
+
+                    val label = when (availableOption) {
+                        LevelUpOption.STAT_BONUS_2 -> "+2 a una statistica (massimo 10)"
+                        LevelUpOption.UPGRADE_ABILITY -> "Potenzia un potere evoluzione"
+                        LevelUpOption.BASE_CLASS_ABILITY -> "Nuova abilità dalla tua classe"
+                        LevelUpOption.ADVANCED_CLASS_ABILITY -> "Nuova abilità avanzata dalla tua classe"
+                        LevelUpOption.NEW_CLASS_BASE_ABILITY -> "Nuova abilità base da un'altra classe"
+                        LevelUpOption.GAIN_PE_CHAR_3 -> "Guadagna ${3 + charismaModifier} PE"
+                        LevelUpOption.GAIN_PE_CHAR_5 -> "Guadagna ${5 + charismaModifier} PE"
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { actions.onSelectedOption(availableOption) }
+                            .padding(vertical = 8.dp, horizontal = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = isSelected,
+                            onClick = { actions.onSelectedOption(availableOption) }
+                        )
+                        Text(
+                            text = label,
+                            fontSize = 15.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            modifier = Modifier.padding(start = 8.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
