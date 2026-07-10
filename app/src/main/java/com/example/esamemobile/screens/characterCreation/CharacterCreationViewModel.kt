@@ -1,7 +1,6 @@
 package com.example.esamemobile.screens.characterCreation
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
@@ -22,9 +21,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.coroutines.launch
 import java.util.UUID
 import androidx.core.net.toUri
-import com.example.esamemobile.data.repositories.FileRepositoryImpl
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.example.esamemobile.data.repositories.FileRepository
 
 enum class CreationStep { STATISTICS, ABILITIES, INVENTORY }
 
@@ -107,7 +104,7 @@ class CharacterCreationViewModel(
     private val characterRepository: CharacterRepository,
     private val authRepository: AuthRepository,
     private val imagesRepository: ImagesRepository,
-    private val fileRepository: FileRepositoryImpl
+    private val fileRepository: FileRepository
 ): ViewModel() {
     private val _state = MutableStateFlow(CharacterCreationState())
     val state = _state.asStateFlow()

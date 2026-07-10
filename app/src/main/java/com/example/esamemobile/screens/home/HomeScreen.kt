@@ -159,7 +159,7 @@ fun HomeScreen(
                             contentPadding = PaddingValues(0.dp),
                             elems = homeState.filteredCharacters,
                         ) {character ->
-                            CharacterItem(character) { navController.navigate(EsameMobileRoute.CharacterDetails(character.id)) }
+                            CharacterItem(character) { navController.navigate(EsameMobileRoute.CharacterDetails(character.id,true)) }
                         }
                     }
 
