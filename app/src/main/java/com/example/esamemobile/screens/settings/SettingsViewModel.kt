@@ -1,12 +1,18 @@
 package com.example.esamemobile.screens.settings
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.collectAsState
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.firebase.firestore.UserRepository
+import com.example.esamemobile.data.repositories.FileRepository
 import com.example.esamemobile.data.repositories.SettingsRepository
+import com.example.esamemobile.data.supabase.ImagesRepository
+import com.example.esamemobile.screens.characterCreation.toCharacter
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +26,7 @@ import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 enum class ThemeValues(val text: String) {
     LIGHT("Chiaro"),
@@ -30,6 +37,7 @@ enum class ThemeValues(val text: String) {
 data class SettingsState(
     val username: String = "",
     val tempName: String = "",
+    val imageUrl: String = "",
     val isLoggedIn: Boolean = true,
     val password: String = "",
     val theme: ThemeValues = ThemeValues.SYSTEM,
@@ -46,20 +54,24 @@ data class SettingsActions(
     val onClickChangePassword: () -> Unit,
     val onThemeChange: (ThemeValues) -> Unit,
     val onDynamicColorsChange: (Boolean) -> Unit,
-    val onLogOut: () -> Unit
+    val onLogOut: () -> Unit,
+    val onAvatarSelected: (String) -> Unit
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModel(
     val repository: SettingsRepository,
     val authRepository: AuthRepository,
-    val userRepository: UserRepository) : ViewModel() {
+    val userRepository: UserRepository,
+    val imagesRepository: ImagesRepository,
+    val fileRepository: FileRepository
+) : ViewModel() {
 
-    private val name: Flow<String> = authRepository.authState.flatMapLatest { user ->
+    private val userData: Flow<Pair<String, String>> = authRepository.authState.flatMapLatest { user ->
         if (user == null) {
-            flowOf("")
+            flowOf(Pair("",""))
         } else {
-            userRepository.usernameObserver(user.uid)
+            userRepository.usernameAndImageObserver(user.uid)
         }
     }
     private val _state = MutableStateFlow(SettingsState())
@@ -67,11 +79,12 @@ class SettingsViewModel(
         repository.theme,
         repository.dynamicColors,
         authRepository.authState,
-        name,
+        userData,
         _state
-    ) { theme,colors,user, fetchedName,currentState -> currentState.copy(
-            username = fetchedName,
-            tempName = if (currentState.changeName) currentState.tempName else fetchedName,
+    ) { theme,colors,user, fetchedData,currentState -> currentState.copy(
+            username = fetchedData.first,
+            tempName = if (currentState.changeName) currentState.tempName else fetchedData.first,
+            imageUrl = fetchedData.second,
             theme= theme,
             dynamicColors = colors,
             isLoggedIn = user != null) }
@@ -106,6 +119,34 @@ class SettingsViewModel(
         onClickChangePassword = { _state.update { it.copy(changePassword = true) } },
         onThemeChange = { themeValue -> viewModelScope.launch { repository.setTheme(themeValue) } },
         onDynamicColorsChange = {colors -> viewModelScope.launch { repository.setDynamicColors(colors) }},
-        onLogOut = {authRepository.logout()}
+        onLogOut = {authRepository.logout()},
+        onAvatarSelected = {uri ->
+            if (authRepository.currentUser != null) {
+                viewModelScope.launch {
+                    var url = ""
+                    val bytes = fileRepository.readBytes(uri.toUri())
+
+                    bytes?.let {
+                        url = imagesRepository.uploadImage(
+                            it,
+                            authRepository.currentUser!!.uid,
+                            "users"
+                        )
+                    }
+                    val result = userRepository.updateUserImage(
+                        authRepository.currentUser!!.uid,
+                        url
+                    )
+                    result.fold(
+                        onSuccess = {
+                            Log.i("debug","immagine forse salvata con successo")
+                        },
+                        onFailure = { exception ->
+                            Log.w("debug", "Errore ${exception.message}")
+                        }
+                    )
+                }
+            }
+        }
     )
 }
