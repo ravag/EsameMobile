@@ -1,6 +1,7 @@
 package com.example.esamemobile.screens.characterCreation
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
@@ -13,12 +14,16 @@ import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.calculateModifier
 import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.firebase.firestore.CharacterRepository
+import com.example.esamemobile.data.supabase.ImagesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.Serializable
 import kotlinx.coroutines.launch
 import java.util.UUID
+import androidx.core.net.toUri
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 enum class CreationStep { STATISTICS, ABILITIES, INVENTORY }
 
@@ -99,7 +104,8 @@ data class CharacterCreationActions(
 class CharacterCreationViewModel(
     private val staticDataRepository: StaticDataRepository,
     private val characterRepository: CharacterRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val imagesRepository: ImagesRepository
 ): ViewModel() {
     private val _state = MutableStateFlow(CharacterCreationState())
     val state = _state.asStateFlow()
@@ -122,8 +128,21 @@ class CharacterCreationViewModel(
                     CreationStep.STATISTICS -> currentState.copy(currentStep = CreationStep.ABILITIES)
                     CreationStep.ABILITIES -> currentState.copy(currentStep = CreationStep.INVENTORY)
                     CreationStep.INVENTORY -> {
-                        val newCharacter = currentState.toCharacter()
                         viewModelScope.launch {
+                            val id = UUID.randomUUID().toString()
+                            var url: String = ""
+                            if (currentState.avatarUri != null) {
+                                val bytes = withContext(Dispatchers.IO) {
+                                    context.contentResolver.openInputStream(currentState.avatarUri.toUri())?.use {
+                                            stream -> stream.readBytes()
+                                    }
+                                }
+
+                                bytes?.let {
+                                    url = imagesRepository.uploadImage(it,id)
+                                }
+                            }
+                            val newCharacter = currentState.toCharacter(id,url)
                             val result = characterRepository.insertNewCharacter(authRepository.currentUser?.uid,newCharacter)
                             result.fold(
                                 onSuccess = {
@@ -150,7 +169,6 @@ class CharacterCreationViewModel(
                     }
                     CreationStep.ABILITIES -> currentState.copy(currentStep = CreationStep.STATISTICS)
                     CreationStep.INVENTORY -> currentState.copy(currentStep = CreationStep.ABILITIES)
-                    else -> currentState
                 }
             }
         },
@@ -493,9 +511,11 @@ fun calculateBaseDamage(power: Int): String {
 
 
 
-fun CharacterCreationState.toCharacter(): Character {
+fun CharacterCreationState.toCharacter(id: String, url: String): Character {
     return Character(
+        id = id,
         name = this.name.ifBlank { "Soggetto Ignoto" },
+        imageUrl = url,
         level = 0,
         age = this.age.toIntOrNull() ?: 0,
         ageMalus = this.ageMalusDescription?.id,

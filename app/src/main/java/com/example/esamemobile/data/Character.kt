@@ -14,6 +14,7 @@ data class Character(
     @DocumentId
     val id: String = UUID.randomUUID().toString(),
     val name: String = "",
+    val imageUrl: String = "",
     val age: Int = 0,
     val ageMalus: String? = null,
     val level: Int = 0,
@@ -38,7 +39,6 @@ data class Character(
     val speed: Double = 0.0,
     val maxCapacity: Int = 0,
     val armor: ArmorTypes = ArmorTypes.NONE,
-    val imageUri: String = ""
 )
 
 enum class ArmorTypes(val text: String) { LIGHT("leggera"), MEDIUM("media"), HEAVY("pesante"), NONE("nessuna") }

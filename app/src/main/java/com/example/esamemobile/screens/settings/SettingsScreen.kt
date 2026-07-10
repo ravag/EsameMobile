@@ -119,7 +119,7 @@ public fun SettingsScreen(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    ImageWithPlaceholder(Uri.parse(""),Size.Lg)
+                    ImageWithPlaceholder("",Size.Lg)
                     Text(settingsState.username)
                 }
             }

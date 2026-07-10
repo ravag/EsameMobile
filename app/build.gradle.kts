@@ -86,6 +86,9 @@ dependencies {
     implementation(libs.koin.androidx.compose)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.coil.compose)
+    implementation(platform(libs.bom))
+    implementation(libs.storage.kt)
+    implementation(libs.ktor.client.android) // engine HTTP per Android
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

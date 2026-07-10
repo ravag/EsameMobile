@@ -261,7 +261,7 @@ fun GroupItem(group: Group, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val imageUri = Uri.parse(group.imageUri)
-            ImageWithPlaceholder(imageUri, Size.Sm)
+            ImageWithPlaceholder("", Size.Sm)
             Spacer(Modifier.size(8.dp))
             Text(
                 group.name,
@@ -291,8 +291,7 @@ fun CharacterItem(char: Character, onClick: () -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val imageUri = Uri.parse(char.imageUri)
-            ImageWithPlaceholder(imageUri, Size.Sm)
+            ImageWithPlaceholder(char.imageUrl, Size.Sm)
             Spacer(Modifier.size(8.dp))
             Text(
                 char.name,
@@ -311,18 +310,18 @@ fun CharacterHeader(
     ageMalusSign: Int?,
     characterClass: String?,
     level: Int,
-    imageUri: String?,
+    imageUrl: String?,
     modifier: Modifier = Modifier,
     onMalusClick: () -> Unit,
     onLevelUpClick: () -> Unit,
 ) {
-    val parsedUri = remember(imageUri) {
-        if (!imageUri.isNullOrEmpty()) {
-            Uri.parse(imageUri)
-        } else {
-            Uri.EMPTY
-        }
-    }
+//    val parsedUri = remember(imageUri) {
+//        if (!imageUri.isNullOrEmpty()) {
+//            Uri.parse(imageUri)
+//        } else {
+//            Uri.EMPTY
+//        }
+//    }
 
     Column(
         modifier = modifier
@@ -381,7 +380,7 @@ fun CharacterHeader(
                 contentAlignment = Alignment.Center
             ) {
                 ImageWithPlaceholder(
-                    uri = parsedUri,
+                    url = imageUrl,
                     size = Size.Lg
                 )
             }
