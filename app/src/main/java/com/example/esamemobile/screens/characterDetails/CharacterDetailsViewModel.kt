@@ -12,6 +12,9 @@ import com.example.esamemobile.data.firebase.firestore.CharacterRepository
 import com.example.esamemobile.data.repositories.CharacterSolver
 import com.example.esamemobile.data.repositories.StaticDataRepository
 import com.example.esamemobile.screens.characterCreation.InventoryItem
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,11 +45,12 @@ data class CharacterDetailsActions(
     val onMalusButton: () -> Unit,
     val onDecreaseHp: () -> Unit,
     val onIncreaseHp: () -> Unit,
-    val onAddPower: (Context) -> Unit,  //Da modificare una volta che si hanno i poteri fatti bene e un idea di cosa dovrebbe fare questo pulsante
+    val onAddPower: (Context) -> Unit,
     val onDecreaseUsage: () -> Unit,
     val onIncreaseUsage: () -> Unit,
-    val onAddItem: (Context) -> Unit,   //Stessa cosa dei poteri, tanto sono entrambi solo nome, descrizione, costo/peso
-    val onUseItem: (InventoryItem) -> Unit, //Al momento non utilizzata, bisogna capire come e quando usarla
+    val onAddItem: (Context) -> Unit,
+    val onUseItem: (InventoryItem) -> Unit,
+    val onScreenExit: () -> Unit
 )
 
 class CharacterDetailsViewModel (
@@ -59,6 +63,8 @@ class CharacterDetailsViewModel (
     val charId = MutableStateFlow<String?>(null)
     private val _state = MutableStateFlow(CharacterDetailsState())
     val state = _state.asStateFlow()
+
+    private val saveScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     init {
         viewModelScope.launch {
@@ -88,7 +94,12 @@ class CharacterDetailsViewModel (
 
     val actions = CharacterDetailsActions(
         onTabSelected = { index -> _state.update { it.copy(selectedTab = CharacterDetailsTab.entries[index]) } },
-        onLevelUp = { /*Non capisco pk io debba lasciare sta funzione vuota ma se la riempio non va e se la tolgo non va, sarà il mio talismano finché non lo capirò*/},
+        onLevelUp = {
+            val userId = authRepository.currentUser?.uid ?: return@CharacterDetailsActions
+            val char = _state.value.character?.character ?: return@CharacterDetailsActions
+
+            viewModelScope.launch { characterRepository.updateCharacter(userId,char) }
+        },
         onMalusButton = { _state.update { it.copy(ageMalusDialog = !_state.value.ageMalusDialog) } },
         onDecreaseHp = { updateCharacter { it.copy(currentHP = (it.currentHP - 1).coerceAtLeast(0)) } },
         onIncreaseHp = { updateCharacter { it.copy(currentHP = (it.currentHP + 1).coerceAtMost(it.maxHP)) } },
@@ -96,7 +107,13 @@ class CharacterDetailsViewModel (
         onDecreaseUsage = { _state.update { it.copy(abilityUsageCurrent = (it.abilityUsageCurrent-1).coerceAtLeast(0)) } },
         onIncreaseUsage = { _state.update { it.copy(abilityUsageCurrent = (it.abilityUsageCurrent+1).coerceAtMost(it.abilityUsageMax)) }},
         onAddItem = {context -> Toast.makeText(context, "aggiungi oggetto", Toast.LENGTH_SHORT).show() },
-        onUseItem = { item -> updateCharacter { it.copy(inventoryList = it.inventoryList.filter { obj -> obj != item }) } }
+        onUseItem = { item -> updateCharacter { it.copy(inventoryList = it.inventoryList.filter { obj -> obj != item }) } },
+        onScreenExit = {
+            val userId = authRepository.currentUser?.uid ?: return@CharacterDetailsActions
+            val char = _state.value.character?.character ?: return@CharacterDetailsActions
+
+            viewModelScope.launch { characterRepository.updateCharacter(userId,char) }
+        }
     )
 
 
@@ -108,6 +125,15 @@ class CharacterDetailsViewModel (
 
         //Bisorrebbe poi salvare il personaggio, al momento non ho il metodo quindi log di debug per ricordare
         Log.i("debug","Salva modifiche")
+    }
+
+    //Per salvataggi in casi di crash o di tornare indietro tramite freccia del telefono e non quella della topBar
+    override fun onCleared() {
+        super.onCleared()
+        val userId = authRepository.currentUser?.uid ?: return
+        val char = _state.value.character?.character ?: return
+
+        saveScope.launch { characterRepository.updateCharacter(userId,char) }
     }
 }
 

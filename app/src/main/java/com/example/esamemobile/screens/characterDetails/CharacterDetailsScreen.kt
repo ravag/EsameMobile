@@ -67,22 +67,16 @@ import kotlin.math.sin
 fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: CharacterDetailsActions, navController: NavHostController, onNavigateToLevelup: () -> Unit) {
 
     val context = LocalContext.current
-    //var selectedIndex by remember { mutableStateOf(0) }
-
-//    var abilities: List<Abilities> = listOf(Abilities("caio","wow caia",1),
-//        Abilities("aaa","wow caia",3),
-//        Abilities("bbb","wow caia",2),
-//        Abilities("cccc","nel mezzo del cammin di nostra vita mi ritrovai per una selva oscura che la diretta via era smarrita, tanto ...",5))
-//
-//    var hp by remember { mutableStateOf(10) }
-//    val maxHp = 10
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {Text("")},
                 navigationIcon = {
-                    IconButton(onClick = {navController.navigateUp()}) {
+                    IconButton(onClick = {
+                        detailsActions.onScreenExit()
+                        navController.navigateUp()
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack,"Indietro")
                     }
                 },
@@ -141,6 +135,7 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                         onMalusClick = detailsActions.onMalusButton,
                         modifier = Modifier,
                         onLevelUpClick = {
+                            detailsActions.onLevelUp()
                             onNavigateToLevelup()
                         }
                         )
