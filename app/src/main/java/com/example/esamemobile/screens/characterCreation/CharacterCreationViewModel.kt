@@ -1,7 +1,6 @@
 package com.example.esamemobile.screens.characterCreation
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
@@ -22,8 +21,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.coroutines.launch
 import java.util.UUID
 import androidx.core.net.toUri
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.example.esamemobile.data.repositories.FileRepository
 
 enum class CreationStep { STATISTICS, ABILITIES, INVENTORY }
 
@@ -105,7 +103,8 @@ class CharacterCreationViewModel(
     private val staticDataRepository: StaticDataRepository,
     private val characterRepository: CharacterRepository,
     private val authRepository: AuthRepository,
-    private val imagesRepository: ImagesRepository
+    private val imagesRepository: ImagesRepository,
+    private val fileRepository: FileRepository
 ): ViewModel() {
     private val _state = MutableStateFlow(CharacterCreationState())
     val state = _state.asStateFlow()
@@ -130,16 +129,16 @@ class CharacterCreationViewModel(
                     CreationStep.INVENTORY -> {
                         viewModelScope.launch {
                             val id = UUID.randomUUID().toString()
-                            var url: String = ""
+                            var url = ""
                             if (currentState.avatarUri != null) {
-                                val bytes = withContext(Dispatchers.IO) {
-                                    context.contentResolver.openInputStream(currentState.avatarUri.toUri())?.use {
-                                            stream -> stream.readBytes()
-                                    }
-                                }
+                                val bytes = fileRepository.readBytes(currentState.avatarUri.toUri())
 
                                 bytes?.let {
-                                    url = imagesRepository.uploadImage(it,id)
+                                    val result = imagesRepository.uploadImage(it,id,"characters")
+                                    result.fold(
+                                        onSuccess = { res -> url = res },
+                                        onFailure = { exception -> Log.w("debug","Errore salvataggio supabase ${exception.message}") }
+                                    )
                                 }
                             }
                             val newCharacter = currentState.toCharacter(id,url)
@@ -191,7 +190,6 @@ class CharacterCreationViewModel(
 
         onAvatarSelected = { uriString ->
             _state.update { it.copy(avatarUri = uriString) }
-
         },
 
         onNameChange = { newName ->

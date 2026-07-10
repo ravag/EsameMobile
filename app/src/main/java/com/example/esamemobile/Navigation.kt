@@ -29,7 +29,7 @@ import org.koin.androidx.compose.koinViewModel
 
 sealed interface EsameMobileRoute {
     @Serializable data object Home : EsameMobileRoute
-    @Serializable data class CharacterDetails(val charId: String) : EsameMobileRoute
+    @Serializable data class CharacterDetails(val charId: String, val enabled: Boolean) : EsameMobileRoute
     @Serializable data object Login : EsameMobileRoute
     @Serializable data object Debug : EsameMobileRoute //Questa è momentanea, sarà da rimuovere in futuro
     @Serializable data object CharacterCreation : EsameMobileRoute
@@ -50,7 +50,7 @@ fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsVi
         composable<EsameMobileRoute.Home> {
             val homeVm = koinViewModel<HomeViewModel>()
             val homeState by homeVm.state.collectAsStateWithLifecycle()
-            HomeScreen(homeState,homeVm.actions,navController)
+            HomeScreen(homeState,homeVm.actions.copy(),navController)
         }
         composable<EsameMobileRoute.Debug> {
             DebugDatabaseScreen(navController)
@@ -58,12 +58,13 @@ fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsVi
         composable<EsameMobileRoute.Login> {
             val loginVm = koinViewModel<LoginViewModel>()
             val loginState by loginVm.state.collectAsStateWithLifecycle()
-            LoginScreen(loginState,loginVm.actions)
+            LoginScreen(loginState,loginVm.actions.copy())
         }
         composable<EsameMobileRoute.CharacterDetails> { backStackEntry ->
             val route = backStackEntry.toRoute<EsameMobileRoute.CharacterDetails>()
             val characterVm = koinViewModel<CharacterDetailsViewModel>()
             characterVm.charId.value = route.charId
+            characterVm.editable = route.enabled
             val charState by characterVm.state.collectAsStateWithLifecycle()
             CharacterDetailsScreen(
                 charState,
@@ -80,14 +81,14 @@ fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsVi
 
             CharacterCreationScreen(
                 creationState = creationState,
-                creationActions = creationVM.actions,
+                creationActions = creationVM.actions.copy(),
                 focusManager = focusManager,
                 navController = navController
             )
         }
         composable<EsameMobileRoute.Settings> {
             val settingsState by settingsVm.state.collectAsStateWithLifecycle()
-            SettingsScreen(settingsState,settingsVm.actions,navController)
+            SettingsScreen(settingsState,settingsVm.actions.copy(),navController)
         }
         composable<EsameMobileRoute.LevelUp> { bakcStackEntry ->
             val route = bakcStackEntry.toRoute<EsameMobileRoute.LevelUp>()

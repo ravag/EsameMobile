@@ -125,21 +125,6 @@ fun HomeScreen(
                     Text("Debug Database", color = Color.Black, fontSize = 12.sp)
                 }
 
-                //Bottone di logout
-//                Button(
-//                    onClick = {
-//                        FirebaseMessaging.getInstance().unsubscribeFromTopic("tutti")
-//                        Toast.makeText(context, "Logout effettuato", Toast.LENGTH_SHORT).show()
-//                        navController.navigate(EsameMobileRoute.Login)
-//                    },
-//                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-//                ) {
-//                    Text(
-//                        text = "Logout",
-//                        color = Color.White,
-//                        fontSize = 16.sp
-//                    )
-//                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -159,7 +144,7 @@ fun HomeScreen(
                             contentPadding = PaddingValues(0.dp),
                             elems = homeState.filteredCharacters,
                         ) {character ->
-                            CharacterItem(character) { navController.navigate(EsameMobileRoute.CharacterDetails(character.id)) }
+                            CharacterItem(character) { navController.navigate(EsameMobileRoute.CharacterDetails(character.id,true)) }
                         }
                     }
 

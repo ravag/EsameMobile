@@ -12,7 +12,8 @@ interface UserRepository {
     suspend fun insertNewUser(userId: String): Result<Unit>
     suspend fun updateToken(token: String): Result<Unit>
     suspend fun updateUsername(userId: String, username: String): Result<Unit>
-    suspend fun usernameObserver(userId: String): Flow<String>
+    suspend fun usernameAndImageObserver(userId: String): Flow<Pair<String, String>>
+    suspend fun updateUserImage(userId: String, imageUrl: String): Result<Unit>
 }
 
 class UserRepositoryImpl(
@@ -26,7 +27,8 @@ class UserRepositoryImpl(
             db.collection("users").document(userId)
                 .set(hashMapOf(
                     "fcmToken" to "",
-                    "name" to username
+                    "name" to username,
+                    "imageUrl" to ""
                 )).await()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -55,19 +57,29 @@ class UserRepositoryImpl(
         }
     }
 
-    override suspend fun usernameObserver(userId: String): Flow<String> {
+    override suspend fun usernameAndImageObserver(userId: String): Flow<Pair<String, String>> {
         return callbackFlow {
             val listener = db.collection("users").document(userId)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
-                        trySend("")
-                        Log.i("bug","mandato:  ")
+                        trySend(Pair("",""))
                         return@addSnapshotListener
                     }
                     val username = snapshot?.getString("name") ?: ""
-                    trySend(username)
+                    val image = snapshot?.getString("imageUrl") ?: ""
+                    trySend(Pair(username,image))
                 }
             awaitClose { listener.remove() }
+        }
+    }
+
+    override suspend fun updateUserImage(userId: String, imageUrl: String): Result<Unit> {
+        return try {
+            db.collection("users").document(userId)
+                .update("imageUrl",imageUrl).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 

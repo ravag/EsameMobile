@@ -11,6 +11,8 @@ import com.example.esamemobile.data.firebase.firestore.GroupRepositoryImpl
 import com.example.esamemobile.data.firebase.firestore.UserRepository
 import com.example.esamemobile.data.firebase.firestore.UserRepositoryImpl
 import com.example.esamemobile.data.repositories.CharacterSolver
+import com.example.esamemobile.data.repositories.FileRepository
+import com.example.esamemobile.data.repositories.FileRepositoryImpl
 import com.example.esamemobile.data.repositories.SettingsRepository
 import com.example.esamemobile.data.repositories.StaticDataRepository
 import com.example.esamemobile.data.supabase.ImagesRepository
@@ -46,6 +48,7 @@ val appModule = module {
     }
     single<Storage> { get<SupabaseClient>().storage }
 
+    single<FileRepository> { FileRepositoryImpl(androidContext()) }
     single { StaticDataRepository(androidContext()) }
     single { CharacterSolver(get()) }
     single { SettingsRepository(get()) }
@@ -56,10 +59,10 @@ val appModule = module {
     single<UserRepository> { UserRepositoryImpl(get(),get()) }
 
     viewModel { LoginViewModel(get(),get()) }
-    viewModel { SettingsViewModel(get(),get(),get()) }
+    viewModel { SettingsViewModel(get(),get(),get(),get(),get()) }
     viewModel { SessionViewModel(get(),get()) }
     viewModel { HomeViewModel(get(),get(), get()) }
     viewModel { CharacterDetailsViewModel(get(),get(),get(),get()) }
-    viewModel { CharacterCreationViewModel(get(),get(),get(),get()) }
-    viewModel { LevelUpViewModel(get(),get(), get()) }
+    viewModel { CharacterCreationViewModel(get(),get(),get(),get(),get()) }
+    viewModel { LevelUpViewModel(get(),get(),get()) }
 }

@@ -41,15 +41,15 @@ data class CharacterDetailsState(
 
 data class CharacterDetailsActions(
     val onTabSelected: (Int) -> Unit,
-    val onLevelUp: () -> Unit,
+    val onLevelUp: (() -> Unit)?,
     val onMalusButton: () -> Unit,
-    val onDecreaseHp: () -> Unit,
-    val onIncreaseHp: () -> Unit,
-    val onAddPower: (Context) -> Unit,
-    val onDecreaseUsage: () -> Unit,
-    val onIncreaseUsage: () -> Unit,
-    val onAddItem: (Context) -> Unit,
-    val onUseItem: (InventoryItem) -> Unit,
+    val onDecreaseHp: (() -> Unit)?,
+    val onIncreaseHp: (() -> Unit)?,
+    val onAddPower: ((Context) -> Unit)?,
+    val onDecreaseUsage: (() -> Unit)?,
+    val onIncreaseUsage: (() -> Unit)?,
+    val onAddItem: ((Context) -> Unit)?,
+    val onUseItem: ((InventoryItem) -> Unit)?,
     val onScreenExit: () -> Unit
 )
 
@@ -60,6 +60,7 @@ class CharacterDetailsViewModel (
     private val staticDataRepository: StaticDataRepository
 ) : ViewModel() {
 
+    var editable: Boolean = false
     val charId = MutableStateFlow<String?>(null)
     private val _state = MutableStateFlow(CharacterDetailsState())
     val state = _state.asStateFlow()
@@ -92,29 +93,45 @@ class CharacterDetailsViewModel (
         }
     }
 
-    val actions = CharacterDetailsActions(
-        onTabSelected = { index -> _state.update { it.copy(selectedTab = CharacterDetailsTab.entries[index]) } },
-        onLevelUp = {
-            val userId = authRepository.currentUser?.uid ?: return@CharacterDetailsActions
-            val char = _state.value.character?.character ?: return@CharacterDetailsActions
+    val actions: CharacterDetailsActions
+        get() = CharacterDetailsActions(
+            onTabSelected = { index -> _state.update { it.copy(selectedTab = CharacterDetailsTab.entries[index]) } },
+            onLevelUp =  if (editable) { {
+                val userId = authRepository.currentUser?.uid ?: return@CharacterDetailsActions
+                val char = _state.value.character?.character ?: return@CharacterDetailsActions
+                viewModelScope.launch { characterRepository.updateCharacter(userId,char) }
+            } } else null,
+            onMalusButton = { _state.update { it.copy(ageMalusDialog = !_state.value.ageMalusDialog) } },
+            onDecreaseHp = if (editable) { {
+                updateCharacter { it.copy(currentHP = (it.currentHP - 1).coerceAtLeast(0)) }
+            } } else null,
+            onIncreaseHp = if (editable) { {
+                updateCharacter { it.copy(currentHP = (it.currentHP + 1).coerceAtMost(it.maxHP)) }
+            } } else null,
+            onAddPower = if (editable) { { context ->
+                Toast.makeText(context, "aggiungi potere", Toast.LENGTH_SHORT).show() }
+            } else null,
+            onDecreaseUsage = if (editable) {
+                { _state.update { it.copy(abilityUsageCurrent = (it.abilityUsageCurrent-1).coerceAtLeast(0)) } }
+            } else null,
+            onIncreaseUsage = if (editable) { {
+                _state.update {
+                    it.copy(abilityUsageCurrent = (it.abilityUsageCurrent+1).coerceAtMost(it.abilityUsageMax)) }
+                }
+            } else null,
+            onAddItem = if (editable) { {context ->
+                Toast.makeText(context, "aggiungi oggetto", Toast.LENGTH_SHORT).show() }
+            } else null,
+            onUseItem = if (editable) { { item ->
+                updateCharacter { it.copy(inventoryList = it.inventoryList.filter { obj -> obj != item }) }
+            } } else null,
+            onScreenExit = {
+                val userId = authRepository.currentUser?.uid ?: return@CharacterDetailsActions
+                val char = _state.value.character?.character ?: return@CharacterDetailsActions
 
-            viewModelScope.launch { characterRepository.updateCharacter(userId,char) }
-        },
-        onMalusButton = { _state.update { it.copy(ageMalusDialog = !_state.value.ageMalusDialog) } },
-        onDecreaseHp = { updateCharacter { it.copy(currentHP = (it.currentHP - 1).coerceAtLeast(0)) } },
-        onIncreaseHp = { updateCharacter { it.copy(currentHP = (it.currentHP + 1).coerceAtMost(it.maxHP)) } },
-        onAddPower = { context -> Toast.makeText(context, "aggiungi potere", Toast.LENGTH_SHORT).show() },
-        onDecreaseUsage = { _state.update { it.copy(abilityUsageCurrent = (it.abilityUsageCurrent-1).coerceAtLeast(0)) } },
-        onIncreaseUsage = { _state.update { it.copy(abilityUsageCurrent = (it.abilityUsageCurrent+1).coerceAtMost(it.abilityUsageMax)) }},
-        onAddItem = {context -> Toast.makeText(context, "aggiungi oggetto", Toast.LENGTH_SHORT).show() },
-        onUseItem = { item -> updateCharacter { it.copy(inventoryList = it.inventoryList.filter { obj -> obj != item }) } },
-        onScreenExit = {
-            val userId = authRepository.currentUser?.uid ?: return@CharacterDetailsActions
-            val char = _state.value.character?.character ?: return@CharacterDetailsActions
-
-            viewModelScope.launch { characterRepository.updateCharacter(userId,char) }
-        }
-    )
+                viewModelScope.launch { characterRepository.updateCharacter(userId,char) }
+            }
+        )
 
 
     private fun updateCharacter(transform: (Character) -> Character) {

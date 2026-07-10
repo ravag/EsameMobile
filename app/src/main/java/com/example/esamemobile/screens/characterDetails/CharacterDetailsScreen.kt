@@ -134,10 +134,10 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                         imageUrl = detailsState.character.character.imageUrl,
                         onMalusClick = detailsActions.onMalusButton,
                         modifier = Modifier,
-                        onLevelUpClick = {
-                            detailsActions.onLevelUp()
-                            onNavigateToLevelup()
-                        }
+                        onLevelUpClick = detailsActions.onLevelUp?.let { {
+                                detailsActions.onLevelUp()
+                                onNavigateToLevelup()
+                            } }
                         )
                     when (detailsState.selectedTab) {
                         CharacterDetailsTab.STATS  -> {
@@ -157,7 +157,7 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                             EvolutionPowersSection(
                                 abilities = detailsState.character.character.abilitiesList,
                                 modifier = Modifier.weight(1f),
-                                onAddPower = { detailsActions.onAddPower(context) }
+                                onAddPower = detailsActions.onAddPower?.let { { detailsActions.onAddPower(context) } }
                             )
                             Spacer(Modifier.height(10.dp))
                             AbilitiesSection(
@@ -175,7 +175,7 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                                 items = detailsState.character.character.inventoryList,
                                 capacityCurrent = detailsState.character.character.inventoryList.sumOf { it.numericValue }, // Se numeric value è il peso
                                 capacityMax = detailsState.character.character.maxCapacity,
-                                onAddItem = { detailsActions.onAddItem(context) },
+                                onAddItem = detailsActions.onAddItem?.let { { detailsActions.onAddItem(context) } },
                                 onUseItem = detailsActions.onUseItem
                             )
                         }
@@ -192,7 +192,7 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
 @Composable
 private fun PowersHeader(
     title: String,
-    onAddClick: () -> Unit,
+    onAddClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     titleWeight: Float = 0.9f
 ) {
@@ -206,11 +206,13 @@ private fun PowersHeader(
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.weight(titleWeight)
         )
-        IconButton(
-            onClick = onAddClick,
-            modifier = Modifier.weight(1f - titleWeight)
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "aggiungi", tint = Color.Magenta)
+        onAddClick?.let {
+            IconButton(
+                onClick = onAddClick,
+                modifier = Modifier.weight(1f - titleWeight)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "aggiungi", tint = Color.Magenta)
+            }
         }
     }
 }
@@ -220,8 +222,8 @@ private fun CountRow(
     title: String,
     current: Int,
     max: Int,
-    onDecrease: () -> Unit,
-    onIncrease: () -> Unit,
+    onDecrease: (() -> Unit)?,
+    onIncrease: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -234,13 +236,21 @@ private fun CountRow(
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.weight(0.7f)
         )
-        IconButton(onClick = onDecrease, modifier = Modifier.weight(0.1f)) {
-            Icon(Icons.Default.Remove, contentDescription = "togli un uso", tint = Color.Magenta)
+
+        onDecrease?.let {
+            IconButton(onClick = onDecrease, modifier = Modifier.weight(0.1f)) {
+                Icon(Icons.Default.Remove, contentDescription = "togli un uso", tint = Color.Magenta)
+            }
         }
+
         Text("$current/$max", modifier = Modifier.weight(0.1f))
-        IconButton(onClick = onIncrease, modifier = Modifier.weight(0.1f)) {
-            Icon(Icons.Default.Add, contentDescription = "aggiungi un uso", tint = Color.Magenta)
+
+        onIncrease?.let {
+            IconButton(onClick = onIncrease, modifier = Modifier.weight(0.1f)) {
+                Icon(Icons.Default.Add, contentDescription = "aggiungi un uso", tint = Color.Magenta)
+            }
         }
+
     }
 }
 
@@ -248,7 +258,7 @@ private fun CountRow(
 private fun InventoryHeader(
     current: Int,
     max: Int,
-    onAddClick: () -> Unit,
+    onAddClick: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -262,8 +272,10 @@ private fun InventoryHeader(
             modifier = Modifier.weight(0.7f)
         )
         Text("Capacità $current/$max", modifier = Modifier.weight(0.2f))
-        IconButton(onClick = onAddClick, modifier = Modifier.weight(0.1f)) {
-            Icon(Icons.Default.Add, contentDescription = "nuovo oggetto", tint = Color.Magenta)
+        onAddClick?.let {
+            IconButton(onClick = onAddClick, modifier = Modifier.weight(0.1f)) {
+                Icon(Icons.Default.Add, contentDescription = "nuovo oggetto", tint = Color.Magenta)
+            }
         }
     }
 }
@@ -272,7 +284,7 @@ private fun InventoryHeader(
 private fun EvolutionPowersSection(
     abilities: List<AbilityItem>,
     modifier: Modifier,
-    onAddPower: () -> Unit
+    onAddPower: (() -> Unit)?
 ) {
     Column(
         modifier = modifier
@@ -295,8 +307,8 @@ private fun AbilitiesSection(
     usageCurrent: Int,
     usageMax: Int,
     modifier: Modifier,
-    onDecreaseUsage: () -> Unit,
-    onIncreaseUsage: () -> Unit
+    onDecreaseUsage: (() -> Unit)?,
+    onIncreaseUsage: (() -> Unit)?
 ) {
     Column(
         modifier = modifier
@@ -323,8 +335,8 @@ private fun InventorySection(
     items: List<InventoryItem>, //Al momento uso abilities per testare, sarà da costruire anche un nuovo metodo per le liste quando faremo gli oggetti
     capacityCurrent: Int,   //Da reperire dal personaggio
     capacityMax: Int,       //Da reperire dal personaggio
-    onAddItem: () -> Unit,
-    onUseItem: (InventoryItem) -> Unit
+    onAddItem: (() -> Unit)?,
+    onUseItem: ((InventoryItem) -> Unit)?
 ) {
     Column {
         InventoryHeader(
@@ -344,8 +356,8 @@ private fun InventorySection(
 private fun StatSection(
     hp: Int,
     maxHp: Int,
-    onDecrease: () -> Unit,
-    onIncrease: () -> Unit,
+    onDecrease: (() -> Unit)?,
+    onIncrease: (() -> Unit)?,
     stats: List<Int>,
     speed: Double,
     armor: String,

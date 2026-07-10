@@ -313,7 +313,7 @@ fun CharacterHeader(
     imageUrl: String?,
     modifier: Modifier = Modifier,
     onMalusClick: () -> Unit,
-    onLevelUpClick: () -> Unit,
+    onLevelUpClick: (() -> Unit)?,
 ) {
 //    val parsedUri = remember(imageUri) {
 //        if (!imageUri.isNullOrEmpty()) {
@@ -387,19 +387,21 @@ fun CharacterHeader(
         }
 
         Spacer(Modifier.height(12.dp))
+        onLevelUpClick?.let {
+            Button(
+                onClick = onLevelUpClick,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                shape = RoundedCornerShape(4.dp)
+            ) {
+                Text(
+                    "Level Up",
+                    color = Color.Black,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
 
-        Button(
-            onClick = onLevelUpClick,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            shape = RoundedCornerShape(4.dp)
-        ) {
-            Text(
-                "Level Up",
-                color = Color.Black,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
