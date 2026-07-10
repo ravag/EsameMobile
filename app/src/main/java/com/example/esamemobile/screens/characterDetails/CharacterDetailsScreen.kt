@@ -131,7 +131,7 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                         ageMalusSign = detailsState.malusDrawableId,
                         characterClass = detailsState.character.chosenClass?.name,
                         level = detailsState.character.character.level,
-                        imageUri = detailsState.character.character.imageUri,
+                        imageUrl = detailsState.character.character.imageUrl,
                         onMalusClick = detailsActions.onMalusButton,
                         modifier = Modifier,
                         onLevelUpClick = {
