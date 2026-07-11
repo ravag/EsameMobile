@@ -51,7 +51,8 @@ data class CharacterDetailsActions(
     val onAddItem: ((Context) -> Unit)?,
     val onUseItem: ((InventoryItem) -> Unit)?,
     val onScreenExit: () -> Unit,
-    val onLoad: () -> Unit
+    val onLoad: () -> Unit,
+    val onDelete: (() -> Unit)?
 )
 
 class CharacterDetailsViewModel (
@@ -62,6 +63,7 @@ class CharacterDetailsViewModel (
 ) : ViewModel() {
 
     var editable: Boolean = false
+    var hasChanged: Boolean = false
     val charId = MutableStateFlow<String?>(null)
     private val _state = MutableStateFlow(CharacterDetailsState())
     val state = _state.asStateFlow()
@@ -74,7 +76,12 @@ class CharacterDetailsViewModel (
             onLevelUp =  if (editable) { {
                 val userId = authRepository.currentUser?.uid ?: return@CharacterDetailsActions
                 val char = _state.value.character?.character ?: return@CharacterDetailsActions
-                viewModelScope.launch { characterRepository.updateCharacter(userId,char) }
+
+                _state.update { it.copy(isLoading = true) }
+
+                if (hasChanged) {
+                    viewModelScope.launch { characterRepository.updateCharacter(userId,char) }
+                }
             } } else null,
             onMalusButton = { _state.update { it.copy(ageMalusDialog = !_state.value.ageMalusDialog) } },
             onDecreaseHp = if (editable) { {
@@ -84,17 +91,23 @@ class CharacterDetailsViewModel (
                 updateCharacter { it.copy(currentHP = (it.currentHP + 1).coerceAtMost(it.maxHP)) }
             } } else null,
             onAddPower = if (editable) { { context ->
+                hasChanged = true
                 Toast.makeText(context, "aggiungi potere", Toast.LENGTH_SHORT).show() }
             } else null,
             onDecreaseUsage = if (editable) {
-                { _state.update { it.copy(abilityUsageCurrent = (it.abilityUsageCurrent-1).coerceAtLeast(0)) } }
+                {
+                    hasChanged = true
+                    _state.update { it.copy(abilityUsageCurrent = (it.abilityUsageCurrent-1).coerceAtLeast(0)) }
+                }
             } else null,
             onIncreaseUsage = if (editable) { {
+                hasChanged = true
                 _state.update {
                     it.copy(abilityUsageCurrent = (it.abilityUsageCurrent+1).coerceAtMost(it.abilityUsageMax)) }
                 }
             } else null,
             onAddItem = if (editable) { {context ->
+                hasChanged = true
                 Toast.makeText(context, "aggiungi oggetto", Toast.LENGTH_SHORT).show() }
             } else null,
             onUseItem = if (editable) { { item ->
@@ -104,9 +117,24 @@ class CharacterDetailsViewModel (
                 val userId = authRepository.currentUser?.uid ?: return@CharacterDetailsActions
                 val char = _state.value.character?.character ?: return@CharacterDetailsActions
 
-                viewModelScope.launch { characterRepository.updateCharacter(userId,char) }
+                if (hasChanged) {
+                    viewModelScope.launch { characterRepository.updateCharacter(userId,char) }
+                }
             },
-            onLoad = { load() }
+            onLoad = { load() },
+            onDelete = if (editable) { {
+                val userId = authRepository.currentUser?.uid ?: return@CharacterDetailsActions
+
+                viewModelScope.launch {
+                    val result = characterRepository.deleteCharacter(userId,state.value.character?.character!!.id)
+                    result.fold(
+                        onSuccess = {
+                            Log.i("debug","Personaggio eliminato con successo")
+                            hasChanged = false
+                                },
+                        onFailure = { exception -> Log.w("debug","Errore eliminazione ${exception.message}") }
+                    )}
+            } } else null
         )
 
     private fun load() {
@@ -138,6 +166,7 @@ class CharacterDetailsViewModel (
     private fun updateCharacter(transform: (Character) -> Character) {
         val current = _state.value.character?.character ?: return
         val updated = transform(current)
+        hasChanged = true
 
         _state.update { it.copy(character = characterSolver.solve(updated)) }
     }
@@ -148,7 +177,9 @@ class CharacterDetailsViewModel (
         val userId = authRepository.currentUser?.uid ?: return
         val char = _state.value.character?.character ?: return
 
-        saveScope.launch { characterRepository.updateCharacter(userId,char) }
+        if (hasChanged) {
+            saveScope.launch { characterRepository.updateCharacter(userId,char) }
+        }
     }
 }
 

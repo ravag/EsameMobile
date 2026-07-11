@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
@@ -44,12 +45,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.R
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavHostController
@@ -69,6 +72,7 @@ import kotlin.math.sin
 fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: CharacterDetailsActions, navController: NavHostController, onNavigateToLevelup: () -> Unit) {
 
     val context = LocalContext.current
+    var deleting by mutableStateOf(false)
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         detailsActions.onLoad()
@@ -88,8 +92,13 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                     }
                 },
                 actions = {
-                    IconButton({}) {
-                        Icon(Icons.Outlined.Star,"Inserisci tra i preferiti")
+                    detailsActions.onDelete?.let {
+                        IconButton({}) {
+                            Icon(Icons.Outlined.Star,"Inserisci tra i preferiti")
+                        }
+                        IconButton({ deleting = true }) {
+                            Icon(Icons.Default.Delete,"Elimina")
+                        }
                     }
                 }
             )
@@ -110,6 +119,22 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                 onConfirm = detailsActions.onMalusButton
             )
         }
+
+        detailsActions.onDelete?.let {
+            GenericBasicDialog(
+                show = deleting,
+                title = "Eliminare personaggio",
+                description = "Sei sicuro di volere eliminare il personaggio?",
+                onConfirmText = "Elimina",
+                onConfirm = {
+                    detailsActions.onDelete()
+                    navController.navigateUp()
+                            },
+                onDismissText = "Annulla",
+                onDismiss = { deleting = false }
+            )
+        }
+
 
         when {
             detailsState.isLoading -> {

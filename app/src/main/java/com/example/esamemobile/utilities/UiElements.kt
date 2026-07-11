@@ -260,7 +260,7 @@ fun GroupItem(group: Group, onClick: () -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val imageUri = Uri.parse(group.imageUri)
+            val imageUri = Uri.parse(group.imageUrl)
             ImageWithPlaceholder("", Size.Sm)
             Spacer(Modifier.size(8.dp))
             Text(

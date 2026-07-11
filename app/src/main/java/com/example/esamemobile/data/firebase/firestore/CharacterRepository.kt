@@ -10,6 +10,7 @@ interface CharacterRepository {
     suspend fun readCharacter(userId: String, charId: String?): Result<Character?>
     suspend fun getAllUserCharacters(userId: String): Result<List<Character>>
     suspend fun updateCharacter(userId: String, character: Character): Result<Unit>
+    suspend fun deleteCharacter(userId: String, charId: String): Result<Unit>
 }
 
 class CharacterRepositoryImpl(private val db: FirebaseFirestore): CharacterRepository {
@@ -59,4 +60,14 @@ class CharacterRepositoryImpl(private val db: FirebaseFirestore): CharacterRepos
         }
     }
 
+    override suspend fun deleteCharacter(userId: String, charId: String): Result<Unit> {
+        return try {
+            db.collection("users").document(userId)
+                .collection("characters").document(charId)
+                .delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
