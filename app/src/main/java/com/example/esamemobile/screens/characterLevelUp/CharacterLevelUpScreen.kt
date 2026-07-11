@@ -1,5 +1,6 @@
 package com.example.esamemobile.screens.characterLevelUp
 
+import android.graphics.Paint
 import android.text.Layout
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -100,17 +102,16 @@ fun LevelUpScreen(
                     )
                 }
 
-                val isFinalStep = currentStep == LevelUpStep.EDIT_STATISTICS ||
-                        currentStep == LevelUpStep.EDIT_ABILITIES ||
-                        (
-                                currentStep == LevelUpStep.CHOOSE_PERK_TYPE &&
-                                currentState.selectedOption != null &&
-                                currentState.selectedOption != LevelUpOption.STAT_BONUS_2 &&
-                                        currentState.selectedOption != LevelUpOption.UPGRADE_ABILITY &&
-                                        currentState.selectedOption != LevelUpOption.BASE_CLASS_ABILITY &&
-                                        currentState.selectedOption != LevelUpOption.ADVANCED_CLASS_ABILITY &&
-                                        currentState.selectedOption != LevelUpOption.NEW_CLASS_BASE_ABILITY
-                                )
+                val isFinalStep = when (currentStep) {
+                    LevelUpStep.EDIT_STATISTICS, LevelUpStep.EDIT_ABILITIES -> true
+                    LevelUpStep.CHOOSE_PERK_TYPE -> {
+                        currentState.selectedOption == LevelUpOption.GAIN_PE_CHAR_3 ||
+                                currentState.selectedOption == LevelUpOption.GAIN_PE_CHAR_5
+                    }
+                    else -> false
+                }
+
+
                 if (isFinalStep) {
                     Button(
                         onClick = { actions.onConfirmLevelUp(context, onNavigateBack) },
@@ -664,14 +665,185 @@ fun EditAbilitiesContent(
     state: LevelUpState,
     actions: LevelUpActions
 ) {
+    val character = state.character ?: return
+    val allClasses = state.gameClasses
+
+    val optionChosen = state.selectedOption ?: when {
+        character.level == 0 -> LevelUpOption.BASE_CLASS_ABILITY
+        state.currentLevel == 6 -> LevelUpOption.NEW_CLASS_BASE_ABILITY
+        else -> return
+    }
+
+    val classIdToSearch = if (character.level == 0) state.selectedClassId else character.chosenClass
+    val primaryClass = allClasses.find { it.id.equals(classIdToSearch, ignoreCase = true) }
+
+    val subClassId = state.selectedSubClassId ?: character.classAbilitiesList.find { it.startsWith("SUBCLASS_", ignoreCase = true) }?.substringAfter("SUBCLASS_")
+    val subClass = allClasses.find { it.id.equals(subClassId, ignoreCase = true) }
+
+    val titleText: String
+    val subtitleText: String
+    val listToDisplay = mutableListOf<Pair<String, String>>()
+
+    val learnedAbilitiesIds = character.classAbilitiesList.map { it.trim().lowercase() }
+
+    when (optionChosen) {
+        LevelUpOption.BASE_CLASS_ABILITY -> {
+            titleText = "Seleziona un'Abilità Base"
+            subtitleText = "Scegli una nuova abilità di base dalla classe ${primaryClass?.name ?: ""}:"
+
+            primaryClass?.baseAbilities?.forEach { ability ->
+                if (!learnedAbilitiesIds.contains(ability.id.trim().lowercase())) {
+                    listToDisplay.add(Pair(ability.id, "${ability.name}\n${ability.description}"))
+                }
+            }
+        }
+
+        LevelUpOption.ADVANCED_CLASS_ABILITY -> {
+            titleText = "Seleziona un'Abilità Avanzata"
+            subtitleText = "Hai sbloccato l'accesso alle tecniche superiori della classe ${primaryClass?.name ?: ""}:"
+
+            primaryClass?.advancedAbilities?.forEach { ability ->
+                if (!learnedAbilitiesIds.contains(ability.id.trim().lowercase())) {
+                    listToDisplay.add(Pair(ability.id, "${ability.name}\n${ability.description}"))
+                }
+            }
+        }
+
+        LevelUpOption.NEW_CLASS_BASE_ABILITY -> {
+            titleText = "Seleziona un'Abilità dalla Sotto-Classe"
+            subtitleText = "Scegli un'abilità di base dalla tua sottoclasse di specializzazione ${subClass?.name ?: ""}:"
+
+            subClass?.baseAbilities?.forEach { ability ->
+                if (!learnedAbilitiesIds.contains(ability.id.trim().lowercase())) {
+                    listToDisplay.add(Pair(ability.id, "${ability.name}\n${ability.description}"))
+                }
+            }
+        }
+
+        LevelUpOption.UPGRADE_ABILITY -> {
+            titleText = "Potenzia un Potere Evoluzione"
+            subtitleText = "Seleziona uno dei tuoi poteri evoluzione attuali per potenziarlo:"
+
+            val allGameClassAbilitiesNames = allClasses.flatMap { it.baseAbilities + it.advancedAbilities }
+
+            character.classAbilitiesList.forEach { learnedAbilityRaw ->
+                val learnedAbilityId = learnedAbilityRaw.trim().lowercase()
+                val isSystemTag = learnedAbilityId.startsWith("subclass_") ||
+                        learnedAbilityId == "bonus_pe_3" ||
+                        learnedAbilityId == "bonus_pe_5" ||
+                        learnedAbilityId == "upgrade_ability" ||
+                        learnedAbilityId == "bonus_stat_2"
+
+                if (!isSystemTag && !learnedAbilityId.endsWith("+")) {
+                    val matchingAbility = allGameClassAbilitiesNames.find { it.id.trim().lowercase() == learnedAbilityId }
+                    if (matchingAbility != null) {
+                        listToDisplay.add(
+                            Pair(learnedAbilityRaw,
+                                "Potenzia ${matchingAbility.name} in ${matchingAbility.name}+.\nOriginale: ${matchingAbility.description}")
+                        )
+                    }
+                }
+            }
+        }
+        else -> return
+    }
+
     Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = "Gestione e Sblocco Abilità",
+            text = titleText,
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold
         )
-        //TODO: Qui sarebbe bene replicare una sorta della edit abilities list in character details o character creation, col problema che se sceglie da una classe è diverso pk mi si deve aprire uno schermo dove vedo tutte le abilità della mia classe e scegliere quella che voglio da aggiungere se invece si sceglie di potenziare un'abilità deve farmi vedere solo le abilità non di una classe che un personaggio possiede e quindi farmela modificare
+        Text(
+            text = subtitleText,
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+        if (listToDisplay.isEmpty()) {
+
+            //TODO: Rimuovi sta card una volta capito cosa cazzo sta facendo
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Nessuna abilità trovata!", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
+                    Spacer(Modifier.height(4.dp))
+                    Text("Classe cercata (ID): ${classIdToSearch ?: "NULL"}", fontSize = 12.sp)
+                    Text("Classe trovata nel JSON: ${primaryClass?.name ?: "NO (Verifica ID)"}", fontSize = 12.sp)
+                    Text("Abilità totali classe nel JSON: ${primaryClass?.baseAbilities?.size ?: 0}", fontSize = 12.sp)
+                    Text("Abilità già note al PG: ${character.classAbilitiesList.size}", fontSize = 12.sp)
+                }
+            }
+
+//            Text(
+//                "Non ci sono abilità disponibili da selezionare.",
+//                fontSize = 14.sp,
+//                fontWeight = FontWeight.Medium,
+//                color = MaterialTheme.colorScheme.error,
+//                modifier = Modifier.padding(vertical = 8.dp)
+//            )
+        } else {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                listToDisplay.forEach { (abilityId, fullNameAndDesc) ->
+                    val targetId = if (optionChosen == LevelUpOption.UPGRADE_ABILITY) "$abilityId+" else abilityId
+                    val isSelected = state.selectedAbilityToUpgrade == targetId
+
+                    val parts = fullNameAndDesc.split("\n", limit = 2)
+                    val displayName = parts.getOrNull(0) ?: abilityId
+                    val displayDesc = parts.getOrNull(1) ?: ""
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { actions.onSelectAbilityToUpgrade(targetId) },
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                                else MaterialTheme.colorScheme.surfaceContainerLow
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (optionChosen == LevelUpOption.UPGRADE_ABILITY) "$displayName -> $displayName+" else displayName,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = displayDesc,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    lineHeight = 16.sp
+                                )
+                            }
+
+                            RadioButton(
+                                selected = isSelected,
+                                onClick = { actions.onSelectAbilityToUpgrade(targetId) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }

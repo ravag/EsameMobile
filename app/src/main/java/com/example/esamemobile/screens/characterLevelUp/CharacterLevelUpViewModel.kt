@@ -1,5 +1,7 @@
 //TODO: Guadagna 5 + char pe appare sempre anche se l'ho già scelto
 //TODO: Devo cambiatr le scritte da seleziona classe a seleziona sottoclasse e chiaramente non posso riscieglierel quella che avevo gia scelto, inoltre qua non mi fa andare più avanti il bottone è sempre disabilitato
+//TODO: Devo far si che se scelgo di potenziare un potere evoluzione mi dia effettivamente un potere evoluzione e non una abilità base della classe, inoltre devo far sì che non mi dia l'opzione nuova abilità della tua classe se le ho già scelte tutte
+//TODO: Non so pk ma quando clicco sulla card selezionabile per aumentare le staqt non me le seleziona né mi mostra una preview della nuova stat aumentata
 
 package com.example.esamemobile.screens.characterLevelUp
 
@@ -213,7 +215,13 @@ class LevelUpViewModel(
         },
 
         onSelectedOption = { option ->
-            _state.update { it?.copy(selectedOption = option) }
+            _state.update {
+                it?.copy(
+                    selectedOption = option,
+                    selectedAbilityToUpgrade = null,
+                    selectedStatToUpgrade = null
+                )
+            }
         },
 
         onSelectStatToUpgrade = { stat ->
