@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.AccountBox
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -44,6 +46,7 @@ import androidx.navigation.NavHostController
 import com.example.esamemobile.EsameMobileRoute
 import com.example.esamemobile.utilities.CharacterItem
 import com.example.esamemobile.utilities.GenericList
+import com.example.esamemobile.utilities.GroupItem
 import com.example.esamemobile.utilities.composables.SimpleSearchBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,6 +82,10 @@ fun HomeScreen(
         },
         bottomBar = {
             NavigationBottomBarWithFAB(
+                firstOptionText = "Personaggi",
+                firstOptionImage = Icons.Outlined.Person,
+                secondOptionText = "Gruppi",
+                secondOptionImage = Icons.Outlined.AccountBox,
                 selectedIndex = homeState.homePage.ordinal,
                 onTabSelected = { newIndex ->
                     focusManager.clearFocus()
@@ -149,11 +156,12 @@ fun HomeScreen(
                     }
 
                     HomePage.GROUPS ->  {
-                        GroupList(
+                        GenericList(
                             contentPadding = PaddingValues(0.dp),
-                            groups = homeState.filteredGroups,
-                            context = context
-                        )
+                            elems = homeState.filteredGroups
+                        ) { group ->
+                            GroupItem(group) { navController.navigate(EsameMobileRoute.GroupDetails(group.id)) }
+                        }
                     }
                 }
             }

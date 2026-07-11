@@ -7,16 +7,22 @@ import com.google.firebase.firestore.toObject
 import kotlinx.coroutines.tasks.await
 
 interface GroupRepository {
-    //suspend fun addNewGroup(userId: String): Result<Unit> //nessuna implementazione al momento
+    suspend fun addNewGroup(userId: String, group: Group): Result<Unit> //nessuna implementazione al momento
     suspend fun readGroup(groupId: String): Result<Group?>
     suspend fun getAllUsersGroups(userId: String): Result<List<Group>>
 }
 
 class GroupRepositoryImpl(private val db: FirebaseFirestore): GroupRepository {
 
-//    override suspend fun addNewGroup(userId: String): Result<Unit> {
-//      TODO("Not yet implemented")
-//    }
+    override suspend fun addNewGroup(userId: String, group: Group): Result<Unit> {
+      return try {
+          db.collection("groups").document(group.id)
+              .set(group).await()
+          Result.success(Unit)
+      } catch (e: Exception) {
+          Result.failure(e)
+      }
+    }
 
     override suspend fun readGroup(groupId: String): Result<Group?> {
         return try {

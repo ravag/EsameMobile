@@ -21,6 +21,7 @@ import kotlinx.serialization.Serializable
 import com.example.esamemobile.screens.characterCreation.CharacterCreationViewModel
 import com.example.esamemobile.screens.characterLevelUp.LevelUpScreen
 import com.example.esamemobile.screens.characterLevelUp.LevelUpViewModel
+import com.example.esamemobile.screens.groupDetails.GroupDetailsScreen
 import com.example.esamemobile.screens.home.HomeViewModel
 import com.example.esamemobile.screens.login.LoginViewModel
 import com.example.esamemobile.screens.settings.SettingsScreen
@@ -29,12 +30,13 @@ import org.koin.androidx.compose.koinViewModel
 
 sealed interface EsameMobileRoute {
     @Serializable data object Home : EsameMobileRoute
-    @Serializable data class CharacterDetails(val charId: String, val enabled: Boolean) : EsameMobileRoute
+    @Serializable data class CharacterDetails(val charId: String, val enabled: Boolean, val userId: String? = null) : EsameMobileRoute
     @Serializable data object Login : EsameMobileRoute
     @Serializable data object Debug : EsameMobileRoute //Questa è momentanea, sarà da rimuovere in futuro
     @Serializable data object CharacterCreation : EsameMobileRoute
     @Serializable data object Settings: EsameMobileRoute
     @Serializable data class LevelUp(val charId: String) : EsameMobileRoute
+    @Serializable data class GroupDetails(val groupId: String): EsameMobileRoute
 }
 
 
@@ -63,7 +65,7 @@ fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsVi
         composable<EsameMobileRoute.CharacterDetails> { backStackEntry ->
             val route = backStackEntry.toRoute<EsameMobileRoute.CharacterDetails>()
             val characterVm = koinViewModel<CharacterDetailsViewModel>()
-            characterVm.charId.value = route.charId
+            characterVm.setIds(route.charId, route.userId)
             characterVm.editable = route.enabled
             val charState by characterVm.state.collectAsStateWithLifecycle()
             CharacterDetailsScreen(
@@ -99,6 +101,10 @@ fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsVi
                 viewModel = levelUpVM,
                 onNavigateBack = { navController.popBackStack() }
             )
+        }
+        composable<EsameMobileRoute.GroupDetails> { backStackEntry ->
+            val route = backStackEntry.toRoute<EsameMobileRoute.GroupDetails>()
+            GroupDetailsScreen(navController=navController)
         }
     }
 }
