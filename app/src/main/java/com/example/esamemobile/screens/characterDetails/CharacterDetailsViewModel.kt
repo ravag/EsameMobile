@@ -74,14 +74,8 @@ class CharacterDetailsViewModel (
         get() = CharacterDetailsActions(
             onTabSelected = { index -> _state.update { it.copy(selectedTab = CharacterDetailsTab.entries[index]) } },
             onLevelUp =  if (editable) { {
-                val userId = authRepository.currentUser?.uid ?: return@CharacterDetailsActions
-                val char = _state.value.character?.character ?: return@CharacterDetailsActions
-
+                saveCharacter(viewModelScope)
                 _state.update { it.copy(isLoading = true) }
-
-                if (hasChanged) {
-                    viewModelScope.launch { characterRepository.updateCharacter(userId,char) }
-                }
             } } else null,
             onMalusButton = { _state.update { it.copy(ageMalusDialog = !_state.value.ageMalusDialog) } },
             onDecreaseHp = if (editable) { {
@@ -114,12 +108,7 @@ class CharacterDetailsViewModel (
                 updateCharacter { it.copy(inventoryList = it.inventoryList.filter { obj -> obj != item }) }
             } } else null,
             onScreenExit = {
-                val userId = authRepository.currentUser?.uid ?: return@CharacterDetailsActions
-                val char = _state.value.character?.character ?: return@CharacterDetailsActions
-
-                if (hasChanged) {
-                    viewModelScope.launch { characterRepository.updateCharacter(userId,char) }
-                }
+                saveCharacter(viewModelScope)
             },
             onLoad = { load() },
             onDelete = if (editable) { {
@@ -171,15 +160,19 @@ class CharacterDetailsViewModel (
         _state.update { it.copy(character = characterSolver.solve(updated)) }
     }
 
-    //Per salvataggi in casi di crash o di tornare indietro tramite freccia del telefono e non quella della topBar
-    override fun onCleared() {
-        super.onCleared()
+    private fun saveCharacter(scope: CoroutineScope) {
         val userId = authRepository.currentUser?.uid ?: return
         val char = _state.value.character?.character ?: return
 
         if (hasChanged) {
-            saveScope.launch { characterRepository.updateCharacter(userId,char) }
+            scope.launch { characterRepository.updateCharacter(userId,char) }
         }
+    }
+
+    //Per salvataggi in casi di crash o di tornare indietro tramite freccia del telefono e non quella della topBar
+    override fun onCleared() {
+        super.onCleared()
+        saveCharacter(saveScope)
     }
 }
 
