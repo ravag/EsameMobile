@@ -1,3 +1,6 @@
+//TODO: Guadagna 5 + char pe appare sempre anche se l'ho già scelto
+//TODO: Devo cambiatr le scritte da seleziona classe a seleziona sottoclasse e chiaramente non posso riscieglierel quella che avevo gia scelto, inoltre qua non mi fa andare più avanti il bottone è sempre disabilitato
+
 package com.example.esamemobile.screens.characterLevelUp
 
 import android.content.Context
@@ -43,6 +46,7 @@ data class LevelUpState(
     val currentLevel: Int = 1,
     val strengthModifier: Int = 0,
     val hpRolled: Int? = null,
+    val pureDiceRoll: Int? = null,
     val isHpRolled: Boolean = false,
 
     val selectedOption: LevelUpOption? = null,
@@ -64,7 +68,7 @@ data class LevelUpState(
         get() = when (currentStep) {
             LevelUpStep.CHOOSE_CLASS -> {
                 if (character?.level == 0) selectedClassId != null
-                else if (currentLevel >= 6) selectedSubClassId != null
+                else if (currentLevel == 6) selectedSubClassId != null
                 else true
             }
             LevelUpStep.CHOOSE_PERK_TYPE -> {
@@ -106,36 +110,78 @@ class LevelUpViewModel(
             val options = mutableListOf<LevelUpOption>()
 
             val hasTakenCharPlus3Before = character.classAbilitiesList.contains("BONUS_PE_3")
+            val hasTakenCharPlus5Before = character.classAbilitiesList.contains("BONUS_PE_5")
+            val hasTakenUpgradeAbility = character.classAbilitiesList.contains("UPGRADE_ABILITY")
+            val hasTakenStatBonus = character.classAbilitiesList.contains("BONUS_STAT_2")
 
             if (!hasTakenCharPlus3Before) {
                 options.add(LevelUpOption.GAIN_PE_CHAR_3)
-            } else {
+            } else if (!hasTakenCharPlus5Before){
                 options.add(LevelUpOption.GAIN_PE_CHAR_5)
             }
-            options.add(LevelUpOption.UPGRADE_ABILITY)
+
+            if (!hasTakenUpgradeAbility) {
+                options.add(LevelUpOption.UPGRADE_ABILITY)
+            }
 
             val classesFromJson = staticDataRepository.allGameClasses
-            val currentCharacterClass = classesFromJson.find { it.id == character.chosenClass }
 
-            val hasAllBaseAbilities = if (currentCharacterClass != null) {
-                currentCharacterClass.baseAbilities.all { baseAbility ->
-                    character.classAbilitiesList.contains(baseAbility.name)
-                }
-            } else {
-                false
-            }
-
-            if (!hasAllBaseAbilities) {
+            if (character.level == 0) {
                 options.add(LevelUpOption.BASE_CLASS_ABILITY)
+            } else {
+                val currentCharacterClass = classesFromJson.find { it.id == character.chosenClass }
+
+                if (currentCharacterClass != null) {
+                    val learnedBaseAbilitiesCount = currentCharacterClass.baseAbilities.count { baseAbility ->
+                        character.classAbilitiesList.contains(baseAbility.name)
+                    }
+                    val totalBaseAbilities = currentCharacterClass.baseAbilities.size
+                    val hasAllBaseAbilities = learnedBaseAbilitiesCount == totalBaseAbilities
+
+                    if (!hasAllBaseAbilities) {
+                        options.add(LevelUpOption.BASE_CLASS_ABILITY)
+                    }
+
+                    if (hasAllBaseAbilities && nextLevel >= 6) {
+                        val learnedAdvancedAbilitiesCount = currentCharacterClass.advancedAbilities.count { advAbility ->
+                            character.classAbilitiesList.contains(advAbility.name)
+                        }
+                        val totalAdvancedAbilities = currentCharacterClass.advancedAbilities.size
+
+                        if (learnedAdvancedAbilitiesCount < totalAdvancedAbilities) {
+                            options.add(LevelUpOption.ADVANCED_CLASS_ABILITY)
+                        }
+                    }
+                }
             }
+
+
 
             if (nextLevel >= 6) {
-                if (hasAllBaseAbilities) {
-                    options.add(LevelUpOption.ADVANCED_CLASS_ABILITY)
+                if (!hasTakenStatBonus) {
+                    options.add(LevelUpOption.STAT_BONUS_2)
                 }
-                options.add(LevelUpOption.NEW_CLASS_BASE_ABILITY)
-                options.add(LevelUpOption.STAT_BONUS_2)
+
+                val subClassId = character.classAbilitiesList
+                    .find { it.startsWith("SUBCLASS_") }
+                    ?.removePrefix("SUBCLASS_")
+
+                if (subClassId != null) {
+                    val subClass = classesFromJson.find { it.id == subClassId }
+                    if (subClass != null) {
+                        val hasTakenSubclassBaseAbility = subClass.baseAbilities.any { baseAbility ->
+                            character.classAbilitiesList.contains(baseAbility.name)
+                        }
+                        if (!hasTakenSubclassBaseAbility) {
+                            options.add(LevelUpOption.NEW_CLASS_BASE_ABILITY)
+                        }
+                    }
+                } else {
+                    options.add(LevelUpOption.NEW_CLASS_BASE_ABILITY)
+                }
             }
+
+            val maxLevelReached = options.isEmpty() && character.level != 0
 
             val initialStep = when {
                 character.level == 0 -> LevelUpStep.CHOOSE_CLASS
@@ -162,7 +208,7 @@ class LevelUpViewModel(
                 val diceRoll = (1..6).random()
                 val strengthModifier = calculateModifier(char.strength)
                 val finalHpGained = maxOf(1, diceRoll + strengthModifier)
-                currentState.copy(hpRolled = finalHpGained, isHpRolled = true)
+                currentState.copy(pureDiceRoll = diceRoll, hpRolled = finalHpGained, isHpRolled = true)
             }
         },
 
@@ -242,7 +288,10 @@ class LevelUpViewModel(
                     )
                 }
                 LevelUpOption.STAT_BONUS_2 -> {
-                    when (currentState.selectedStatToUpgrade) {
+                    val currentAbilities = updatedChar.classAbilitiesList.toMutableList()
+                    currentAbilities.add("BONUS_STAT_2")
+
+                    val statChar = when (currentState.selectedStatToUpgrade) {
                         "Forza" -> updatedChar.copy(strength = minOf(10, updatedChar.strength + 2))
                         "Agilità" -> updatedChar.copy(agility = minOf(10, updatedChar.agility + 2))
                         "Intelligenza" -> updatedChar.copy(intelligence = minOf(10, updatedChar.intelligence + 2))
@@ -250,8 +299,14 @@ class LevelUpViewModel(
                         "Potere" -> updatedChar.copy(power = minOf(10, updatedChar.power + 2))
                         else -> updatedChar
                     }
+                    statChar.copy(classAbilitiesList = currentAbilities)
                 }
-                LevelUpOption.UPGRADE_ABILITY,
+                LevelUpOption.UPGRADE_ABILITY -> {
+                    val currentAbilities = updatedChar.classAbilitiesList.toMutableList()
+                    currentAbilities.add("UPGRADE_ABILITY")
+                    currentState.selectedAbilityToUpgrade?.let { currentAbilities.add(it) }
+                    updatedChar.copy(classAbilitiesList = currentAbilities)
+                }
                 LevelUpOption.BASE_CLASS_ABILITY,
                 LevelUpOption.ADVANCED_CLASS_ABILITY,
                 LevelUpOption.NEW_CLASS_BASE_ABILITY -> {
@@ -259,7 +314,6 @@ class LevelUpViewModel(
                     currentState.selectedAbilityToUpgrade?.let { currentAbilities.add(it) }
                     updatedChar.copy(classAbilitiesList = currentAbilities)
                 }
-                else -> updatedChar
             }
 
             viewModelScope.launch {
@@ -305,7 +359,7 @@ class LevelUpViewModel(
                         currentState
                     }
                     LevelUpStep.CHOOSE_PERK_TYPE -> {
-                        if (currentState.character?.level == 0) {
+                        if (currentState.character?.level == 0 || currentState.character?.level == 6) {
                             currentState.copy(currentStep = LevelUpStep.CHOOSE_CLASS)
                         } else {
                             onNavigateBack()

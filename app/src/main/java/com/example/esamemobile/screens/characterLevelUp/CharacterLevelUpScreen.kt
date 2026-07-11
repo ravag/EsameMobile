@@ -2,6 +2,7 @@ package com.example.esamemobile.screens.characterLevelUp
 
 import android.text.Layout
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -104,7 +105,11 @@ fun LevelUpScreen(
                         (
                                 currentStep == LevelUpStep.CHOOSE_PERK_TYPE &&
                                 currentState.selectedOption != null &&
-                                currentState.selectedOption != LevelUpOption.STAT_BONUS_2
+                                currentState.selectedOption != LevelUpOption.STAT_BONUS_2 &&
+                                        currentState.selectedOption != LevelUpOption.UPGRADE_ABILITY &&
+                                        currentState.selectedOption != LevelUpOption.BASE_CLASS_ABILITY &&
+                                        currentState.selectedOption != LevelUpOption.ADVANCED_CLASS_ABILITY &&
+                                        currentState.selectedOption != LevelUpOption.NEW_CLASS_BASE_ABILITY
                                 )
                 if (isFinalStep) {
                     Button(
@@ -174,26 +179,39 @@ fun ChooseClassContent(
     allClasses: List<GameClass>
 ) {
     var expandedClassId by remember { mutableStateOf<String?>(null) }
+    val isSubClassSelection = state.currentLevel == 6
+
+    val filteredClasses = if (isSubClassSelection && state.character != null) {
+        allClasses.filter { it.id != state.character.chosenClass }
+    } else {
+        allClasses
+    }
+
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = if (state.selectedClassId == null) "Seleziona Classe" else "Seleziona Sotto-Classe",
+            text = if (!isSubClassSelection) "Seleziona Classe" else "Seleziona Sotto-Classe",
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold
         )
         Text(
-            text = "Di seguito, puoi visualizzare l'elenco di tutte le classi con relative abilitò di base e avanzate per aiutarti a scegliere una classe consapevolmente.",
+            text = if (isSubClassSelection) {
+                "Scegli la tua sottoclasse di specializzazione avanzata.\n\n" +
+                        "Dalla classe scelta potrai imparare una abilità di base in aggiunta a quelle che hai già dalla tua classe principale."
+            } else {
+                "Di seguito, puoi visualizzare l'elenco di tutte le classi con relative abilitò di base e avanzate per aiutarti a scegliere una classe consapevolmente."
+            },
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-        allClasses.forEach { gameClass ->
+        filteredClasses.forEach { gameClass ->
             val isExpanded = expandedClassId == gameClass.id
-            val isSelected = state.selectedClassId == gameClass.id
+            val isSelected = if (isSubClassSelection) state.selectedSubClassId == gameClass.id else state.selectedClassId == gameClass.id
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -219,7 +237,7 @@ fun ChooseClassContent(
                                 text = gameClass.name,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
@@ -254,16 +272,19 @@ fun ChooseClassContent(
                                 ClassAbilityPreviewItem(name = ability.name, description = ability.description)
                             }
 
-                            Spacer(Modifier.height(4.dp))
+                            if (!isSubClassSelection) {
+                                Spacer(Modifier.height(4.dp))
 
-                            Text(
-                                text = "Abilità Avanzate",
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.secondary,
-                                fontSize = 14.sp
-                            )
-                            gameClass.advancedAbilities.forEach { ability ->
-                                ClassAbilityPreviewItem(name = ability.name, description = ability.description)
+                                Text(
+                                    text = "Abilità Avanzate",
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    fontSize = 14.sp
+                                )
+
+                                gameClass.advancedAbilities.forEach { ability ->
+                                    ClassAbilityPreviewItem(name = ability.name, description = ability.description)
+                                }
                             }
                         }
                     }
@@ -286,18 +307,18 @@ fun ChooseClassContent(
                 .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(12.dp))
                 .padding(8.dp)
         ) {
-            allClasses.forEach { gameClass ->
-                val isSelected = state.selectedClassId == gameClass.id
+            filteredClasses.forEach { gameClass ->
+                val isSelected = if (isSubClassSelection) state.selectedSubClassId == gameClass.id else state.selectedClassId == gameClass.id
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { actions.onSelectedClass(gameClass.id) }
+                        .clickable { if (isSubClassSelection) actions.onSelectedSubClass(gameClass.id) else actions.onSelectedClass(gameClass.id) }
                         .padding(vertical = 8.dp, horizontal = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RadioButton(
                         selected = isSelected,
-                        onClick = { actions.onSelectedClass(gameClass.id) }
+                        onClick = { if (isSubClassSelection) actions.onSelectedSubClass(gameClass.id) else actions.onSelectedClass(gameClass.id) }
                     )
                     Text(
                         text = gameClass.name,
@@ -379,6 +400,7 @@ fun ChoosePerkContent(
                 )
 
                 val hpRollValue = state.hpRolled
+                val pureDice = state.pureDiceRoll
                 val currentMaxHp = state.character?.maxHP ?: 0
 
                 Row(
@@ -391,8 +413,8 @@ fun ChoosePerkContent(
                             "HP Attuali: $currentMaxHp",
                             fontSize = 14.sp
                         )
-                        if (hpRollValue != null) {
-                            val totalNewHp = currentMaxHp + hpRollValue + strengthModifier
+                        if (hpRollValue != null && pureDice != null) {
+                            val totalNewHp = currentMaxHp + hpRollValue
                             Text(
                                 "Nuovi HP totali: $totalNewHp",
                                 fontSize = 15.sp,
@@ -401,7 +423,7 @@ fun ChoosePerkContent(
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(
-                                "Dettaglio: $currentMaxHp (Base) + $hpRollValue (Dado) + $strengthModifier (Modificatore di Forza) = $totalNewHp",
+                                "Dettaglio: $currentMaxHp (Base) + $pureDice (Dado) + $strengthModifier (Modificatore di Forza) = $totalNewHp",
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 lineHeight = 14.sp
@@ -439,7 +461,7 @@ fun ChoosePerkContent(
                                 .padding(horizontal = 20.dp, vertical = 12.dp)
                         ) {
                             Text(
-                                "+${hpRollValue + strengthModifier} HP",
+                                "+$hpRollValue HP",
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 fontSize = 18.sp
@@ -523,15 +545,117 @@ fun EditStatContent(
     state: LevelUpState,
     actions: LevelUpActions
 ) {
+    val character = state.character ?: return
+
+    val stats = listOf(
+        AbilityItem(name = "Forza", numericValue = character.strength),
+        AbilityItem(name = "Agilità", numericValue = character.agility),
+        AbilityItem(name = "Intelligenza", numericValue = character.intelligence),
+        AbilityItem(name = "Carisma", numericValue = character.charisma),
+        AbilityItem(name = "Potere", numericValue = character.power)
+    )
+
     Column(
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Text(
             text = "Potenziamento Caratteristica di +2 (max 10)",
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold
         )
-        //TODO: Inserisci qui la versione semplificata del edit stat del character creation screen
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            stats.forEach { stat ->
+                val isSelected = state.selectedStatToUpgrade == stat.id
+                val potentialValue = minOf(10, stat.numericValue + 2)
+                val isStatMaxed = stat.numericValue >= 10
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = !isStatMaxed) {
+                            actions.onSelectStatToUpgrade(stat.id)
+                        },
+                    colors = CardDefaults.cardColors(
+                        containerColor = when {
+                            isStatMaxed -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            isSelected -> MaterialTheme.colorScheme.primaryContainer
+                            else -> MaterialTheme.colorScheme.surfaceContainerLow
+                        }
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stat.name,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isStatMaxed) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onSurface
+                            )
+                            if (isStatMaxed) {
+                                Text(
+                                    text = "Punteggio massimo (10)",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            } else {
+                                Text(
+                                    text = "Attuale: ${stat.numericValue} -> Nuovo: $potentialValue",
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        val activeValue = if (isSelected) potentialValue else stat.numericValue
+                        val modifier = calculateModifier(activeValue)
+                        val modifierText = if (modifier >= 0) "+$modifier" else "$modifier"
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Mod: $modifierText",
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 14.sp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            RadioButton(
+                                selected = isSelected,
+                                onClick = { actions.onSelectStatToUpgrade(stat.id) },
+                                enabled = !isStatMaxed
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

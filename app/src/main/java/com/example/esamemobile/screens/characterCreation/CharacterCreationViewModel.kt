@@ -1,3 +1,6 @@
+//TODO: Quando inserisco manualmente le statistiche dopo averle tirate o se sono diverse da uno mi impedisce di cambiarle manualmente
+//TODO: Controlla che non mi faccia andare avanti nella creazione se non ho rollato anche gli hp
+
 package com.example.esamemobile.screens.characterCreation
 
 import android.content.Context
