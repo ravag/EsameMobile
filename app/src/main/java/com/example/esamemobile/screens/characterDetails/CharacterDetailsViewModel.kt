@@ -50,7 +50,8 @@ data class CharacterDetailsActions(
     val onIncreaseUsage: (() -> Unit)?,
     val onAddItem: ((Context) -> Unit)?,
     val onUseItem: ((InventoryItem) -> Unit)?,
-    val onScreenExit: () -> Unit
+    val onScreenExit: () -> Unit,
+    val onLoad: () -> Unit
 )
 
 class CharacterDetailsViewModel (
@@ -66,32 +67,6 @@ class CharacterDetailsViewModel (
     val state = _state.asStateFlow()
 
     private val saveScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
-    init {
-        viewModelScope.launch {
-            charId.filterNotNull().collectLatest { id ->
-                _state.update { it.copy(isLoading = true) }
-
-                val result = characterRepository.readCharacter(authRepository.currentUser!!.uid,id)
-                result.fold(
-                    onSuccess = { char ->
-                        val character = char?.let { characterSolver.solve(it) }
-                        _state.update { it.copy(
-                            character = character,
-                            isLoading = false,
-                            malusDrawableId = character?.ageMalus?.drawableId?.let { drawId ->
-                                staticDataRepository.getDrawableId(drawId) }
-                        )
-                        }
-                    },
-                    onFailure = { exception ->
-                        Log.w("debug","Errorazzo ${exception.message}")
-                        _state.update { it.copy(isLoading = false) }
-                    }
-                )
-            }
-        }
-    }
 
     val actions: CharacterDetailsActions
         get() = CharacterDetailsActions(
@@ -130,18 +105,41 @@ class CharacterDetailsViewModel (
                 val char = _state.value.character?.character ?: return@CharacterDetailsActions
 
                 viewModelScope.launch { characterRepository.updateCharacter(userId,char) }
-            }
+            },
+            onLoad = { load() }
         )
 
+    private fun load() {
+        viewModelScope.launch {
+            charId.filterNotNull().collectLatest { id ->
+                _state.update { it.copy(isLoading = true) }
+
+                val result = characterRepository.readCharacter(authRepository.currentUser!!.uid,id)
+                result.fold(
+                    onSuccess = { char ->
+                        val character = char?.let { characterSolver.solve(it) }
+                        _state.update { it.copy(
+                            character = character,
+                            isLoading = false,
+                            malusDrawableId = character?.ageMalus?.drawableId?.let { drawId ->
+                                staticDataRepository.getDrawableId(drawId) }
+                        )
+                        }
+                    },
+                    onFailure = { exception ->
+                        Log.w("debug","Errorazzo ${exception.message}")
+                        _state.update { it.copy(isLoading = false) }
+                    }
+                )
+            }
+        }
+    }
 
     private fun updateCharacter(transform: (Character) -> Character) {
         val current = _state.value.character?.character ?: return
         val updated = transform(current)
 
         _state.update { it.copy(character = characterSolver.solve(updated)) }
-
-        //Bisorrebbe poi salvare il personaggio, al momento non ho il metodo quindi log di debug per ricordare
-        Log.i("debug","Salva modifiche")
     }
 
     //Per salvataggi in casi di crash o di tornare indietro tramite freccia del telefono e non quella della topBar
