@@ -549,11 +549,11 @@ fun EditStatContent(
     val character = state.character ?: return
 
     val stats = listOf(
-        AbilityItem(name = "Forza", numericValue = character.strength),
-        AbilityItem(name = "Agilità", numericValue = character.agility),
-        AbilityItem(name = "Intelligenza", numericValue = character.intelligence),
-        AbilityItem(name = "Carisma", numericValue = character.charisma),
-        AbilityItem(name = "Potere", numericValue = character.power)
+        AbilityItem(id = "Forza", name = "Forza", numericValue = character.strength),
+        AbilityItem(id = "Agilità", name = "Agilità", numericValue = character.agility),
+        AbilityItem(id = "Intelligenza", name = "Intelligenza", numericValue = character.intelligence),
+        AbilityItem(id = "Carisma", name = "Carisma", numericValue = character.charisma),
+        AbilityItem(id = "Potere", name = "Potere", numericValue = character.power)
     )
 
     Column(
@@ -574,7 +574,7 @@ fun EditStatContent(
         ) {
             stats.forEach { stat ->
                 val isSelected = state.selectedStatToUpgrade == stat.id
-                val potentialValue = minOf(10, stat.numericValue + 2)
+                val potentialValue = state.getStatPreview(stat.id)
                 val isStatMaxed = stat.numericValue >= 10
 
                 Card(

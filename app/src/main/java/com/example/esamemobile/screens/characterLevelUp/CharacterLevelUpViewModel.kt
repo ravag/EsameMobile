@@ -1,5 +1,5 @@
-//TODO: Guadagna 5 + char pe appare sempre anche se l'ho già scelto
-//TODO: Devo cambiatr le scritte da seleziona classe a seleziona sottoclasse e chiaramente non posso riscieglierel quella che avevo gia scelto, inoltre qua non mi fa andare più avanti il bottone è sempre disabilitato
+//TODO: (Risolto)Guadagna 5 + char pe appare sempre anche se l'ho già scelto
+//TODO: (Risolto)Devo cambiatr le scritte da seleziona classe a seleziona sottoclasse e chiaramente non posso riscieglierel quella che avevo gia scelto, inoltre qua non mi fa andare più avanti il bottone è sempre disabilitato
 //TODO: Devo far si che se scelgo di potenziare un potere evoluzione mi dia effettivamente un potere evoluzione e non una abilità base della classe, inoltre devo far sì che non mi dia l'opzione nuova abilità della tua classe se le ho già scelte tutte
 //TODO: Non so pk ma quando clicco sulla card selezionabile per aumentare le staqt non me le seleziona né mi mostra una preview della nuova stat aumentata
 
@@ -66,6 +66,18 @@ data class LevelUpState(
 
     val isLevelUpComplete: Boolean = false
 ) {
+    fun getStatPreview(statName: String): Int {
+        val baseValue = when (statName.lowercase().trim()) {
+            "forza" -> character?.strength
+            "agilità" -> character?.agility
+            "intelligenza" -> character?.intelligence
+            "carisma" -> character?.charisma
+            "potere" -> character?.power
+            else -> null
+        } ?: return 0
+        return minOf(10, baseValue + 2)
+    }
+
     val isCurrentStepValid: Boolean
         get() = when (currentStep) {
             LevelUpStep.CHOOSE_CLASS -> {
@@ -128,6 +140,8 @@ class LevelUpViewModel(
 
             val classesFromJson = staticDataRepository.allGameClasses
 
+            val learnedAbilitiesIds = character.classAbilitiesList.map { it.trim().lowercase() }
+
             if (character.level == 0) {
                 options.add(LevelUpOption.BASE_CLASS_ABILITY)
             } else {
@@ -135,7 +149,7 @@ class LevelUpViewModel(
 
                 if (currentCharacterClass != null) {
                     val learnedBaseAbilitiesCount = currentCharacterClass.baseAbilities.count { baseAbility ->
-                        character.classAbilitiesList.contains(baseAbility.name)
+                        learnedAbilitiesIds.contains(baseAbility.id.trim().lowercase())
                     }
                     val totalBaseAbilities = currentCharacterClass.baseAbilities.size
                     val hasAllBaseAbilities = learnedBaseAbilitiesCount == totalBaseAbilities
@@ -146,7 +160,7 @@ class LevelUpViewModel(
 
                     if (hasAllBaseAbilities && nextLevel >= 6) {
                         val learnedAdvancedAbilitiesCount = currentCharacterClass.advancedAbilities.count { advAbility ->
-                            character.classAbilitiesList.contains(advAbility.name)
+                            learnedAbilitiesIds.contains(advAbility.id.trim().lowercase())
                         }
                         val totalAdvancedAbilities = currentCharacterClass.advancedAbilities.size
 
@@ -182,8 +196,6 @@ class LevelUpViewModel(
                     options.add(LevelUpOption.NEW_CLASS_BASE_ABILITY)
                 }
             }
-
-            val maxLevelReached = options.isEmpty() && character.level != 0
 
             val initialStep = when {
                 character.level == 0 -> LevelUpStep.CHOOSE_CLASS
@@ -225,7 +237,7 @@ class LevelUpViewModel(
         },
 
         onSelectStatToUpgrade = { stat ->
-            _state.update { it?.copy(selectedStatToUpgrade = stat) }
+            _state.update { it?.copy(selectedStatToUpgrade = stat.trim()) }
         },
 
         onSelectAbilityToUpgrade = { ability ->
@@ -299,21 +311,28 @@ class LevelUpViewModel(
                     val currentAbilities = updatedChar.classAbilitiesList.toMutableList()
                     currentAbilities.add("BONUS_STAT_2")
 
-                    val statChar = when (currentState.selectedStatToUpgrade) {
-                        "Forza" -> updatedChar.copy(strength = minOf(10, updatedChar.strength + 2))
-                        "Agilità" -> updatedChar.copy(agility = minOf(10, updatedChar.agility + 2))
-                        "Intelligenza" -> updatedChar.copy(intelligence = minOf(10, updatedChar.intelligence + 2))
-                        "Carisma" -> updatedChar.copy(charisma = minOf(10, updatedChar.charisma + 2))
-                        "Potere" -> updatedChar.copy(power = minOf(10, updatedChar.power + 2))
+                    val statChar = when (currentState.selectedStatToUpgrade?.lowercase()?.trim()) {
+                        "forza" -> updatedChar.copy(strength = minOf(10, updatedChar.strength + 2))
+                        "agilità" -> updatedChar.copy(agility = minOf(10, updatedChar.agility + 2))
+                        "intelligenza" -> updatedChar.copy(intelligence = minOf(10, updatedChar.intelligence + 2))
+                        "carisma" -> updatedChar.copy(charisma = minOf(10, updatedChar.charisma + 2))
+                        "potere" -> updatedChar.copy(power = minOf(10, updatedChar.power + 2))
                         else -> updatedChar
                     }
                     statChar.copy(classAbilitiesList = currentAbilities)
                 }
                 LevelUpOption.UPGRADE_ABILITY -> {
-                    val currentAbilities = updatedChar.classAbilitiesList.toMutableList()
-                    currentAbilities.add("UPGRADE_ABILITY")
-                    currentState.selectedAbilityToUpgrade?.let { currentAbilities.add(it) }
-                    updatedChar.copy(classAbilitiesList = currentAbilities)
+                    if (currentState.selectedAbilityToUpgrade?.startsWith("EVOLUTION_") == true) {
+                        updatedChar.copy(
+                            peAvailable = updatedChar.peAvailable + 2,
+                            classAbilitiesList = updatedChar.classAbilitiesList + "UPGRADE_ABILITY" + currentState.selectedAbilityToUpgrade
+                        )
+                    } else {
+                        val currentAbilities = updatedChar.classAbilitiesList.toMutableList()
+                        currentAbilities.add("UPGRADE_ABILITY")
+                        currentState.selectedAbilityToUpgrade?.let { currentAbilities.add(it) }
+                        updatedChar.copy(classAbilitiesList = currentAbilities)
+                    }
                 }
                 LevelUpOption.BASE_CLASS_ABILITY,
                 LevelUpOption.ADVANCED_CLASS_ABILITY,
