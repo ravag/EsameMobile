@@ -11,5 +11,6 @@ data class Group(
     val description: String = "",
     val masterName: String = "",
     val masterImgUrl: String? = "",
-    val masterId: String = ""
+    val masterId: String = "",
+    val nextSession: String? = null
 )

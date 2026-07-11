@@ -71,10 +71,16 @@ class CharacterDetailsViewModel (
     var editable: Boolean = false
     var hasChanged: Boolean = false
     val charId = MutableStateFlow<String?>(null)
+    val userId = MutableStateFlow<String?>(null)
     private val _state = MutableStateFlow(CharacterDetailsState())
     val state = _state.asStateFlow()
 
     private val saveScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    fun setIds(charId: String, userId: String?) {
+        this.charId.value = charId
+        this.userId.value = userId ?: authRepository.currentUser?.uid
+    }
 
     val actions: CharacterDetailsActions
         get() = CharacterDetailsActions(
@@ -118,7 +124,7 @@ class CharacterDetailsViewModel (
             },
             onLoad = { load() },
             onDelete = if (editable) { {
-                val userId = authRepository.currentUser?.uid ?: return@CharacterDetailsActions
+                val userId = userId.value ?: return@CharacterDetailsActions
 
                 viewModelScope.launch {
                     val result = characterRepository.deleteCharacter(userId,state.value.character?.character!!.id)
@@ -137,7 +143,8 @@ class CharacterDetailsViewModel (
             charId.filterNotNull().collectLatest { id ->
                 _state.update { it.copy(isLoading = true) }
 
-                val result = characterRepository.readCharacter(authRepository.currentUser!!.uid,id)
+                val currentUserId = userId.value ?: return@collectLatest
+                val result = characterRepository.readCharacter(currentUserId,id)
                 result.fold(
                     onSuccess = { char ->
                         val character = char?.let { characterSolver.solve(it) }
@@ -167,7 +174,7 @@ class CharacterDetailsViewModel (
     }
 
     private fun saveCharacter(scope: CoroutineScope) {
-        val userId = authRepository.currentUser?.uid ?: return
+        val userId = userId.value ?: return
         val char = _state.value.character?.character ?: return
 
         if (hasChanged) {

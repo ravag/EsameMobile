@@ -71,6 +71,10 @@ data class NavigationItem(
 
 @Composable
 fun NavigationBottomBarWithFAB(
+    firstOptionText: String,
+    firstOptionImage: ImageVector,
+    secondOptionText: String,
+    secondOptionImage: ImageVector,
     selectedIndex: Int,
     onTabSelected: (Int) -> Unit,
     onFabClick: () -> Unit
@@ -95,13 +99,13 @@ fun NavigationBottomBarWithFAB(
                     .clickable { onTabSelected(0) }
             ) {
                 Icon(
-                    Icons.Outlined.Person,
-                    contentDescription = "Personaggi",
+                    firstOptionImage,
+                    contentDescription = firstOptionText,
                     tint = if (selectedIndex == 0) Color.Green else Color.White,
                     modifier = Modifier.size(26.dp)
                 )
                 Text(
-                    "Personaggi",
+                    firstOptionText,
                     color = if (selectedIndex == 0) Color.Green else Color.White,
                     fontSize = 12.sp
                 )
@@ -118,13 +122,13 @@ fun NavigationBottomBarWithFAB(
                     .clickable { onTabSelected(1) }
             ) {
                 Icon(
-                    Icons.Outlined.AccountBox,
-                    contentDescription = "Gruppi",
+                    secondOptionImage,
+                    contentDescription = secondOptionText,
                     tint = if (selectedIndex == 1) Color.Green else Color.White,
                     modifier = Modifier.size(26.dp)
                 )
                 Text(
-                    "Gruppi",
+                    secondOptionText,
                     color = if (selectedIndex == 1) Color.Green else Color.White,
                     fontSize = 12.sp
                 )
