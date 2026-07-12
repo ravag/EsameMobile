@@ -7,6 +7,7 @@ import com.example.esamemobile.data.Group
 import com.example.esamemobile.data.Member
 import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.firebase.firestore.GroupRepository
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -25,8 +26,10 @@ data class GroupDetailsState(
     val master: Member? = null,
     val members: List<Member> = emptyList(),
     val tempDesc: String = "",
+    val tempName: String = "",
     val isLoading: Boolean = true,
-    val isOwner: Boolean = false
+    val isOwner: Boolean = false,
+    val isEditing: Boolean = false
 )
 
 data class GroupDetailsActions(
@@ -34,10 +37,13 @@ data class GroupDetailsActions(
     val onSelectTab: (Int) -> Unit,
     val onExitOrDelete: () -> Unit,
     val onChangeDescription: (String) -> Unit,
-    val onSaveChangeDescription: () -> Unit,
+    val onChangeName: (String) -> Unit,
+    val onSaveChange: () -> Unit,
     val onUpdateGroupPhoto:() -> Unit,
     val onLoad: () -> Unit,
-    val onChangePage: () -> Unit
+    val onChangePage: () -> Unit,
+    val toggleEdit: () -> Unit,
+    val onChageSessionDate: (Timestamp) -> Unit
 )
 
 class GroupDetailsViewModel (
@@ -57,21 +63,51 @@ class GroupDetailsViewModel (
             onSelectTab = { index -> _state.update { it.copy(selectedTab = GroupDetailsTab.entries[index]) } },
             //Ho bisogno di fare le query per il db prima
             onExitOrDelete = {
-                if (_state.value.isOwner) {
-                    Log.i("debug","proprietario")
-                } else {
-                    Log.i("debug","Non proprietario")
+                viewModelScope.launch {
+                    val result = if (_state.value.isOwner) {
+                        groupRepository.deleteGroup(_state.value.group!!.id)
+                    } else {
+                        groupRepository.removeGroupMember(authRepository.currentUser!!.uid,_state.value.group!!.id)
+                    }
+                    result.fold(
+                        onSuccess = { Log.i("debug","Eliminazione avvenuta con successo") },
+                        onFailure = { exception -> Log.w("debug","Errore nell'eliminazione ${exception.message}") }
+                    )
                 }
+
             },
             onChangeDescription = { text -> _state.update { it.copy(tempDesc = text) } },
-            onSaveChangeDescription = {
+            onChangeName = { text -> _state.update { it.copy(tempName = text) } },
+            onSaveChange = {
                 val current = _state.value.group ?: return@GroupDetailsActions
-                val updated = current.copy(description = _state.value.tempDesc)
-                _state.update { it.copy(group = updated) }
+                viewModelScope.launch {
+                    val updated = current.copy(description = _state.value.tempDesc, name = _state.value.tempName)
+                    _state.update { it.copy(group = updated, isEditing = false) }
+                    val result = groupRepository.updateGroup(_state.value.group!!)
+                    result.fold(
+                        onSuccess = { Log.i("debug","salvataggio gruppo con successo") },
+                        onFailure = { exception -> Log.w("debug","Errore nel salvataggio del gruppo ${exception.message}") }
+                    )
+                }
             },
             onUpdateGroupPhoto = {},
             onLoad = { load() },
-            onChangePage = { _state.update { it.copy(isLoading = true) } }
+            onChangePage = { _state.update { it.copy(isLoading = true) } },
+            toggleEdit = { _state.update { it.copy(isEditing = !it.isEditing, tempDesc = it.group!!.description) } },
+            onChageSessionDate = { timestamp ->
+                val current = _state.value.group ?: return@GroupDetailsActions
+                viewModelScope.launch {
+                    Log.i("debug","ciao $timestamp")
+                    val updated = current.copy(nextSession = timestamp)
+                    Log.i("debug","come butta $timestamp")
+                    _state.update { it.copy(group = updated) }
+                    val result = groupRepository.insertSessionDate(_state.value.group!!.id,timestamp)
+                    result.fold(
+                        onSuccess = { Log.i("debug","data inserita con successo") },
+                        onFailure = { exception -> Log.w("debug","Errore nell'inserimento data ${exception.message}") }
+                    )
+                }
+            }
         )
 
     fun setId(groupId: String) {
@@ -101,6 +137,7 @@ class GroupDetailsViewModel (
                             master = masterMember,
                             members = membersList.filter { member -> member.userId != tempGroup?.masterId },
                             tempDesc = tempGroup?.description ?: "",
+                            tempName = tempGroup?.name ?: "",
                             isLoading = false,
                             isOwner = tempGroup?.masterId == authRepository.currentUser!!.uid
                         )

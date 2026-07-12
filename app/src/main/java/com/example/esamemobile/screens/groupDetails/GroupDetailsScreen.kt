@@ -1,8 +1,13 @@
 package com.example.esamemobile.screens.groupDetails
 
+import android.content.ClipData
+import android.content.Context
+import android.content.Intent
+import android.provider.CalendarContract
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,37 +16,55 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -51,6 +74,12 @@ import com.example.esamemobile.data.Member
 import com.example.esamemobile.utilities.NavigationBottomBarWithFAB
 import com.example.esamemobile.utilities.composables.ImageWithPlaceholder
 import com.example.esamemobile.utilities.composables.Size
+import com.google.firebase.Timestamp
+import kotlinx.coroutines.launch
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Calendar
+import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,6 +88,8 @@ fun GroupDetailsScreen(
     groupActions: GroupDetailsActions,
     navController: NavHostController
 ) {
+    val context = LocalContext.current
+
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         groupActions.onLoad()
     }
@@ -70,6 +101,18 @@ fun GroupDetailsScreen(
                 navigationIcon = {
                     IconButton({ navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack,"Indietro")
+                    }
+                },
+                actions = {
+                    IconButton( onClick = {
+                        groupActions.onExitOrDelete()
+                        navController.navigateUp()
+                    }) {
+                        if (groupState.isOwner) {
+                            Icon(Icons.Default.Delete,"Elimina")
+                        } else {
+                            Icon(Icons.AutoMirrored.Filled.Logout,"Abbandona")
+                        }
                     }
                 }
             )
@@ -120,7 +163,7 @@ fun GroupDetailsScreen(
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .weight(0.4f)
+                                    .weight(0.5f)
                                     .clickable(onClick = { })
                             ) {
                                 Column(
@@ -131,7 +174,16 @@ fun GroupDetailsScreen(
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     ImageWithPlaceholder(groupState.group.imageUrl, Size.Lg)
-                                    Text(groupState.group.name)
+
+                                    if (groupState.isEditing) {
+                                        OutlinedTextField(
+                                            value = groupState.tempName,
+                                            onValueChange = groupActions.onChangeName,
+                                            label = {Text("Nome gruppo")}
+                                        )
+                                    } else {
+                                        Text(groupState.group.name)
+                                    }
                                 }
                             }
 
@@ -151,8 +203,25 @@ fun GroupDetailsScreen(
                                     .weight(0.1f),
                                 horizontalArrangement = Arrangement.SpaceAround
                             ) {
-                                Text(groupState.master?.username ?: "Sconosciuto")
-                                Text(groupState.group.nextSession ?: "Nessuna seesione prevista")
+                                Text(groupState.master?.username ?: "Anonimo")
+                                if (groupState.isOwner) {
+                                    SessionDateButton(
+                                        dateText = formatDate(groupState.group.nextSession) ?: "Nessuna sessione prevista",
+                                        onDateSelected = groupActions.onChageSessionDate
+                                    )
+                                } else {
+                                    Button(
+                                        onClick = { addSessionToCalendar(
+                                            context = context,
+                                            title = "Sessione ${groupState.group.name}",
+                                            startTime = groupState.group.nextSession!!.toDate().time
+                                        ) },
+                                        enabled = groupState.group.nextSession != null
+                                    ) {
+                                        Text(formatDate(groupState.group.nextSession) ?: "Nessuna sessione prevista")
+                                    }
+                                }
+
                             }
                             HorizontalDivider(
                                 modifier = Modifier.fillMaxWidth(),
@@ -166,30 +235,65 @@ fun GroupDetailsScreen(
                                     .weight(0.7f)
                                     .fillMaxWidth()
                             ) {
-                                Text(groupState.group.description)
-//                                Text(
-//                                    "Nel mezzo del cammin di nostra vita mi ritrovai per una selva oscura che la diretta via era smarrita" +
-//                                            " ahi quanto a dir qual era è cosa dura esta selva selvaggia et aspra et forte che nel pensier rinova la paura" +
-//                                            " tanto è amara che poco è più morte ma per trattar del ben che vi trovai vi dirò d'altre cose che vi ho scorte" +
-//                                            " non so ben ridir come vi entrai tant'ero pien di sonno a quel punto che la verace via abbandonai"
-//                                )
+                                if (groupState.isEditing) {
+                                    OutlinedTextField(
+                                        value = groupState.tempDesc,
+                                        onValueChange = groupActions.onChangeDescription,
+                                        label = {Text("Descrizione")}
+                                    )
+                                } else {
+                                    Text(groupState.group.description)
+                                }
                             }
                             if (groupState.isOwner) {
-                                Text(
-                                    "Codice Invito: ${groupState.group.inviteCode}",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .weight(0.1f)
-                                )
+                                Row {
+                                    if (groupState.isEditing) {
+                                        IconButton(
+                                            onClick = groupActions.toggleEdit,
+                                            modifier = Modifier
+                                                .weight(0.5f)
+                                                .background(color = MaterialTheme.colorScheme.secondaryContainer)
+                                            ) {
+                                            Row() {
+                                                Icon(Icons.Default.Cancel,"Annulla")
+                                                Text("Annulla")
+                                            }
+                                        }
+                                        IconButton(
+                                            onClick = groupActions.onSaveChange,
+                                            modifier = Modifier
+                                                .weight(0.5f)
+                                                .background(color = MaterialTheme.colorScheme.secondaryContainer)
+                                        ) {
+                                            Row() {
+                                                Icon(Icons.Default.Save,"Salva modifiche")
+                                                Text("Salva modifiche")
+                                            }
+                                        }
+                                    } else {
+                                        IconButton(
+                                            onClick = groupActions.toggleEdit,
+                                            modifier = Modifier
+                                                .background(color = MaterialTheme.colorScheme.secondaryContainer)
+                                                .fillMaxWidth()
+                                        ) {
+                                            Row() {
+                                                Icon(Icons.Default.Edit,"Modifica")
+                                                Text("Modifica")
+                                            }
+                                        }
+                                    }
+                                }
+                                InviteCodeRow(context,groupState.group.inviteCode, Modifier.weight(0.1f))
                             }
                         }
                         GroupDetailsTab.MEMBERS -> {
-                            LazyColumn() {
+                            LazyColumn {
                                 items(groupState.members) { user ->
                                     ExpandableListItem(user) {
                                         user.characterId?.let { charId ->
                                             navController.navigate(EsameMobileRoute.CharacterDetails(
-                                                user.characterId,
+                                                charId,
                                                 groupActions.onCharacterClick(user.userId),
                                                 user.userId
                                             ))
@@ -215,7 +319,7 @@ fun ExpandableListItem(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Column() {
+    Column {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -253,4 +357,149 @@ fun ExpandableListItem(
             }
         }
     }
+}
+
+@Composable
+fun InviteCodeRow(
+    context: Context,
+    inviteCode: String,
+    modifier: Modifier
+) {
+    val clipboardManager = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        SelectionContainer {
+            Text("Codice Invito:\n $inviteCode")
+        }
+        Spacer(Modifier.width(5.dp))
+        IconButton(onClick = {
+            scope.launch {
+                clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("invite code", inviteCode)))
+                Toast.makeText(context,"Codice invito copiato", Toast.LENGTH_SHORT).show()
+            }
+        }) {
+            Icon(Icons.Default.ContentCopy, "Copia codice invito")
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SessionDateButton(
+    dateText: String,
+    onDateSelected: (Timestamp) -> Unit
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+    var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
+
+    Button( {showDatePicker = true} ) {
+        Text(dateText)
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = System.currentTimeMillis()
+        )
+
+        DatePickerDialog(onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    selectedDateMillis = datePickerState.selectedDateMillis
+                    showDatePicker = false
+                    showTimePicker = true
+                }) {
+                    Text("Conferma")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Annulla")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showTimePicker) {
+        val timePickerState = rememberTimePickerState(
+            initialHour = 12,
+            initialMinute = 0,
+            is24Hour = true
+        )
+
+        BasicAlertDialog(
+            onDismissRequest = { showTimePicker = false }
+        ) {
+            Column() {
+                TimePicker(timePickerState)
+                Row() {
+                    TextButton(onClick = { showTimePicker = false }) {
+                        Text("Annulla")
+                    }
+                    TextButton(onClick = {
+                        selectedDateMillis?.let { dateMillis ->
+                            val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                                timeInMillis = dateMillis
+                            }
+
+                            val year = calendar.get(Calendar.YEAR)
+                            val month = calendar.get(Calendar.MONTH)
+                            val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+                            val localCalendar = Calendar.getInstance().apply {
+                                set(year,month,day,timePickerState.hour,timePickerState.minute)
+                            }
+
+                            val finalDate = localCalendar.time
+                            val timestamp = Timestamp(finalDate)
+
+                            onDateSelected(timestamp)
+                        }
+                        showTimePicker = false
+                    }) {
+                        Text("Conferma")
+                    }
+                }
+            }
+        }
+
+
+    }
+}
+
+
+
+private fun addSessionToCalendar(
+    context: Context,
+    title: String,
+    startTime: Long,
+) {
+    //metto un evento di tre ore, tre ore sono giusto indicative, non penso nessuno riesca a dire quanto duri una sessione
+    val endTime = startTime + 180*60*1000
+
+    val intent = Intent(Intent.ACTION_INSERT).apply {
+        data = CalendarContract.Events.CONTENT_URI
+        putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startTime)
+        putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endTime)
+        putExtra(CalendarContract.Events.TITLE, title)
+    }
+
+    if (intent.resolveActivity(context.packageManager) != null) {
+        context.startActivity(intent)
+    } else {
+        Toast.makeText(context,"Impossibile aggiungere al calendario", Toast.LENGTH_SHORT).show()
+    }
+
+}
+private fun formatDate(timestamp: Timestamp?): String? {
+    if (timestamp == null) return null
+    val instant = timestamp.toDate().toInstant()
+    val localDate = instant.atZone(ZoneId.systemDefault())
+    return localDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
 }

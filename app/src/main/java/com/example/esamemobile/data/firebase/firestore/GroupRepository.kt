@@ -3,6 +3,7 @@ package com.example.esamemobile.data.firebase.firestore
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.Group
 import com.example.esamemobile.data.Member
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -19,6 +20,8 @@ interface GroupRepository {
     suspend fun removeGroupMember(userId: String, groupId: String): Result<Unit>
     suspend fun getAllGroupMembers(groupId: String?): Result<List<Member>>
     suspend fun insertMemberCharacter(groupId: String, userId: String, character: Character): Result<Unit>
+    suspend fun updateGroup(group: Group): Result<Unit>
+    suspend fun insertSessionDate(groupId: String, date: Timestamp): Result<Unit>
 }
 
 class GroupRepositoryImpl(private val db: FirebaseFirestore): GroupRepository {
@@ -53,7 +56,7 @@ class GroupRepositoryImpl(private val db: FirebaseFirestore): GroupRepository {
               "name" to group.name,
               "imageUrl" to group.imageUrl,
               "description" to "",
-              "nextSession" to "",
+              "nextSession" to null,
               "masterId" to group.masterId,
               "inviteCode" to generateUniqueInviteCode()
           )
@@ -173,6 +176,30 @@ class GroupRepositoryImpl(private val db: FirebaseFirestore): GroupRepository {
                     "characterName" to character.name,
                     "characterImgUrl" to character.imageUrl
                 ))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateGroup(group: Group): Result<Unit> {
+        return try {
+            db.collection("groups").document(group.id)
+                .update(mapOf(
+                    "name" to group.name,
+                    "description" to group.description,
+                    "imageUrl" to group.imageUrl
+                )).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun insertSessionDate(groupId: String, date: Timestamp): Result<Unit> {
+        return try {
+            db.collection("groups").document(groupId)
+                .update(mapOf("nextSession" to date)).await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
