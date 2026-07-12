@@ -713,8 +713,20 @@ fun EditAbilitiesContent(
             titleText = "Seleziona un'Abilità dalla Sotto-Classe"
             subtitleText = "Scegli un'abilità di base dalla tua sottoclasse di specializzazione ${subClass?.name ?: ""}:"
 
-            subClass?.baseAbilities?.forEach { ability ->
-                if (!learnedAbilitiesIds.contains(ability.id.trim().lowercase())) {
+            val targetSubClass = subClass ?: allClasses.find { it.id.equals(character.chosenClass, ignoreCase = true) }
+
+            targetSubClass?.baseAbilities?.forEach { ability ->
+                val isAlreadyLearned = learnedAbilitiesIds.any { learnedId ->
+                    learnedId.contains(ability.id.trim().lowercase()) || ability.id.trim().lowercase().contains(learnedId)
+                }
+
+                if (!isAlreadyLearned) {
+                    listToDisplay.add(Pair(ability.id, "${ability.name}\n${ability.description}"))
+                }
+            }
+
+            if (listToDisplay.isEmpty() && targetSubClass != null) {
+                targetSubClass.baseAbilities.forEach { ability ->
                     listToDisplay.add(Pair(ability.id, "${ability.name}\n${ability.description}"))
                 }
             }
@@ -728,31 +740,31 @@ fun EditAbilitiesContent(
                 listToDisplay.add(
                     Pair(
                         abilityItem.name,
-                        "Potenzia ${abilityItem.name}.\nDescrizione: ${abilityItem.description}"
+                        "${abilityItem.name}\n${abilityItem.description}"
                     )
                 )
             }
 
-            val allGameClassAbilitiesNames = allClasses.flatMap { it.baseAbilities + it.advancedAbilities }
-
-            character.classAbilitiesList.forEach { learnedAbilityRaw ->
-                val learnedAbilityId = learnedAbilityRaw.trim().lowercase()
-                val isSystemTag = learnedAbilityId.startsWith("subclass_") ||
-                        learnedAbilityId == "bonus_pe_3" ||
-                        learnedAbilityId == "bonus_pe_5" ||
-                        learnedAbilityId == "upgrade_ability" ||
-                        learnedAbilityId == "bonus_stat_2"
-
-                if (!isSystemTag && !learnedAbilityId.endsWith("+")) {
-                    val matchingAbility = allGameClassAbilitiesNames.find { it.id.trim().lowercase() == learnedAbilityId }
-                    if (matchingAbility != null) {
-                        listToDisplay.add(
-                            Pair(learnedAbilityRaw,
-                                "Potenzia ${matchingAbility.name} in ${matchingAbility.name}+.\nOriginale: ${matchingAbility.description}")
-                        )
-                    }
-                }
-            }
+//            val allGameClassAbilitiesNames = allClasses.flatMap { it.baseAbilities + it.advancedAbilities }
+//
+//            character.classAbilitiesList.forEach { learnedAbilityRaw ->
+//                val learnedAbilityId = learnedAbilityRaw.trim().lowercase()
+//                val isSystemTag = learnedAbilityId.startsWith("subclass_") ||
+//                        learnedAbilityId == "bonus_pe_3" ||
+//                        learnedAbilityId == "bonus_pe_5" ||
+//                        learnedAbilityId == "upgrade_ability" ||
+//                        learnedAbilityId == "bonus_stat_2"
+//
+//                if (!isSystemTag && !learnedAbilityId.endsWith("+")) {
+//                    val matchingAbility = allGameClassAbilitiesNames.find { it.id.trim().lowercase() == learnedAbilityId }
+//                    if (matchingAbility != null) {
+//                        listToDisplay.add(
+//                            Pair(learnedAbilityRaw,
+//                                "Potenzia ${matchingAbility.name} in ${matchingAbility.name}+.\nOriginale: ${matchingAbility.description}")
+//                        )
+//                    }
+//                }
+//            }
         }
         else -> return
     }
@@ -788,7 +800,7 @@ fun EditAbilitiesContent(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 listToDisplay.forEach { (abilityId, fullNameAndDesc) ->
-                    val targetId = if (optionChosen == LevelUpOption.UPGRADE_ABILITY) "$abilityId+" else abilityId
+                    val targetId = abilityId
                     val isSelected = state.selectedAbilityToUpgrade == targetId
 
                     val parts = fullNameAndDesc.split("\n", limit = 2)

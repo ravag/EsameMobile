@@ -1,6 +1,7 @@
 //TODO: Quando inserisco manualmente le statistiche dopo averle tirate o se sono diverse da uno mi impedisce di cambiarle manualmente
 //TODO: Controlla che non mi faccia andare avanti nella creazione se non ho rollato anche gli hp
 //TODO: Per le scelte stilistiche che hai fatto, devi assolutamente aggiungere un controllo nel caracter creation dove eviti che il nome di una abilità creata possa terminare con il carattere +, semplicemente mandando un toast che dica che non può terminare con + e che mi mantenga aperto il dialog dell'inserimento nuova abilità
+//TODO: Quando crei un'abilità non puoi averne due con lo stesso nome visto che l'id è ricavato dal nome e quindi causa casino più in là e sinceramnete non so come gestire con id automatici visto che non ci caspisco più niente
 
 package com.example.esamemobile.screens.characterCreation
 

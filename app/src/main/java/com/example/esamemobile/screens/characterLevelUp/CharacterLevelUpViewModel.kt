@@ -1,7 +1,5 @@
-//TODO: (Risolto)Guadagna 5 + char pe appare sempre anche se l'ho già scelto
-//TODO: (Risolto)Devo cambiatr le scritte da seleziona classe a seleziona sottoclasse e chiaramente non posso riscieglierel quella che avevo gia scelto, inoltre qua non mi fa andare più avanti il bottone è sempre disabilitato
-//TODO: Devo far si che se scelgo di potenziare un potere evoluzione mi dia effettivamente un potere evoluzione e non una abilità base della classe, inoltre devo far sì che non mi dia l'opzione nuova abilità della tua classe se le ho già scelte tutte
-//TODO: Non so pk ma quando clicco sulla card selezionabile per aumentare le staqt non me le seleziona né mi mostra una preview della nuova stat aumentata
+//TODO: Quando salvo un'abilità potenziata non me la salva con +, non mi da la possibilità di modificare la descrizione e mi aumenta di 1 il costo anchwe se non dovrebbe farlo, il costo rimane uguale
+//TODO: Quando aumento una statistica non la salva nel personaggio e rimane quella vecchia come se non l'avessi aumentata
 
 package com.example.esamemobile.screens.characterLevelUp
 
@@ -127,6 +125,7 @@ class LevelUpViewModel(
             val hasTakenCharPlus5Before = character.classAbilitiesList.contains("BONUS_PE_5")
             val hasTakenUpgradeAbility = character.classAbilitiesList.contains("UPGRADE_ABILITY")
             val hasTakenStatBonus = character.classAbilitiesList.contains("BONUS_STAT_2")
+            val hasTakenNewClassBaseAbility = character.classAbilitiesList.contains("TAKEN_NEW_CLASS_BASE_ABILITIES")
 
             if (!hasTakenCharPlus3Before) {
                 options.add(LevelUpOption.GAIN_PE_CHAR_3)
@@ -171,28 +170,12 @@ class LevelUpViewModel(
                 }
             }
 
-
-
             if (nextLevel >= 6) {
                 if (!hasTakenStatBonus) {
                     options.add(LevelUpOption.STAT_BONUS_2)
                 }
 
-                val subClassId = character.classAbilitiesList
-                    .find { it.startsWith("SUBCLASS_") }
-                    ?.removePrefix("SUBCLASS_")
-
-                if (subClassId != null) {
-                    val subClass = classesFromJson.find { it.id == subClassId }
-                    if (subClass != null) {
-                        val hasTakenSubclassBaseAbility = subClass.baseAbilities.any { baseAbility ->
-                            character.classAbilitiesList.contains(baseAbility.name)
-                        }
-                        if (!hasTakenSubclassBaseAbility) {
-                            options.add(LevelUpOption.NEW_CLASS_BASE_ABILITY)
-                        }
-                    }
-                } else {
+                if (!hasTakenNewClassBaseAbility) {
                     options.add(LevelUpOption.NEW_CLASS_BASE_ABILITY)
                 }
             }
@@ -345,9 +328,14 @@ class LevelUpViewModel(
                     }
                 }
                 LevelUpOption.BASE_CLASS_ABILITY,
-                LevelUpOption.ADVANCED_CLASS_ABILITY,
+                LevelUpOption.ADVANCED_CLASS_ABILITY -> {
+                    val currentAbilities = updatedChar.classAbilitiesList.toMutableList()
+                    currentState.selectedAbilityToUpgrade?.let { currentAbilities.add(it) }
+                    updatedChar.copy(classAbilitiesList = currentAbilities)
+                }
                 LevelUpOption.NEW_CLASS_BASE_ABILITY -> {
                     val currentAbilities = updatedChar.classAbilitiesList.toMutableList()
+                    currentAbilities.add("TAKEN_NEW_CLASS_BASE_ABILITIES")
                     currentState.selectedAbilityToUpgrade?.let { currentAbilities.add(it) }
                     updatedChar.copy(classAbilitiesList = currentAbilities)
                 }
