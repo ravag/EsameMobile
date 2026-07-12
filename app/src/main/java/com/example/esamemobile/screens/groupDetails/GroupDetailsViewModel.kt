@@ -22,6 +22,7 @@ enum class GroupDetailsTab {
 data class GroupDetailsState(
     val group: Group? = null,
     val selectedTab: GroupDetailsTab = GroupDetailsTab.DESCRIPTION,
+    val master: Member? = null,
     val members: List<Member> = emptyList(),
     val tempDesc: String = "",
     val isLoading: Boolean = true,
@@ -31,10 +32,11 @@ data class GroupDetailsState(
 data class GroupDetailsActions(
     val onCharacterClick: (String) -> Boolean,
     val onSelectTab: (Int) -> Unit,
-    val onFabClick: () -> Unit,
     val onExitOrDelete: () -> Unit,
     val onChangeDescription: (String) -> Unit,
-    val onSaveChangeDescription: () -> Unit
+    val onSaveChangeDescription: () -> Unit,
+    val onUpdateGroupPhoto:() -> Unit,
+    val onLoad: () -> Unit
 )
 
 class GroupDetailsViewModel (
@@ -47,9 +49,8 @@ class GroupDetailsViewModel (
 
     val actions: GroupDetailsActions
         get() = GroupDetailsActions(
-            onCharacterClick = { text -> true },
+            onCharacterClick = { text -> text == authRepository.currentUser?.uid },
             onSelectTab = { index -> _state.update { it.copy(selectedTab = GroupDetailsTab.entries[index]) } },
-            onFabClick = {},
             //Ho bisogno di fare le query per il db prima
             onExitOrDelete = {
                 if (_state.value.isOwner) {
@@ -63,7 +64,9 @@ class GroupDetailsViewModel (
                 val current = _state.value.group ?: return@GroupDetailsActions
                 val updated = current.copy(description = _state.value.tempDesc)
                 _state.update { it.copy(group = updated) }
-            }
+            },
+            onUpdateGroupPhoto = {},
+            onLoad = { load() }
         )
 
     fun setId(groupId: String) {
@@ -74,20 +77,33 @@ class GroupDetailsViewModel (
         viewModelScope.launch {
             groupId.filterNotNull().collectLatest { id ->
                 _state.update { it.copy(isLoading = true) }
-
+                var tempGroup: Group? = null
                 val result = groupRepository.readGroup(id)
                 result.fold(
-                    onSuccess = { group ->
-                        _state.update { it.copy(
-                            group = group,
-                            tempDesc = group?.description ?: "",
-                            isLoading = false,
-                            isOwner = group?.masterId == authRepository.currentUser!!.uid
-                        )
-                        }
-                    },
+                    onSuccess = { group -> tempGroup = group },
                     onFailure = { exception ->
                         Log.w("debug","Errorazzo ${exception.message}")
+                        _state.update { it.copy(isLoading = false) }
+                        return@collectLatest
+                    }
+                )
+                val membersResult = groupRepository.getAllGroupMembers(id)
+                membersResult.fold(
+                    onSuccess = { membersList ->
+                        val masterMember = membersList.find { it.userId == tempGroup?.masterId }
+                        _state.update { it.copy(
+                            group = tempGroup,
+                            master = masterMember,
+                            members = membersList.filter { member -> member.userId != tempGroup?.masterId },
+                            tempDesc = tempGroup?.description ?: "",
+                            isLoading = false,
+                            isOwner = tempGroup?.masterId == authRepository.currentUser!!.uid
+                        )
+                        }
+                        Log.i("debug","yippie")
+                    },
+                    onFailure = { exception ->
+                        Log.w("debug","Errorazzo2 ${exception.message}")
                         _state.update { it.copy(isLoading = false) }
                     }
                 )

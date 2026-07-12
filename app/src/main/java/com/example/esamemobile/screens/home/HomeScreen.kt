@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -25,8 +26,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -67,7 +70,6 @@ fun HomeScreen(
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val textFieldState = rememberTextFieldState()
-    var groupPopUp by remember { mutableStateOf(false) }
     val groupTextFieldState = rememberTextFieldState()
 
     //Soluzione temporanea per refresh dopo creazione personaggio
@@ -106,7 +108,7 @@ fun HomeScreen(
                     focusManager.clearFocus()
                     when (homeState.homePage) {
                         HomePage.CHARACTERS ->  navController.navigate(EsameMobileRoute.CharacterCreation)
-                        HomePage.GROUPS ->  groupPopUp = true
+                        HomePage.GROUPS ->  homeActions.onOpenDialog(HomeDialog.CHOICE)
                     }
                 }
             )
@@ -114,51 +116,84 @@ fun HomeScreen(
         containerColor = Color.Black
     ) { innerPadding ->
 
-        if (groupPopUp) {
-            Dialog(
-                onDismissRequest = { groupPopUp = false },
-            ) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .padding(16.dp)
+        when (homeState.currentDialog) {
+            HomeDialog.CHOICE -> {
+                Dialog(
+                    onDismissRequest = homeActions.onDismissDialog,
                 ) {
-                    Column(
-                        verticalArrangement = Arrangement.Top,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .padding(16.dp)
                     ) {
-                        Spacer(Modifier.height(25.dp))
-                        OutlinedTextField(
-                            value = groupTextFieldState.text.toString(),
-                            onValueChange = { s -> groupTextFieldState.edit { replace(0,this.length,s) } },
-                            label = { Text("Nome gruppo") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Row() {
+                        Column(
+                            verticalArrangement = Arrangement.Top,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             Button(
-                                onClick = {
-                                    groupTextFieldState.edit { replace(0,this.length,"") }
-                                    groupPopUp = false
-                                }
+                                onClick = { homeActions.onOpenDialog(HomeDialog.NEW_GROUP) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Nuovo gruppo")
+                            }
+                            HorizontalDivider(
+                                modifier = Modifier.fillMaxWidth(),
+                                thickness = 1.dp,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Button(
+                                onClick = { homeActions.onOpenDialog(HomeDialog.JOIN_GROUP) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Entra in un gruppo")
+                            }
+                            HorizontalDivider(
+                                modifier = Modifier.fillMaxWidth(),
+                                thickness = 1.dp,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Button(
+                                onClick = homeActions.onDismissDialog,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text("Annulla")
-                            }
-                            Spacer(Modifier.width(10.dp))
-                            Button(
-                                onClick = {
-                                    homeActions.onGroupCreate(groupTextFieldState.text.toString())
-                                    groupTextFieldState.edit { replace(0,this.length,"") }
-                                    groupPopUp = false
-                                }
-                            ) {
-                                Text("Conferma")
                             }
                         }
                     }
                 }
-
             }
+            HomeDialog.NEW_GROUP -> {
+                GenericInputPopup(
+                    textFieldState = groupTextFieldState,
+                    title = "Nuovo gruppo",
+                    query = "Nome gruppo",
+                    onDismiss = {
+                        homeActions.onDismissDialog()
+                        groupTextFieldState.edit { replace(0,this.length,"") }
+                    },
+                    onConfirm = {
+                        homeActions.onGroupCreate(groupTextFieldState.text.toString())
+                        groupTextFieldState.edit { replace(0,this.length,"") }
+                    }
+                )
+            }
+            HomeDialog.JOIN_GROUP -> {
+                GenericInputPopup(
+                    textFieldState = groupTextFieldState,
+                    title = "Entra in un gruppo",
+                    query = "Codice gruppo",
+                    onDismiss = {
+                        homeActions.onDismissDialog()
+                        groupTextFieldState.edit { replace(0,this.length,"") }
+                    },
+                    onConfirm = {
+                        homeActions.onGroupJoin(groupTextFieldState.text.toString())
+                        groupTextFieldState.edit { replace(0,this.length,"") }
+                    }
+                )
+            }
+            null -> { }
         }
 
         Column (
@@ -231,3 +266,59 @@ fun HomeScreen(
         }
     }
 }
+
+@Composable
+fun GenericInputPopup(
+    textFieldState: TextFieldState,
+    title: String,
+    query: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .padding(16.dp)
+        ) {
+            Column(
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(title, fontSize = 15.sp)
+                Spacer(Modifier.height(25.dp))
+                OutlinedTextField(
+                    value = textFieldState.text.toString(),
+                    onValueChange = { s ->
+                        textFieldState.edit {
+                            replace(
+                                0,
+                                this.length,
+                                s
+                            )
+                        }
+                    },
+                    label = { Text(query) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Row() {
+                    Button(
+                        onClick = onDismiss
+                    ) {
+                        Text("Annulla")
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Button(
+                        onClick = onConfirm
+                    ) {
+                        Text("Conferma")
+                    }
+                }
+            }
+        }
+    }
+}
+

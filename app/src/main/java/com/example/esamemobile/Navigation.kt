@@ -22,6 +22,7 @@ import com.example.esamemobile.screens.characterCreation.CharacterCreationViewMo
 import com.example.esamemobile.screens.characterLevelUp.LevelUpScreen
 import com.example.esamemobile.screens.characterLevelUp.LevelUpViewModel
 import com.example.esamemobile.screens.groupDetails.GroupDetailsScreen
+import com.example.esamemobile.screens.groupDetails.GroupDetailsViewModel
 import com.example.esamemobile.screens.home.HomeViewModel
 import com.example.esamemobile.screens.login.LoginViewModel
 import com.example.esamemobile.screens.settings.SettingsScreen
@@ -30,7 +31,7 @@ import org.koin.androidx.compose.koinViewModel
 
 sealed interface EsameMobileRoute {
     @Serializable data object Home : EsameMobileRoute
-    @Serializable data class CharacterDetails(val charId: String, val enabled: Boolean, val userId: String? = null) : EsameMobileRoute
+    @Serializable data class CharacterDetails(val charId: String, val enabled: Boolean) : EsameMobileRoute
     @Serializable data object Login : EsameMobileRoute
     @Serializable data object Debug : EsameMobileRoute //Questa è momentanea, sarà da rimuovere in futuro
     @Serializable data object CharacterCreation : EsameMobileRoute
@@ -68,7 +69,7 @@ fun EsameMobileNavGraph(
         composable<EsameMobileRoute.CharacterDetails> { backStackEntry ->
             val route = backStackEntry.toRoute<EsameMobileRoute.CharacterDetails>()
             val characterVm = koinViewModel<CharacterDetailsViewModel>()
-            characterVm.setIds(route.charId, route.userId)
+            characterVm.setIds(route.charId)
             characterVm.editable = route.enabled
             val charState by characterVm.state.collectAsStateWithLifecycle()
             CharacterDetailsScreen(
@@ -107,7 +108,11 @@ fun EsameMobileNavGraph(
         }
         composable<EsameMobileRoute.GroupDetails> { backStackEntry ->
             val route = backStackEntry.toRoute<EsameMobileRoute.GroupDetails>()
-            GroupDetailsScreen(navController=navController)
+            val groupDetailsVm = koinViewModel<GroupDetailsViewModel>()
+            groupDetailsVm.setId(route.groupId)
+
+            val groupDetailsState by groupDetailsVm.state.collectAsStateWithLifecycle()
+            GroupDetailsScreen(groupDetailsState,groupDetailsVm.actions,navController=navController)
         }
     }
 }

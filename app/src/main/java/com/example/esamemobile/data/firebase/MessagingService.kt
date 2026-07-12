@@ -37,7 +37,8 @@ class MessagingService : FirebaseMessagingService(), KoinComponent {
 
     //Ho controllato, questi sono i metodi da usare, non so perchè dica sono deprecati che non lo sono
     //Messaggio di deprecated in java
-    @Suppress("OVERRIDE_DEPRECATION")
+    @Deprecated("Deprecated in Java")
+    @Suppress("DEPRECATION")
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         // il token è cambiato: va rimandato al tuo backend Java

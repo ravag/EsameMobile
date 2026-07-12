@@ -71,15 +71,15 @@ class CharacterDetailsViewModel (
     var editable: Boolean = false
     var hasChanged: Boolean = false
     val charId = MutableStateFlow<String?>(null)
-    val userId = MutableStateFlow<String?>(null)
+    private var userId: String? = null
     private val _state = MutableStateFlow(CharacterDetailsState())
     val state = _state.asStateFlow()
 
     private val saveScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    fun setIds(charId: String, userId: String?) {
+    fun setIds(charId: String) {
         this.charId.value = charId
-        this.userId.value = userId ?: authRepository.currentUser?.uid
+        this.userId =  authRepository.currentUser?.uid
     }
 
     val actions: CharacterDetailsActions
@@ -124,7 +124,7 @@ class CharacterDetailsViewModel (
             },
             onLoad = { load() },
             onDelete = if (editable) { {
-                val userId = userId.value ?: return@CharacterDetailsActions
+                val userId = userId ?: return@CharacterDetailsActions
 
                 viewModelScope.launch {
                     val result = characterRepository.deleteCharacter(userId,state.value.character?.character!!.id)
@@ -143,7 +143,7 @@ class CharacterDetailsViewModel (
             charId.filterNotNull().collectLatest { id ->
                 _state.update { it.copy(isLoading = true) }
 
-                val currentUserId = userId.value ?: return@collectLatest
+                val currentUserId = userId ?: return@collectLatest
                 val result = characterRepository.readCharacter(currentUserId,id)
                 result.fold(
                     onSuccess = { char ->
@@ -174,7 +174,7 @@ class CharacterDetailsViewModel (
     }
 
     private fun saveCharacter(scope: CoroutineScope) {
-        val userId = userId.value ?: return
+        val userId = userId ?: return
         val char = _state.value.character?.character ?: return
 
         if (hasChanged) {
