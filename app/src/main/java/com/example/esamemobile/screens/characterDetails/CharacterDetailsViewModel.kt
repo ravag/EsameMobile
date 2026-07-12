@@ -71,15 +71,16 @@ class CharacterDetailsViewModel (
     var editable: Boolean = false
     var hasChanged: Boolean = false
     val charId = MutableStateFlow<String?>(null)
-    private var userId: String? = null
+    //Potrei vedere un personaggio non mio, ho bisogno di tenermi userId per recuperare il personaggio
+    private var userId = MutableStateFlow<String?>(null)
     private val _state = MutableStateFlow(CharacterDetailsState())
     val state = _state.asStateFlow()
 
     private val saveScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    fun setIds(charId: String) {
+    fun setIds(charId: String, userId: String?) {
         this.charId.value = charId
-        this.userId =  authRepository.currentUser?.uid
+        this.userId.value = userId ?: authRepository.currentUser?.uid
     }
 
     val actions: CharacterDetailsActions
@@ -124,7 +125,7 @@ class CharacterDetailsViewModel (
             },
             onLoad = { load() },
             onDelete = if (editable) { {
-                val userId = userId ?: return@CharacterDetailsActions
+                val userId = userId.value ?: return@CharacterDetailsActions
 
                 viewModelScope.launch {
                     val result = characterRepository.deleteCharacter(userId,state.value.character?.character!!.id)
@@ -143,7 +144,7 @@ class CharacterDetailsViewModel (
             charId.filterNotNull().collectLatest { id ->
                 _state.update { it.copy(isLoading = true) }
 
-                val currentUserId = userId ?: return@collectLatest
+                val currentUserId = userId.value ?: return@collectLatest
                 val result = characterRepository.readCharacter(currentUserId,id)
                 result.fold(
                     onSuccess = { char ->
@@ -174,7 +175,7 @@ class CharacterDetailsViewModel (
     }
 
     private fun saveCharacter(scope: CoroutineScope) {
-        val userId = userId ?: return
+        val userId = userId.value ?: return
         val char = _state.value.character?.character ?: return
 
         if (hasChanged) {

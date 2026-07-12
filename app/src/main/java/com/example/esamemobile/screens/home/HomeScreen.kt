@@ -67,7 +67,7 @@ fun HomeScreen(
     homeActions: HomeActions,
     navController: NavHostController
 ) {
-    val context = LocalContext.current
+
     val focusManager = LocalFocusManager.current
     val textFieldState = rememberTextFieldState()
     val groupTextFieldState = rememberTextFieldState()

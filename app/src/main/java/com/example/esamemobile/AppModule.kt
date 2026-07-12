@@ -17,6 +17,7 @@ import com.example.esamemobile.data.repositories.SettingsRepository
 import com.example.esamemobile.data.repositories.StaticDataRepository
 import com.example.esamemobile.data.supabase.ImagesRepository
 import com.example.esamemobile.data.supabase.ImagesRepositoryImpl
+import com.example.esamemobile.screens.addCharacter.AddCharacterViewModel
 import com.example.esamemobile.screens.characterCreation.CharacterCreationViewModel
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewModel
 import com.example.esamemobile.screens.characterLevelUp.LevelUpViewModel
@@ -67,4 +68,5 @@ val appModule = module {
     viewModel { CharacterCreationViewModel(get(),get(),get(),get(),get()) }
     viewModel { LevelUpViewModel(get(),get(),get()) }
     viewModel { GroupDetailsViewModel(get(),get()) }
+    viewModel { AddCharacterViewModel(get(),get(),get()) }
 }

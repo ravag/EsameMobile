@@ -14,6 +14,8 @@ import com.example.esamemobile.data.Character
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsScreen
 import com.example.esamemobile.screens.characterCreation.CharacterCreationScreen
 import com.example.esamemobile.screens.DebugDatabaseScreen
+import com.example.esamemobile.screens.addCharacter.AddCharacterScreen
+import com.example.esamemobile.screens.addCharacter.AddCharacterViewModel
 import com.example.esamemobile.screens.home.HomeScreen
 import com.example.esamemobile.screens.login.LoginScreen
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewModel
@@ -31,13 +33,14 @@ import org.koin.androidx.compose.koinViewModel
 
 sealed interface EsameMobileRoute {
     @Serializable data object Home : EsameMobileRoute
-    @Serializable data class CharacterDetails(val charId: String, val enabled: Boolean) : EsameMobileRoute
+    @Serializable data class CharacterDetails(val charId: String, val enabled: Boolean, val userId: String? = null) : EsameMobileRoute
     @Serializable data object Login : EsameMobileRoute
     @Serializable data object Debug : EsameMobileRoute //Questa è momentanea, sarà da rimuovere in futuro
     @Serializable data object CharacterCreation : EsameMobileRoute
     @Serializable data object Settings: EsameMobileRoute
     @Serializable data class LevelUp(val charId: String) : EsameMobileRoute
     @Serializable data class GroupDetails(val groupId: String): EsameMobileRoute
+    @Serializable data class AddCharacter(val groupId: String): EsameMobileRoute
 }
 
 
@@ -69,7 +72,7 @@ fun EsameMobileNavGraph(
         composable<EsameMobileRoute.CharacterDetails> { backStackEntry ->
             val route = backStackEntry.toRoute<EsameMobileRoute.CharacterDetails>()
             val characterVm = koinViewModel<CharacterDetailsViewModel>()
-            characterVm.setIds(route.charId)
+            characterVm.setIds(route.charId, route.userId)
             characterVm.editable = route.enabled
             val charState by characterVm.state.collectAsStateWithLifecycle()
             CharacterDetailsScreen(
@@ -113,6 +116,14 @@ fun EsameMobileNavGraph(
 
             val groupDetailsState by groupDetailsVm.state.collectAsStateWithLifecycle()
             GroupDetailsScreen(groupDetailsState,groupDetailsVm.actions,navController=navController)
+        }
+        composable<EsameMobileRoute.AddCharacter> { backStackEntry ->
+            val route = backStackEntry.toRoute<EsameMobileRoute.AddCharacter>()
+            val addCharacterVm = koinViewModel<AddCharacterViewModel>()
+            addCharacterVm.setId(route.groupId)
+
+            val addCharacterState by addCharacterVm.state.collectAsStateWithLifecycle()
+            AddCharacterScreen(addCharacterState,addCharacterVm.actions,navController)
         }
     }
 }

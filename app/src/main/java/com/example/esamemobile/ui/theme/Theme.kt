@@ -37,6 +37,7 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+@Suppress("DEPRECATION")
 @Composable
 fun EsameMobileTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

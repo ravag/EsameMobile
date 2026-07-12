@@ -86,7 +86,8 @@ fun GroupDetailsScreen(
                 if (groupState.isOwner) {
                     Log.i("debug","Questo è incompleto, devi inserire il calendario")
                 } else {
-                    Log.i("debug","Inserisci navigazione a schermo scegli personaggio")
+                    groupActions.onChangePage()
+                    navController.navigate(EsameMobileRoute.AddCharacter(groupState.group!!.id))
                 }
             }
         }
@@ -189,7 +190,8 @@ fun GroupDetailsScreen(
                                         user.characterId?.let { charId ->
                                             navController.navigate(EsameMobileRoute.CharacterDetails(
                                                 user.characterId,
-                                                groupActions.onCharacterClick(user.userId)
+                                                groupActions.onCharacterClick(user.userId),
+                                                user.userId
                                             ))
                                         }
 

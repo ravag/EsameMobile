@@ -36,7 +36,8 @@ data class GroupDetailsActions(
     val onChangeDescription: (String) -> Unit,
     val onSaveChangeDescription: () -> Unit,
     val onUpdateGroupPhoto:() -> Unit,
-    val onLoad: () -> Unit
+    val onLoad: () -> Unit,
+    val onChangePage: () -> Unit
 )
 
 class GroupDetailsViewModel (
@@ -49,7 +50,10 @@ class GroupDetailsViewModel (
 
     val actions: GroupDetailsActions
         get() = GroupDetailsActions(
-            onCharacterClick = { text -> text == authRepository.currentUser?.uid },
+            onCharacterClick = { text ->
+                _state.update { it.copy(isLoading = true) }
+                text == authRepository.currentUser?.uid
+            },
             onSelectTab = { index -> _state.update { it.copy(selectedTab = GroupDetailsTab.entries[index]) } },
             //Ho bisogno di fare le query per il db prima
             onExitOrDelete = {
@@ -66,7 +70,8 @@ class GroupDetailsViewModel (
                 _state.update { it.copy(group = updated) }
             },
             onUpdateGroupPhoto = {},
-            onLoad = { load() }
+            onLoad = { load() },
+            onChangePage = { _state.update { it.copy(isLoading = true) } }
         )
 
     fun setId(groupId: String) {
