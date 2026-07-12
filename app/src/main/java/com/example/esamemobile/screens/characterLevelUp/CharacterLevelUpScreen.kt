@@ -23,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,6 +32,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -71,18 +73,14 @@ fun LevelUpScreen(
     val state by viewModel.state.collectAsState()
     val actions = viewModel.actions
 
-    val currentState = state
-    if (currentState == null) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
-        }
-        return
-    }
-
+    val currentState = state ?: return
     val currentStep = currentState.currentStep
+
+    var showEditDescriptionDialog by remember { mutableStateOf(false) }
+
+    if (showEditDescriptionDialog && currentState.selectedOption == LevelUpOption.UPGRADE_ABILITY) {
+
+    }
 
     Scaffold(
         bottomBar = {
@@ -846,6 +844,41 @@ fun EditAbilitiesContent(
                                 onClick = { actions.onSelectAbilityToUpgrade(targetId) }
                             )
                         }
+                    }
+                }
+            }
+
+            AnimatedVisibility(
+                visible = optionChosen == LevelUpOption.UPGRADE_ABILITY && state.selectedAbilityToUpgrade != null
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            "Personalizza gli effetti del potenziamento:",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        OutlinedTextField(
+                            value = state.customAbilityDescription,
+                            onValueChange = { actions.onUpdateAbilityDescription(it) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(120.dp),
+                            placeholder = { Text("Scrivi qui come cambia la descrizione dell'abilità...") },
+                            shape = RoundedCornerShape(8.dp)
+                        )
                     }
                 }
             }

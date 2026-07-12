@@ -1,6 +1,3 @@
-//TODO: Quando salvo un'abilità potenziata non me la salva con +, non mi da la possibilità di modificare la descrizione e mi aumenta di 1 il costo anchwe se non dovrebbe farlo, il costo rimane uguale
-//TODO: Quando aumento una statistica non la salva nel personaggio e rimane quella vecchia come se non l'avessi aumentata
-
 package com.example.esamemobile.screens.characterLevelUp
 
 import android.content.Context
@@ -57,6 +54,7 @@ data class LevelUpState(
 
     val selectedStatToUpgrade: String? = null,
     val selectedAbilityToUpgrade: String? = null,
+    val customAbilityDescription: String = "",
     val selectedClassId: String? = null,
     val selectedSubClassId: String? = null,
 
@@ -96,6 +94,7 @@ data class LevelUpActions(
     val onSelectedOption: (LevelUpOption) -> Unit,
     val onSelectStatToUpgrade: (String) -> Unit,
     val onSelectAbilityToUpgrade: (String) -> Unit,
+    val onUpdateAbilityDescription: (String) -> Unit,
     val onSelectedClass: (String) -> Unit,
     val onSelectedSubClass: (String) -> Unit,
     val onConfirmLevelUp: (Context, () -> Unit) -> Unit,
@@ -224,7 +223,18 @@ class LevelUpViewModel(
         },
 
         onSelectAbilityToUpgrade = { ability ->
-            _state.update { it?.copy(selectedAbilityToUpgrade = ability) }
+            _state.update { currentState ->
+                val currentDesc = currentState?.character?.abilitiesList?.find { it.name == ability }?.description ?: ""
+
+                currentState?.copy(
+                    selectedAbilityToUpgrade = ability,
+                    customAbilityDescription = currentDesc
+                )
+            }
+        },
+
+        onUpdateAbilityDescription = { text ->
+            _state.update { it?.copy(customAbilityDescription = text) }
         },
 
         onSelectedClass = { classId ->
@@ -265,11 +275,11 @@ class LevelUpViewModel(
                 currentHP = char.currentHP + (currentState.hpRolled ?: 0)
             )
 
-            if (char.level == 0 && currentState.selectedClassId != null) {
+            if (char.level == 0) {
                 updatedChar = updatedChar.copy(chosenClass = currentState.selectedClassId)
             }
 
-            if (currentState.currentLevel == 6 && currentState.selectedSubClassId != null) {
+            if (currentState.currentLevel == 6) {
                 updatedChar = updatedChar.copy(classAbilitiesList = updatedChar.classAbilitiesList + "SUBCLASS_${currentState.selectedSubClassId}")
             }
 
@@ -294,7 +304,7 @@ class LevelUpViewModel(
                     val currentAbilities = updatedChar.classAbilitiesList.toMutableList()
                     currentAbilities.add("BONUS_STAT_2")
 
-                    val statChar = when (currentState.selectedStatToUpgrade?.lowercase()?.trim()) {
+                    val baseUpgradedChar = when (currentState.selectedStatToUpgrade?.lowercase()?.trim()) {
                         "forza" -> updatedChar.copy(strength = minOf(10, updatedChar.strength + 2))
                         "agilità" -> updatedChar.copy(agility = minOf(10, updatedChar.agility + 2))
                         "intelligenza" -> updatedChar.copy(intelligence = minOf(10, updatedChar.intelligence + 2))
@@ -302,7 +312,7 @@ class LevelUpViewModel(
                         "potere" -> updatedChar.copy(power = minOf(10, updatedChar.power + 2))
                         else -> updatedChar
                     }
-                    statChar.copy(classAbilitiesList = currentAbilities)
+                        baseUpgradedChar.copy(classAbilitiesList = currentAbilities)
                 }
                 LevelUpOption.UPGRADE_ABILITY -> {
                     val chosenAbilityName = currentState.selectedAbilityToUpgrade
@@ -311,7 +321,13 @@ class LevelUpViewModel(
                     if (hasEvolution) {
                         val updatedAbilities = updatedChar.abilitiesList.map { ability ->
                             if (ability.name == chosenAbilityName) {
-                                ability.copy(numericValue = ability.numericValue + 1)
+                                val newName = if (!ability.name.endsWith("+")) "${ability.name}+" else ability.name
+                                val cleanDesc = ability.description.substringBefore("\n[Potenziata]")
+
+                                ability.copy(
+                                    name = newName,
+                                    description = currentState.customAbilityDescription.toString()
+                                )
                             } else {
                                 ability
                             }
