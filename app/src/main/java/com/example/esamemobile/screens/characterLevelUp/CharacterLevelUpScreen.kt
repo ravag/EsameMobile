@@ -724,6 +724,15 @@ fun EditAbilitiesContent(
             titleText = "Potenzia un Potere Evoluzione"
             subtitleText = "Seleziona uno dei tuoi poteri evoluzione attuali per potenziarlo:"
 
+            character.abilitiesList.forEach { abilityItem ->
+                listToDisplay.add(
+                    Pair(
+                        abilityItem.name,
+                        "Potenzia ${abilityItem.name}.\nDescrizione: ${abilityItem.description}"
+                    )
+                )
+            }
+
             val allGameClassAbilitiesNames = allClasses.flatMap { it.baseAbilities + it.advancedAbilities }
 
             character.classAbilitiesList.forEach { learnedAbilityRaw ->
@@ -766,29 +775,13 @@ fun EditAbilitiesContent(
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
         if (listToDisplay.isEmpty()) {
-
-            //TODO: Rimuovi sta card una volta capito cosa cazzo sta facendo
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Nessuna abilità trovata!", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onErrorContainer)
-                    Spacer(Modifier.height(4.dp))
-                    Text("Classe cercata (ID): ${classIdToSearch ?: "NULL"}", fontSize = 12.sp)
-                    Text("Classe trovata nel JSON: ${primaryClass?.name ?: "NO (Verifica ID)"}", fontSize = 12.sp)
-                    Text("Abilità totali classe nel JSON: ${primaryClass?.baseAbilities?.size ?: 0}", fontSize = 12.sp)
-                    Text("Abilità già note al PG: ${character.classAbilitiesList.size}", fontSize = 12.sp)
-                }
-            }
-
-//            Text(
-//                "Non ci sono abilità disponibili da selezionare.",
-//                fontSize = 14.sp,
-//                fontWeight = FontWeight.Medium,
-//                color = MaterialTheme.colorScheme.error,
-//                modifier = Modifier.padding(vertical = 8.dp)
-//            )
+            Text(
+                "Non ci sono abilità disponibili da selezionare.",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
         } else {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),

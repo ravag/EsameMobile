@@ -322,15 +322,25 @@ class LevelUpViewModel(
                     statChar.copy(classAbilitiesList = currentAbilities)
                 }
                 LevelUpOption.UPGRADE_ABILITY -> {
-                    if (currentState.selectedAbilityToUpgrade?.startsWith("EVOLUTION_") == true) {
+                    val chosenAbilityName = currentState.selectedAbilityToUpgrade
+                    val hasEvolution = updatedChar.abilitiesList.any { it.name == chosenAbilityName }
+
+                    if (hasEvolution) {
+                        val updatedAbilities = updatedChar.abilitiesList.map { ability ->
+                            if (ability.name == chosenAbilityName) {
+                                ability.copy(numericValue = ability.numericValue + 1)
+                            } else {
+                                ability
+                            }
+                        }
                         updatedChar.copy(
-                            peAvailable = updatedChar.peAvailable + 2,
-                            classAbilitiesList = updatedChar.classAbilitiesList + "UPGRADE_ABILITY" + currentState.selectedAbilityToUpgrade
+                            abilitiesList = updatedAbilities,
+                            classAbilitiesList = updatedChar.classAbilitiesList + "UPGRADE_ABILITY"
                         )
                     } else {
                         val currentAbilities = updatedChar.classAbilitiesList.toMutableList()
                         currentAbilities.add("UPGRADE_ABILITY")
-                        currentState.selectedAbilityToUpgrade?.let { currentAbilities.add(it) }
+                        chosenAbilityName?.let { currentAbilities.add(it) }
                         updatedChar.copy(classAbilitiesList = currentAbilities)
                     }
                 }
