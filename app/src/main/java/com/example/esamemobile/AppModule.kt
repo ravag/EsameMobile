@@ -20,6 +20,7 @@ import com.example.esamemobile.data.supabase.ImagesRepositoryImpl
 import com.example.esamemobile.screens.characterCreation.CharacterCreationViewModel
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewModel
 import com.example.esamemobile.screens.characterLevelUp.LevelUpViewModel
+import com.example.esamemobile.screens.groupDetails.GroupDetailsViewModel
 import com.example.esamemobile.screens.home.HomeViewModel
 import com.example.esamemobile.screens.login.LoginViewModel
 import com.example.esamemobile.screens.settings.SettingsViewModel
@@ -61,8 +62,9 @@ val appModule = module {
     viewModel { LoginViewModel(get(),get()) }
     viewModel { SettingsViewModel(get(),get(),get(),get(),get()) }
     viewModel { SessionViewModel(get(),get()) }
-    viewModel { HomeViewModel(get(),get(), get()) }
+    viewModel { HomeViewModel(get(),get(), get(), get()) }
     viewModel { CharacterDetailsViewModel(get(),get(),get(),get()) }
     viewModel { CharacterCreationViewModel(get(),get(),get(),get(),get()) }
     viewModel { LevelUpViewModel(get(),get(),get()) }
+    viewModel { GroupDetailsViewModel(get(),get()) }
 }

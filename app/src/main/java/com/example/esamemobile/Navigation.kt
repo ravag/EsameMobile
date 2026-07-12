@@ -43,11 +43,14 @@ sealed interface EsameMobileRoute {
 //Prima di fare questa parte bisogna sistemare bene come passare i parametri in giro perché
 //altrimenti non so come passarli in questi costruttori
 @Composable
-fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsViewModel) {
+fun EsameMobileNavGraph(
+    navController: NavHostController,
+    settingsVm: SettingsViewModel,
+    startDestination: EsameMobileRoute) {
     val focusManager = LocalFocusManager.current
     NavHost(
         navController = navController,
-        startDestination = EsameMobileRoute.Login
+        startDestination = startDestination
     ) {
         composable<EsameMobileRoute.Home> {
             val homeVm = koinViewModel<HomeViewModel>()

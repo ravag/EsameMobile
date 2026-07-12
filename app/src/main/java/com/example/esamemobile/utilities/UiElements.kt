@@ -232,6 +232,7 @@ fun GroupList(
 fun <T> GenericList(
     contentPadding: PaddingValues,
     elems: List<T>,
+    key: ((T) -> Any)? = null,
     elemContent: @Composable (T) -> Unit) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -240,7 +241,7 @@ fun <T> GenericList(
         contentPadding = PaddingValues(8.dp,8.dp,8.dp,80.dp),
         modifier = Modifier.padding(contentPadding)
     ) {
-        items(elems) { elem ->
+        items(elems, key) { elem ->
             elemContent(elem)
         }
     }
@@ -264,8 +265,7 @@ fun GroupItem(group: Group, onClick: () -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            val imageUri = Uri.parse(group.imageUrl)
-            ImageWithPlaceholder("", Size.Sm)
+            ImageWithPlaceholder(group.imageUrl, Size.Sm)
             Spacer(Modifier.size(8.dp))
             Text(
                 group.name,

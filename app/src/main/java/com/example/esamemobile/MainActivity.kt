@@ -84,7 +84,11 @@ class MainActivity : ComponentActivity() {
                 val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 manager.createNotificationChannel(channel)
 
-                EsameMobileNavGraph(navController,settingsVm)
+                EsameMobileNavGraph(
+                    navController,
+                    settingsVm,
+                    if (sessionState) EsameMobileRoute.Home else EsameMobileRoute.Login
+                )
                 SessionEffect(navController,sessionState)
             }
         }
