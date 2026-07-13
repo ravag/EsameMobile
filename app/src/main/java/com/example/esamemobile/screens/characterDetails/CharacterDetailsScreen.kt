@@ -59,7 +59,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.R
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavHostController
@@ -71,6 +70,7 @@ import com.example.esamemobile.utilities.CharacterDetailsNavigationBar
 import com.example.esamemobile.utilities.CharacterHeader
 import com.example.esamemobile.utilities.DisplayableItem
 import com.example.esamemobile.utilities.GenericBasicDialog
+import com.example.esamemobile.utilities.GenericFormDialog
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -146,6 +146,29 @@ fun CharacterDetailsScreen(
             )
         }
 
+        val isAddingPower = detailsState.showAddPowerDialog
+        val isAddingItem = detailsState.showAddItemDialog
+
+        if (isAddingPower || isAddingItem) {
+            GenericFormDialog(
+                show = true,
+                title = if (isAddingPower) "Aggiungi Nuovo Potere Evoluzione" else "Aggiungi Nuovo Oggetto",
+                valueLabel = if (isAddingPower) "Costo in PE" else "Peso Oggetto",
+                tempName = detailsState.tempName,
+                tempDesc = detailsState.tempDesc,
+                tempValue = detailsState.tempValue,
+                onTempDataChanged = detailsActions.onTempDataChanged,
+                onDismiss = detailsActions.onCloseDialogs,
+                onConfirm = {
+                    if (isAddingPower) {
+                        detailsActions.onConfirmAddPower?.invoke(context)
+                    } else {
+                        detailsActions.onConfirmAddItem?.invoke(context)
+                    }
+                }
+            )
+        }
+
 
         when {
             detailsState.isLoading -> {
@@ -209,7 +232,7 @@ fun CharacterDetailsScreen(
                                 EvolutionPowersSection(
                                     abilities = detailsState.character.character.abilitiesList,
                                     modifier = Modifier.weight(1f),
-                                    onAddPower = detailsActions.onAddPower?.let { { detailsActions.onAddPower(context) } }
+                                    onAddPower = detailsActions.onOpenAddPowerDialog
                                 )
                                 AbilitiesSection(
                                     abilities = detailsState.character.classAbilities,
@@ -227,7 +250,7 @@ fun CharacterDetailsScreen(
                                 items = detailsState.character.character.inventoryList,
                                 capacityCurrent = detailsState.character.character.inventoryList.sumOf { it.numericValue }, // Se numeric value è il peso
                                 capacityMax = detailsState.character.character.maxCapacity,
-                                onAddItem = detailsActions.onAddItem?.let { { detailsActions.onAddItem(context) } },
+                                onAddItem = detailsActions.onOpenAddItemDialog,
                                 onUseItem = detailsActions.onUseItem
                             )
                         }
