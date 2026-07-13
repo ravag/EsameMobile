@@ -24,6 +24,7 @@ firebaseMessaging = "25.1.0"
 foundation = "1.11.3"
 materialIconsExtended = "1.7.0"
 navigationCompose = "2.9.7"
+uiText = "1.11.4"
 
 [libraries]
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
@@ -57,6 +58,7 @@ koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", versi
 ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktorClientAndroid" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorSerializationKotlinxJson" }
 storage-kt = { module = "io.github.jan-tennert.supabase:storage-kt" }
+androidx-compose-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

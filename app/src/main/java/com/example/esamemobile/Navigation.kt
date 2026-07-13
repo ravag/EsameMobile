@@ -14,6 +14,8 @@ import com.example.esamemobile.data.Character
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsScreen
 import com.example.esamemobile.screens.characterCreation.CharacterCreationScreen
 import com.example.esamemobile.screens.DebugDatabaseScreen
+import com.example.esamemobile.screens.addCharacter.AddCharacterScreen
+import com.example.esamemobile.screens.addCharacter.AddCharacterViewModel
 import com.example.esamemobile.screens.home.HomeScreen
 import com.example.esamemobile.screens.login.LoginScreen
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsViewModel
@@ -22,6 +24,7 @@ import com.example.esamemobile.screens.characterCreation.CharacterCreationViewMo
 import com.example.esamemobile.screens.characterLevelUp.LevelUpScreen
 import com.example.esamemobile.screens.characterLevelUp.LevelUpViewModel
 import com.example.esamemobile.screens.groupDetails.GroupDetailsScreen
+import com.example.esamemobile.screens.groupDetails.GroupDetailsViewModel
 import com.example.esamemobile.screens.home.HomeViewModel
 import com.example.esamemobile.screens.login.LoginViewModel
 import com.example.esamemobile.screens.settings.SettingsScreen
@@ -37,17 +40,21 @@ sealed interface EsameMobileRoute {
     @Serializable data object Settings: EsameMobileRoute
     @Serializable data class LevelUp(val charId: String) : EsameMobileRoute
     @Serializable data class GroupDetails(val groupId: String): EsameMobileRoute
+    @Serializable data class AddCharacter(val groupId: String): EsameMobileRoute
 }
 
 
 //Prima di fare questa parte bisogna sistemare bene come passare i parametri in giro perché
 //altrimenti non so come passarli in questi costruttori
 @Composable
-fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsViewModel) {
+fun EsameMobileNavGraph(
+    navController: NavHostController,
+    settingsVm: SettingsViewModel,
+    startDestination: EsameMobileRoute) {
     val focusManager = LocalFocusManager.current
     NavHost(
         navController = navController,
-        startDestination = EsameMobileRoute.Login
+        startDestination = startDestination
     ) {
         composable<EsameMobileRoute.Home> {
             val homeVm = koinViewModel<HomeViewModel>()
@@ -104,7 +111,19 @@ fun EsameMobileNavGraph(navController: NavHostController, settingsVm: SettingsVi
         }
         composable<EsameMobileRoute.GroupDetails> { backStackEntry ->
             val route = backStackEntry.toRoute<EsameMobileRoute.GroupDetails>()
-            GroupDetailsScreen(navController=navController)
+            val groupDetailsVm = koinViewModel<GroupDetailsViewModel>()
+            groupDetailsVm.setId(route.groupId)
+
+            val groupDetailsState by groupDetailsVm.state.collectAsStateWithLifecycle()
+            GroupDetailsScreen(groupDetailsState,groupDetailsVm.actions,navController=navController)
+        }
+        composable<EsameMobileRoute.AddCharacter> { backStackEntry ->
+            val route = backStackEntry.toRoute<EsameMobileRoute.AddCharacter>()
+            val addCharacterVm = koinViewModel<AddCharacterViewModel>()
+            addCharacterVm.setId(route.groupId)
+
+            val addCharacterState by addCharacterVm.state.collectAsStateWithLifecycle()
+            AddCharacterScreen(addCharacterState,addCharacterVm.actions,navController)
         }
     }
 }

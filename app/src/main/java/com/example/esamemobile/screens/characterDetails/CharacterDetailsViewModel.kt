@@ -71,7 +71,8 @@ class CharacterDetailsViewModel (
     var editable: Boolean = false
     var hasChanged: Boolean = false
     val charId = MutableStateFlow<String?>(null)
-    val userId = MutableStateFlow<String?>(null)
+    //Potrei vedere un personaggio non mio, ho bisogno di tenermi userId per recuperare il personaggio
+    private var userId = MutableStateFlow<String?>(null)
     private val _state = MutableStateFlow(CharacterDetailsState())
     val state = _state.asStateFlow()
 
