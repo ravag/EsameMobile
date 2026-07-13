@@ -145,9 +145,12 @@ class CharacterDetailsViewModel (
 
                 val currentUserId = authRepository.currentUser?.uid
                 val result = characterRepository.readCharacter(currentUserId,ownerId.value,id)
+                Log.i("debug","result: $result")
                 result.fold(
                     onSuccess = { char ->
+                        Log.i("debug", char.toString())
                         val character = char?.let { characterSolver.solve(it) }
+                        Log.i("debug","character: ${character.toString()} id: $id")
                         _state.update { it.copy(
                             character = character,
                             isLoading = false,

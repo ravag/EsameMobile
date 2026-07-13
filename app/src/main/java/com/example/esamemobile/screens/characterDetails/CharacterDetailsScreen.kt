@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.R
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavHostController
@@ -78,8 +79,7 @@ import kotlin.math.sin
 fun CharacterDetailsScreen(
     detailsState: CharacterDetailsState,
     detailsActions: CharacterDetailsActions,
-    navController: NavHostController,
-    onNavigateToLevelup: () -> Unit
+    navController: NavHostController
 ) {
 
     val context = LocalContext.current
@@ -176,11 +176,12 @@ fun CharacterDetailsScreen(
                         characterClass = detailsState.character.chosenClass?.name,
                         level = detailsState.character.character.level,
                         imageUrl = detailsState.character.character.imageUrl,
+                        points = detailsState.character.character.peAvailable,
                         onMalusClick = detailsActions.onMalusButton,
                         modifier = Modifier,
                         onLevelUpClick = detailsActions.onLevelUp?.let { {
                                 detailsActions.onLevelUp()
-                                onNavigateToLevelup()
+                                navController.navigate(EsameMobileRoute.LevelUp(detailsState.character.character.id))
                             } }
                         )
 
@@ -291,7 +292,11 @@ private fun CountRow(
         Row(verticalAlignment = Alignment.CenterVertically) {
             onDecrease?.let {
                 IconButton(onClick = onDecrease, modifier = Modifier.weight(0.1f)) {
-                    Icon(Icons.Default.Remove, contentDescription = "togli un uso", tint = MaterialTheme.colorScheme.primary)
+                    Icon(
+                        Icons.Default.Remove,
+                        contentDescription = "togli un uso",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
 
@@ -304,7 +309,11 @@ private fun CountRow(
 
             onIncrease?.let {
                 IconButton(onClick = onIncrease, modifier = Modifier.weight(0.1f)) {
-                    Icon(Icons.Default.Add, contentDescription = "aggiungi un uso", tint = MaterialTheme.colorScheme.primary)
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "aggiungi un uso",
+                        tint = Color.Magenta
+                    )
                 }
             }
         }
@@ -721,7 +730,7 @@ fun statChart(
         //Disegna le etichette sui vertici
         for (i in 0 until sides) {
             val angle = -Math.PI / 2 + i * vertexAngle
-            val labelRadius = radius + 14.dp.toPx()
+            val labelRadius = radius + 20.dp.toPx()
             val labelPosition = Offset(
                 x = center.x + (labelRadius * cos(angle)).toFloat(),
                 y = center.y + (labelRadius * sin(angle)).toFloat()
@@ -729,7 +738,7 @@ fun statChart(
 
             val textLayoutResult = textMeasurer.measure(
                 text = labels[i],
-                style = TextStyle(fontSize = 11.sp, color = labelColor, fontWeight = FontWeight.Bold)
+                style = TextStyle(fontSize = 12.sp, color = Color.White)
             )
 
             drawText(
