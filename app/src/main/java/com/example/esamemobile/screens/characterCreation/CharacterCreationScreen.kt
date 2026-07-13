@@ -667,6 +667,7 @@ fun CharacterCreationScreen(
                     modifier = Modifier
                         .weight(1f)
                         .height(50.dp),
+                    enabled = creationState.isNextStepEnabled
                 ) {
                     val buttonText = if (creationState.currentStep == CreationStep.INVENTORY) "Conferma" else "Avanti >"
                     Text(buttonText, fontSize = 16.sp)
