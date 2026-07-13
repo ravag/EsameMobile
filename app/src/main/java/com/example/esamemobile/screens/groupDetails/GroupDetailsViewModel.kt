@@ -1,12 +1,15 @@
 package com.example.esamemobile.screens.groupDetails
 
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.esamemobile.data.Group
 import com.example.esamemobile.data.Member
 import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.firebase.firestore.GroupRepository
+import com.example.esamemobile.data.repositories.FileRepository
+import com.example.esamemobile.data.supabase.ImagesRepository
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,7 +42,7 @@ data class GroupDetailsActions(
     val onChangeDescription: (String) -> Unit,
     val onChangeName: (String) -> Unit,
     val onSaveChange: () -> Unit,
-    val onUpdateGroupPhoto:() -> Unit,
+    val onUpdateGroupPhoto:(String) -> Unit,
     val onLoad: () -> Unit,
     val onChangePage: () -> Unit,
     val toggleEdit: () -> Unit,
@@ -48,7 +51,9 @@ data class GroupDetailsActions(
 
 class GroupDetailsViewModel (
     private val groupRepository: GroupRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val fileRepository: FileRepository,
+    private val imagesRepository: ImagesRepository
 ): ViewModel() {
     val groupId = MutableStateFlow<String?>(null)
     private val _state = MutableStateFlow(GroupDetailsState())
@@ -90,7 +95,43 @@ class GroupDetailsViewModel (
                     )
                 }
             },
-            onUpdateGroupPhoto = {},
+            onUpdateGroupPhoto = {uri ->
+                val current = _state.value.group ?: return@GroupDetailsActions
+                    viewModelScope.launch {
+                        var url = ""
+                        val bytes = fileRepository.readBytes(uri.toUri())
+
+                        bytes?.let {
+                            val result = imagesRepository.uploadImage(
+                                it,
+                                current.id,
+                                "groups"
+                            )
+                            result.fold(
+                                onSuccess = { path -> url = path },
+                                onFailure = {exception ->
+                                    Log.w("debug","Errore salvataggio supabase ${exception.message}")
+                                    return@launch
+                                }
+                            )
+                        }
+                        val result = groupRepository.updateGroupImage(
+                            current.id,
+                            url
+                        )
+                        result.fold(
+                            onSuccess = {
+                                val updated = current.copy(imageUrl = url)
+                                _state.update { it.copy(group = updated) }
+                                Log.i("debug","immagine forse salvata con successo")
+
+                            },
+                            onFailure = { exception ->
+                                Log.w("debug", "Errore ${exception.message}")
+                            }
+                        )
+                }
+            },
             onLoad = { load() },
             onChangePage = { _state.update { it.copy(isLoading = true) } },
             toggleEdit = { _state.update { it.copy(isEditing = !it.isEditing, tempDesc = it.group!!.description) } },

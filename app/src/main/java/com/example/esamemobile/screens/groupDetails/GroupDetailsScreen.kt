@@ -72,6 +72,7 @@ import androidx.navigation.NavHostController
 import com.example.esamemobile.EsameMobileRoute
 import com.example.esamemobile.data.Member
 import com.example.esamemobile.utilities.NavigationBottomBarWithFAB
+import com.example.esamemobile.utilities.composables.ChangeImageCard
 import com.example.esamemobile.utilities.composables.ImageWithPlaceholder
 import com.example.esamemobile.utilities.composables.Size
 import com.google.firebase.Timestamp
@@ -160,32 +161,51 @@ fun GroupDetailsScreen(
                     when (groupState.selectedTab) {
                         GroupDetailsTab.DESCRIPTION -> {
                             //Immagine e nome gruppo
-                            Card(
+                            ChangeImageCard(
+                                context = context,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .weight(0.5f)
-                                    .clickable(onClick = { })
+                                    .weight(0.5f),
+                                useUri = groupActions.onUpdateGroupPhoto
                             ) {
-                                Column(
-                                    modifier = Modifier
-                                        .padding(16.dp)
-                                        .fillMaxSize(),
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    ImageWithPlaceholder(groupState.group.imageUrl, Size.Lg)
+                                ImageWithPlaceholder(groupState.group.imageUrl, Size.Lg)
 
-                                    if (groupState.isEditing) {
-                                        OutlinedTextField(
-                                            value = groupState.tempName,
-                                            onValueChange = groupActions.onChangeName,
-                                            label = {Text("Nome gruppo")}
-                                        )
-                                    } else {
-                                        Text(groupState.group.name)
-                                    }
+                                if (groupState.isEditing) {
+                                    OutlinedTextField(
+                                        value = groupState.tempName,
+                                        onValueChange = groupActions.onChangeName,
+                                        label = {Text("Nome gruppo")}
+                                    )
+                                } else {
+                                    Text(groupState.group.name)
                                 }
                             }
+//                            Card(
+//                                modifier = Modifier
+//                                    .fillMaxWidth()
+//                                    .weight(0.5f)
+//                                    .clickable(onClick = { })
+//                            ) {
+//                                Column(
+//                                    modifier = Modifier
+//                                        .padding(16.dp)
+//                                        .fillMaxSize(),
+//                                    verticalArrangement = Arrangement.Center,
+//                                    horizontalAlignment = Alignment.CenterHorizontally
+//                                ) {
+//                                    ImageWithPlaceholder(groupState.group.imageUrl, Size.Lg)
+//
+//                                    if (groupState.isEditing) {
+//                                        OutlinedTextField(
+//                                            value = groupState.tempName,
+//                                            onValueChange = groupActions.onChangeName,
+//                                            label = {Text("Nome gruppo")}
+//                                        )
+//                                    } else {
+//                                        Text(groupState.group.name)
+//                                    }
+//                                }
+//                            }
 
                             //DM e prossima sessione questa parte adesso che abbiamo cambiato idea è da sistemare un attimo
                             Row(

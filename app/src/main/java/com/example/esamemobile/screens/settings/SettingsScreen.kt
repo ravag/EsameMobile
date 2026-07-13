@@ -1,6 +1,7 @@
 package com.example.esamemobile.screens.settings
 
 import android.Manifest.permission
+import android.R
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -58,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
+import com.example.esamemobile.utilities.composables.ChangeImageCard
 import com.example.esamemobile.utilities.composables.ImageWithPlaceholder
 import com.example.esamemobile.utilities.composables.Size
 import java.io.File
@@ -71,45 +73,6 @@ fun SettingsScreen(
     navController: NavHostController
 ) {
     val context = LocalContext.current
-    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
-    var showAvatarOptionDialog by remember { mutableStateOf(false) }
-
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        if (uri != null) {
-            settingsActions.onAvatarSelected(uri.toString())
-        }
-    }
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success && tempCameraUri != null) {
-            settingsActions.onAvatarSelected(tempCameraUri.toString())
-        }
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            val uri = createTempPictureUri(context)
-            if (uri != null) {
-                tempCameraUri = uri
-                try {
-                    cameraLauncher.launch(uri)
-                } catch (e: Exception) {
-                    Toast.makeText(context, "Impossibile avviare la fotocamera", Toast.LENGTH_SHORT).show()
-                }
-            } else {
-                Toast.makeText(context, "Errore nella creazione del file temporaneo", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            Toast.makeText(context, "Permesso fotocamera negato", Toast.LENGTH_SHORT).show()
-        }
-
-    }
 
     Scaffold(
         topBar = {
@@ -170,22 +133,16 @@ fun SettingsScreen(
         Column(
             modifier = Modifier.padding(innerPadding).fillMaxSize()
         ) {
-            Card(
-                modifier = Modifier.fillMaxWidth()
-                    .weight(0.2f)
-                    .clickable(onClick = { showAvatarOptionDialog = true })
+            //Immagine e username
+            ChangeImageCard(
+                context = context,
+                modifier = Modifier.weight(0.2f),
+                useUri = settingsActions.onAvatarSelected
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    ImageWithPlaceholder(settingsState.imageUrl,Size.Lg)
-                    Text(settingsState.username)
-                }
+                ImageWithPlaceholder(settingsState.imageUrl,Size.Lg)
+                Text(settingsState.username)
             }
+
             Row(
                 modifier = Modifier
                     .border(
@@ -277,64 +234,6 @@ fun SettingsScreen(
             }
         }
 
-        if (showAvatarOptionDialog) {
-            val sheetState = rememberModalBottomSheetState()
-
-            ModalBottomSheet(
-                onDismissRequest = { showAvatarOptionDialog = false },
-                sheetState = sheetState,
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp)
-                        .navigationBarsPadding(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Seleziona foto avatar",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            showAvatarOptionDialog = false
-                            permissionLauncher.launch(permission.CAMERA)
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(id = android.R.drawable.ic_menu_camera),
-                            contentDescription = null
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Scatta una foto")
-                    }
-
-                    OutlinedButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            showAvatarOptionDialog = false
-                            galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                            contentDescription = null
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Scegli dalla galleria")
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-            }
-        }
-
-
     }
 }
 
@@ -355,19 +254,5 @@ private fun RadioItem(selected: Boolean, text: String, onClick: () -> Unit) {
             onClick = onClick
         )
         Text(text, style = MaterialTheme.typography.bodyLarge)
-    }
-}
-
-private fun createTempPictureUri(context: Context): Uri? {
-    return try {
-        val tempFile = File.createTempFile("avatar_capture_", ".jpg", context.cacheDir).apply {
-            createNewFile()
-            deleteOnExit()
-        }
-
-        FileProvider.getUriForFile(context, "${context.packageName}.provider", tempFile)
-    } catch (e: Exception) {
-        e.printStackTrace()
-        null
     }
 }

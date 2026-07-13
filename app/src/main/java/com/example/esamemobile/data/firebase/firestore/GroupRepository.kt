@@ -22,6 +22,7 @@ interface GroupRepository {
     suspend fun insertMemberCharacter(groupId: String, userId: String, character: Character): Result<Unit>
     suspend fun updateGroup(group: Group): Result<Unit>
     suspend fun insertSessionDate(groupId: String, date: Timestamp): Result<Unit>
+    suspend fun updateGroupImage(groupId: String, url: String): Result<Unit>
 }
 
 class GroupRepositoryImpl(private val db: FirebaseFirestore): GroupRepository {
@@ -200,6 +201,16 @@ class GroupRepositoryImpl(private val db: FirebaseFirestore): GroupRepository {
         return try {
             db.collection("groups").document(groupId)
                 .update(mapOf("nextSession" to date)).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateGroupImage(groupId: String, url: String): Result<Unit> {
+        return try {
+            db.collection("groups").document(groupId)
+                .update(mapOf("imageUrl" to url)).await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

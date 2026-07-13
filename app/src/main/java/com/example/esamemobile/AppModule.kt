@@ -67,6 +67,6 @@ val appModule = module {
     viewModel { CharacterDetailsViewModel(get(),get(),get(),get()) }
     viewModel { CharacterCreationViewModel(get(),get(),get(),get(),get()) }
     viewModel { LevelUpViewModel(get(),get(),get()) }
-    viewModel { GroupDetailsViewModel(get(),get()) }
+    viewModel { GroupDetailsViewModel(get(),get(),get(),get()) }
     viewModel { AddCharacterViewModel(get(),get(),get()) }
 }
