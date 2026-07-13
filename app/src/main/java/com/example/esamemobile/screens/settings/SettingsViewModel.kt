@@ -1,32 +1,26 @@
 package com.example.esamemobile.screens.settings
 
 import android.util.Log
-import android.widget.Toast
-import androidx.compose.runtime.collectAsState
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.esamemobile.data.firebase.AuthProviderType
 import com.example.esamemobile.data.firebase.AuthRepository
+import com.example.esamemobile.data.firebase.AuthenticationResult
 import com.example.esamemobile.data.firebase.firestore.UserRepository
 import com.example.esamemobile.data.repositories.FileRepository
 import com.example.esamemobile.data.repositories.SettingsRepository
 import com.example.esamemobile.data.supabase.ImagesRepository
-import com.example.esamemobile.screens.characterCreation.toCharacter
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 enum class ThemeValues(val text: String) {
     LIGHT("Chiaro"),
@@ -39,11 +33,14 @@ data class SettingsState(
     val tempName: String = "",
     val imageUrl: String = "",
     val isLoggedIn: Boolean = true,
-    val password: String = "",
+    val currentPassword: String = "",
+    val newPassword: String = "",
     val theme: ThemeValues = ThemeValues.SYSTEM,
     val dynamicColors: Boolean = false,
     val changeName: Boolean = false,
-    val changePassword: Boolean = false
+    val changePassword: Boolean = false,
+    val isLoading: Boolean = false,
+    val providerType: AuthProviderType = AuthProviderType.UNKNOWN
 )
 
 data class SettingsActions(
@@ -52,10 +49,17 @@ data class SettingsActions(
     val onConfirmNameChange: () -> Unit,
     val cancelChangeName: () -> Unit,
     val onClickChangePassword: () -> Unit,
+    val onConfirmPasswordChange: () -> Unit,
+    val onChangePasswordInput: (String) -> Unit,
+    val onChangeNewPasswordInput: (String) -> Unit,
+    val onCancelChangePassword: () -> Unit,
     val onThemeChange: (ThemeValues) -> Unit,
     val onDynamicColorsChange: (Boolean) -> Unit,
     val onLogOut: () -> Unit,
-    val onAvatarSelected: (String) -> Unit
+    val onAvatarSelected: (String) -> Unit,
+    val onGoogleReauth: (String) -> Unit,
+    val onGoogleError: (Exception) -> Unit,
+    val onPasswordDeleteAccount: () -> Unit
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -87,40 +91,57 @@ class SettingsViewModel(
             imageUrl = fetchedData.second,
             theme= theme,
             dynamicColors = colors,
-            isLoggedIn = user != null) }
+            isLoggedIn = user != null,
+            providerType = authRepository.providerType) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(),
-            initialValue = _state.value.copy(theme = ThemeValues.SYSTEM, dynamicColors = false)
+            initialValue = _state.value.copy(theme = ThemeValues.SYSTEM, dynamicColors = false, providerType = authRepository.providerType)
         )
         
 
     val actions = SettingsActions(
-        onClickChangeName = { _state.update { it.copy(changeName = true) }
-                            Log.i("debug",state.value.changeName.toString())},
-        onUsernameChange = {name -> _state.update { it.copy(tempName = name) } },
+        onClickChangeName = {
+            _state.update { it.copy(changeName = true) }
+            Log.i("debug", state.value.changeName.toString())
+        },
+        onUsernameChange = { name -> _state.update { it.copy(tempName = name) } },
         onConfirmNameChange = {
             viewModelScope.launch {
                 val result = userRepository.updateUsername(
                     userId = authRepository.currentUser!!.uid,
-                    username = _state.value.tempName)
+                    username = _state.value.tempName
+                )
                 result.fold(
                     onSuccess = {
-                        Log.i("debug","Nome cambiato con successo")
+                        Log.i("debug", "Nome cambiato con successo")
                         _state.update { it.copy(changeName = false, username = it.tempName) }
                     },
                     onFailure = {
-                        Log.w("debug","Errore a cambiare nome nel db")
+                        Log.w("debug", "Errore a cambiare nome nel db")
                     }
                 )
             }
-            },
-        cancelChangeName = { _state.update { it.copy(changeName = false, tempName = it.username) } },
-        onClickChangePassword = { _state.update { it.copy(changePassword = true) } },
+        },
+        cancelChangeName = {
+            _state.update {
+                it.copy(
+                    changeName = false,
+                    tempName = it.username
+                )
+            }
+        },
+        onClickChangePassword = { _state.update { it.copy(changePassword = true) } } ,
         onThemeChange = { themeValue -> viewModelScope.launch { repository.setTheme(themeValue) } },
-        onDynamicColorsChange = {colors -> viewModelScope.launch { repository.setDynamicColors(colors) }},
-        onLogOut = {authRepository.logout()},
-        onAvatarSelected = {uri ->
+        onDynamicColorsChange = { colors ->
+            viewModelScope.launch {
+                repository.setDynamicColors(
+                    colors
+                )
+            }
+        },
+        onLogOut = { authRepository.logout() },
+        onAvatarSelected = { uri ->
             if (authRepository.currentUser != null) {
                 viewModelScope.launch {
                     var url = ""
@@ -134,7 +155,12 @@ class SettingsViewModel(
                         )
                         result.fold(
                             onSuccess = { path -> url = path },
-                            onFailure = {exception -> Log.w("debug","Errore salvataggio supabase ${exception.message}") }
+                            onFailure = { exception ->
+                                Log.w(
+                                    "debug",
+                                    "Errore salvataggio supabase ${exception.message}"
+                                )
+                            }
                         )
                     }
                     val result = userRepository.updateUserImage(
@@ -143,7 +169,7 @@ class SettingsViewModel(
                     )
                     result.fold(
                         onSuccess = {
-                            Log.i("debug","immagine forse salvata con successo")
+                            Log.i("debug", "immagine forse salvata con successo")
                         },
                         onFailure = { exception ->
                             Log.w("debug", "Errore ${exception.message}")
@@ -151,6 +177,72 @@ class SettingsViewModel(
                     )
                 }
             }
-        }
+        },
+        onConfirmPasswordChange = {
+            viewModelScope.launch {
+                val current = _state.value.currentPassword
+                val new = _state.value.newPassword
+                _state.update { it.copy(isLoading = true) }
+
+                val reauthResult = authRepository.reauthenticateWithPassword(current)
+                if (reauthResult is AuthenticationResult.Error) {
+                    Log.w("debug", "Errore riautenticazione: ${reauthResult.message}")
+                    return@launch
+                }
+                when (val result = authRepository.updatePassword(new)) {
+                    is AuthenticationResult.Error -> {
+                        Log.w("debug", "Errore cambio password: ${result.message}")
+                    }
+
+                    is AuthenticationResult.Success -> {
+                        _state.update {
+                            it.copy(
+                                changePassword = false,
+                                currentPassword = "",
+                                newPassword = ""
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        onGoogleReauth = { idToken ->
+            viewModelScope.launch {
+                val reauthResult = authRepository.reauthenticateWithGoogle(idToken)
+                if (reauthResult is AuthenticationResult.Error) {
+                    Log.w("debug", "Errore riautenticazione: ${reauthResult.message}")
+                    return@launch
+                }
+                deleteAccount()
+            }
+        },
+        onGoogleError = { exception -> Log.w("debug", "Errore google: ${exception.message}") },
+        onPasswordDeleteAccount = {
+            viewModelScope.launch {
+                val reauthResult = authRepository.reauthenticateWithPassword(_state.value.currentPassword)
+                if (reauthResult is AuthenticationResult.Error) {
+                    Log.w("debug","Errore eliminazione account password: ${reauthResult.message}")
+                    return@launch
+                }
+                deleteAccount()
+            }
+        },
+        onChangePasswordInput = { text -> _state.update { it.copy(currentPassword = text) } },
+        onChangeNewPasswordInput = { text -> _state.update { it.copy(newPassword = text) } },
+        onCancelChangePassword = { _state.update { it.copy(changePassword = false, newPassword = "", currentPassword = "") } }
     )
+
+    private suspend fun deleteAccount() {
+        val user = authRepository.currentUser?.uid ?: return
+        val result = userRepository.deleteUser(user)
+        result.fold(
+            onSuccess = {
+                authRepository.deleteAccount()
+                _state.update { it.copy(isLoggedIn = false) }
+            },
+            onFailure = { exception ->
+                Log.w("debug","Errore eliminazione account db ${exception.message}")
+            }
+        )
+    }
 }

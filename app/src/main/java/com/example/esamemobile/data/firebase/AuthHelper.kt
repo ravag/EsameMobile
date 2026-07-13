@@ -1,5 +1,6 @@
 package com.example.esamemobile.data.firebase
 
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuth.AuthStateListener
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
@@ -17,12 +18,21 @@ enum class AuthErrorType {
     WEAK_PASSWORD, USER_COLLISION, INVALID_CREDENTIALS, UNKNOWN
 }
 
+enum class AuthProviderType {
+    PASSWORD,GOOGLE,UNKNOWN
+}
+
 interface AuthRepository {
     val currentUser: FirebaseUser?
     val authState: Flow<FirebaseUser?>
+    val providerType: AuthProviderType
     suspend fun signInOrRegister(email: String, password: String): AuthenticationResult
     suspend fun singInWithGoogleIdToken(idToken: String): AuthenticationResult
     fun logout()
+    suspend fun reauthenticateWithPassword(password: String): AuthenticationResult
+    suspend fun reauthenticateWithGoogle(idToken: String): AuthenticationResult
+    suspend fun updatePassword(newPassword: String): AuthenticationResult
+    suspend fun deleteAccount(): AuthenticationResult
 }
 
 //Volevo chiamare la classe AuthResult, ma esiste gia una tale classe,
@@ -44,6 +54,15 @@ class AuthRepositoryImpl( val firebaseAuth: FirebaseAuth): AuthRepository {
         firebaseAuth.addAuthStateListener(listener)
         awaitClose { firebaseAuth.removeAuthStateListener(listener) }
     }
+    override val providerType: AuthProviderType
+        get() {
+            val providers = currentUser?.providerData?.map { it.providerId } ?: emptyList()
+            return when {
+                providers.contains(GoogleAuthProvider.PROVIDER_ID) -> AuthProviderType.GOOGLE
+                providers.contains(EmailAuthProvider.PROVIDER_ID) -> AuthProviderType.PASSWORD
+                else -> AuthProviderType.UNKNOWN
+            }
+        }
 
     override suspend fun signInOrRegister(
         email: String,
@@ -64,8 +83,8 @@ class AuthRepositoryImpl( val firebaseAuth: FirebaseAuth): AuthRepository {
     override suspend fun singInWithGoogleIdToken(idToken: String): AuthenticationResult {
         return try {
             val credential = GoogleAuthProvider.getCredential(idToken,null)
-            firebaseAuth.signInWithCredential(credential).await()
-            AuthenticationResult.Success(isNewUser = false)
+            val authResult = firebaseAuth.signInWithCredential(credential).await()
+            AuthenticationResult.Success(isNewUser = authResult.additionalUserInfo?.isNewUser ?: false)
         } catch (e: Exception) { //Questo non dovrebbe quasi mai fallire, ma non si sa mai
             AuthenticationResult.Error(AuthErrorType.UNKNOWN,e.message)
         }
@@ -87,5 +106,57 @@ class AuthRepositoryImpl( val firebaseAuth: FirebaseAuth): AuthRepository {
 
     override fun logout() {
         firebaseAuth.signOut()
+    }
+
+    override suspend fun reauthenticateWithPassword(password: String): AuthenticationResult {
+        val user = currentUser ?: return AuthenticationResult.Error(AuthErrorType.UNKNOWN,"Utente non loggato")
+        val email = user.email
+            ?: return AuthenticationResult.Error(AuthErrorType.UNKNOWN,"Impossibile raggiungere l'email")
+
+        return try {
+            val credential = EmailAuthProvider.getCredential(email,password)
+            user.reauthenticate(credential).await()
+            AuthenticationResult.Success(false)
+        } catch (e: FirebaseAuthInvalidCredentialsException) {
+            AuthenticationResult.Error(AuthErrorType.INVALID_CREDENTIALS, e.message)
+        } catch (e: Exception) {
+            AuthenticationResult.Error(AuthErrorType.UNKNOWN, e.message)
+        }
+    }
+
+    override suspend fun reauthenticateWithGoogle(idToken: String): AuthenticationResult {
+        val user = currentUser ?: return AuthenticationResult.Error(AuthErrorType.UNKNOWN,"Utente non loggato")
+
+        return try {
+            val credential = GoogleAuthProvider.getCredential(idToken,null)
+            user.reauthenticate(credential).await()
+            AuthenticationResult.Success(false)
+        } catch (e: Exception) {
+            AuthenticationResult.Error(AuthErrorType.UNKNOWN, e.message)
+        }
+    }
+
+    override suspend fun updatePassword(newPassword: String): AuthenticationResult {
+        val user = currentUser ?: return AuthenticationResult.Error(AuthErrorType.UNKNOWN,"Utente non loggato")
+
+        return try {
+            user.updatePassword(newPassword).await()
+            AuthenticationResult.Success(false)
+        } catch (e: FirebaseAuthWeakPasswordException) {
+            AuthenticationResult.Error(AuthErrorType.WEAK_PASSWORD,e.message)
+        } catch (e: Exception) {
+            AuthenticationResult.Error(AuthErrorType.UNKNOWN, e.message)
+        }
+    }
+
+    override suspend fun deleteAccount(): AuthenticationResult {
+        val user = currentUser ?: return AuthenticationResult.Error(AuthErrorType.UNKNOWN,"Utente non loggato")
+
+        return try {
+            user.delete().await()
+            AuthenticationResult.Success(false)
+        } catch (e: Exception) {
+            AuthenticationResult.Error(AuthErrorType.UNKNOWN, e.message)
+        }
     }
 }

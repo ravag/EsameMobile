@@ -59,7 +59,9 @@ class GroupRepositoryImpl(private val db: FirebaseFirestore): GroupRepository {
               "description" to "",
               "nextSession" to null,
               "masterId" to group.masterId,
-              "inviteCode" to generateUniqueInviteCode()
+              "inviteCode" to generateUniqueInviteCode(),
+              "lastNotifiedSession" to null,
+              "pendingDeletion" to false
           )
 
           db.runBatch { batch ->
@@ -110,7 +112,7 @@ class GroupRepositoryImpl(private val db: FirebaseFirestore): GroupRepository {
     override suspend fun deleteGroup(groupId: String): Result<Unit> {
         return try {
             db.collection("groups").document(groupId)
-                .delete().await()
+                .update("pendingDeletion",true).await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

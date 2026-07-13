@@ -1,7 +1,6 @@
 package com.example.esamemobile.screens.settings
 
 import android.Manifest.permission
-import android.R
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -47,21 +46,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
+import com.example.esamemobile.R
+import com.example.esamemobile.data.firebase.AuthProviderType
+import com.example.esamemobile.utilities.GenericBasicDialog
 import com.example.esamemobile.utilities.composables.ChangeImageCard
 import com.example.esamemobile.utilities.composables.ImageWithPlaceholder
 import com.example.esamemobile.utilities.composables.Size
+import com.example.esamemobile.utilities.requestGoogleIdToken
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.io.File
 import kotlin.toString
 
@@ -73,6 +80,9 @@ fun SettingsScreen(
     navController: NavHostController
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val webClientId = stringResource(R.string.default_web_client_id)
+    var deleteAccountPopup by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -91,43 +101,61 @@ fun SettingsScreen(
 
         //Popup cambio nome
         if (settingsState.changeName) {
-            Dialog(
-                onDismissRequest = settingsActions.cancelChangeName,
-            ) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .padding(16.dp)
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.Top,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Spacer(Modifier.height(25.dp))
-                        OutlinedTextField(
-                            value = settingsState.tempName,
-                            onValueChange = settingsActions.onUsernameChange,
-                            label = { Text("Nome") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Row() {
-                            Button(
-                                onClick = settingsActions.cancelChangeName
-                            ) {
-                                Text("Annulla")
-                            }
-                            Spacer(Modifier.width(10.dp))
-                            Button(
-                                onClick = settingsActions.onConfirmNameChange
-                            ) {
-                                Text("Conferma")
-                            }
-                        }
-                    }
-                }
+            InputDialog(
+                text = "Inserisci nuovo nome\n",
+                labels = listOf("Nome"),
+                textValues = listOf(settingsState.tempName),
+                updateTexts = listOf(settingsActions.onUsernameChange),
+                onDismiss = settingsActions.cancelChangeName,
+                onConfirm = settingsActions.onConfirmNameChange
+            )
+        }
 
+        if (deleteAccountPopup) {
+            if (settingsState.providerType == AuthProviderType.PASSWORD) {
+                InputDialog(
+                    text = "Reinserisci la password per eliminare,\n Una volta confermata, questa operazione non sarà reversibile",
+                    labels = listOf("Password"),
+                    textValues = listOf(settingsState.currentPassword),
+                    updateTexts = listOf(settingsActions.onChangePasswordInput),
+                    onDismiss = { deleteAccountPopup = false },
+                    onConfirm = {
+                        settingsActions.onPasswordDeleteAccount()
+                        deleteAccountPopup = false
+                    }
+                )
+            } else {
+                GenericBasicDialog(
+                    show = true,
+                    title = "Elimina account",
+                    description = "Sei sicuro di volere eliminare l'account?\n L'azione non sarà reversibile",
+                    onConfirmText = "Elimina",
+                    onConfirm = {
+                        coroutineScope.launch {
+                            requestGoogleIdToken(
+                                context = context,
+                                webClientId = webClientId,
+                                filter = true,
+                                onSuccess = settingsActions.onGoogleReauth,
+                                onError = settingsActions.onGoogleError
+                            )
+                        }
+                    },
+                    onDismissText = "Annulla",
+                    onDismiss = { deleteAccountPopup = false },
+                )
             }
+        }
+
+        if (settingsState.changePassword) {
+            InputDialog(
+                text = "Inserisci vecchia e nuova password",
+                labels = listOf("password attuale","nuova password"),
+                textValues = listOf(settingsState.currentPassword,settingsState.newPassword),
+                updateTexts = listOf(settingsActions.onChangePasswordInput,settingsActions.onChangeNewPasswordInput),
+                onDismiss = settingsActions.onCancelChangePassword,
+                onConfirm = settingsActions.onConfirmPasswordChange
+            )
         }
 
         Column(
@@ -160,22 +188,24 @@ fun SettingsScreen(
                 Spacer(Modifier.width(15.dp))
                 Icon(Icons.Filled.KeyboardDoubleArrowRight,"avanti?")
             }
-            Row(
-                modifier = Modifier
-                    .border(
-                        width = 1.dp,
-                        color = Color.Magenta
-                    )
-                    .weight(0.1f)
-                    .fillMaxWidth()
-                    .clickable(onClick = {
-                        settingsActions.onClickChangePassword
-                        Log.i("debug","premuto cambio password")
-                    })
-            ) {
-                Text("cambia password")
-                Spacer(Modifier.width(15.dp))
-                Icon(Icons.Filled.KeyboardDoubleArrowRight,"avanti?")
+            if (settingsState.providerType == AuthProviderType.PASSWORD) {
+                Row(
+                    modifier = Modifier
+                        .border(
+                            width = 1.dp,
+                            color = Color.Magenta
+                        )
+                        .weight(0.1f)
+                        .fillMaxWidth()
+                        .clickable(onClick = {
+                            settingsActions.onClickChangePassword()
+                            Log.i("debug","premuto cambio password")
+                        })
+                ) {
+                    Text("cambia password")
+                    Spacer(Modifier.width(15.dp))
+                    Icon(Icons.Filled.KeyboardDoubleArrowRight,"avanti?")
+                }
             }
             Column(
                 modifier = Modifier
@@ -226,6 +256,7 @@ fun SettingsScreen(
                 Button(
                     onClick = {
                         Log.i("debug","Elimina")
+                        deleteAccountPopup = true
                     }
                 ) {
                     Text("Elimina account")
@@ -254,5 +285,55 @@ private fun RadioItem(selected: Boolean, text: String, onClick: () -> Unit) {
             onClick = onClick
         )
         Text(text, style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+@Composable
+private fun InputDialog(
+    text: String,
+    labels: List<String>,
+    textValues:List <String>,
+    updateTexts: List<(String) -> Unit>,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .padding(16.dp)
+        ) {
+            Column(
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text)
+                for (i in 0 until labels.size) {
+                    OutlinedTextField(
+                        value = textValues[i],
+                        onValueChange = updateTexts[i],
+                        label = { Text(labels[i]) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                Row() {
+                    Button(
+                        onClick = onDismiss
+                    ) {
+                        Text("Annulla")
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Button(
+                        onClick = onConfirm
+                    ) {
+                        Text("Conferma")
+                    }
+                }
+            }
+        }
+
     }
 }

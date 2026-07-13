@@ -14,6 +14,7 @@ interface UserRepository {
     suspend fun updateUsername(userId: String, username: String): Result<Unit>
     suspend fun usernameAndImageObserver(userId: String): Flow<Pair<String, String>>
     suspend fun updateUserImage(userId: String, imageUrl: String): Result<Unit>
+    suspend fun deleteUser(userId: String): Result<Unit>
 }
 
 class UserRepositoryImpl(
@@ -77,6 +78,16 @@ class UserRepositoryImpl(
         return try {
             db.collection("users").document(userId)
                 .update("imageUrl",imageUrl).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deleteUser(userId: String): Result<Unit> {
+        return try {
+            db.collection("users").document(userId)
+                .delete().await()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

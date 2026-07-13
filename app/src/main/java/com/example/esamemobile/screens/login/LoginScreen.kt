@@ -33,12 +33,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import com.example.esamemobile.R
+import com.example.esamemobile.utilities.requestGoogleIdToken
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
@@ -56,7 +58,7 @@ fun LoginScreen(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val webClientId = "803305060535-h1adgsgul2khemr3rcmvsevb6q35ieev.apps.googleusercontent.com"
+    val webClientId = stringResource(R.string.default_web_client_id)
 
     LaunchedEffect(loginState.message) {
         loginState.message?.let { msg ->
@@ -65,7 +67,7 @@ fun LoginScreen(
                 is LoginMessage.Error -> msg.text
             }
             Toast.makeText(context,text, Toast.LENGTH_SHORT).show()
-            loginActions.onMessageShown
+            loginActions.onMessageShown()
         }
     }
 
@@ -138,36 +140,12 @@ fun LoginScreen(
             //Bottone accedi con google
             Button(
                 onClick = {
-                    val credentialManager = CredentialManager.create(context)
-
-                    val googleIdOption = GetGoogleIdOption.Builder()
-                        .setFilterByAuthorizedAccounts(false)
-                        .setServerClientId(webClientId)
-                        .build()
-
-                    val request = GetCredentialRequest.Builder()
-                        .addCredentialOption(googleIdOption)
-                        .build()
-
-                    //Lancia il flusso di login
-                    coroutineScope.launch {
-                        try {
-                            val result = credentialManager.getCredential(
-                                context = context,
-                                request = request
-                            )
-                            val credential = result.credential
-
-                            if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                                val googleIdTokenCredential =
-                                    GoogleIdTokenCredential.createFrom(
-                                        credential.data
-                                    )
-                                loginActions.onGoogleIdTokenReceived(googleIdTokenCredential.idToken)
-                            }
-                        } catch (e: Exception) {
-                            loginActions.onGoogleSignInError
-                        }
+                    coroutineScope.launch { requestGoogleIdToken(
+                        context = context,
+                        webClientId = webClientId,
+                        filter = false,
+                        onSuccess = loginActions.onGoogleIdTokenReceived,
+                        onError = loginActions.onGoogleSignInError)
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White)

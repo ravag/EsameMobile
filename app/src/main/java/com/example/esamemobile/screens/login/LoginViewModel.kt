@@ -28,7 +28,7 @@ data class LoginActions(
     val onPasswordChange: (String) -> Unit,
     val onEmailPasswordSubmit: () -> Unit,
     val onGoogleIdTokenReceived: (String) -> Unit,
-    val onGoogleSignInError: () -> Unit,    //Ci sono gia molti onGoogleSignInError, e anche onGoogleError
+    val onGoogleSignInError: (Exception) -> Unit,    //Ci sono gia molti onGoogleSignInError, e anche onGoogleError
     val onMessageShown: () -> Unit
 )
 
@@ -61,7 +61,7 @@ class LoginViewModel (
                 _state.update { it.copy(isLoading = false, message = loginToMessage(result)) }
             }
         },
-        onGoogleSignInError = { _state.update { it.copy(message = LoginMessage.Error("Errore login Google")) } },
+        onGoogleSignInError = { exception -> _state.update { it.copy(message = LoginMessage.Error("Errore login Google ${exception.message}")) } },
         onMessageShown = { _state.update { it.copy(message = null) } }
     )
 
