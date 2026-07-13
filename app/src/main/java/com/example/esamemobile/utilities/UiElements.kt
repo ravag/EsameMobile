@@ -55,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -324,7 +325,9 @@ fun CharacterHeader(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color.Black)
+            .background(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                shape = RoundedCornerShape(12.dp))
             .padding(16.dp)
     ) {
         Row(
@@ -336,13 +339,13 @@ fun CharacterHeader(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text("Nome: $name", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Nome: $name",color = MaterialTheme.colorScheme.onSecondaryContainer, style = MaterialTheme.typography.titleLarge)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Età: $age", color = Color.White, fontSize = 16.sp)
+                    Text("Età: $age",color = MaterialTheme.colorScheme.onSecondaryContainer, style = MaterialTheme.typography.bodyMedium)
                     if (age > 70) {
                         IconButton(
                             onClick = onMalusClick
@@ -363,8 +366,8 @@ fun CharacterHeader(
                         }
                     }
                 }
-                Text("Classe: ${characterClass ?: "nessuna"}", color = Color.White, fontSize = 16.sp)
-                Text("Livello: $level", color = Color.White, fontSize = 16.sp)
+                Text("Classe: ${characterClass ?: "nessuna"}",color = MaterialTheme.colorScheme.onSecondaryContainer, style = MaterialTheme.typography.bodyMedium)
+                Text("Livello: $level",color = MaterialTheme.colorScheme.onSecondaryContainer, style = MaterialTheme.typography.bodyMedium)
             }
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -388,14 +391,16 @@ fun CharacterHeader(
         onLevelUpClick?.let {
             Button(
                 onClick = onLevelUpClick,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ),
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 shape = RoundedCornerShape(4.dp)
             ) {
                 Text(
                     "Level Up",
-                    color = Color.Black,
-                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold
                 )
 
@@ -404,7 +409,17 @@ fun CharacterHeader(
 
         Spacer(modifier = Modifier.height(8.dp))
         if (points != 0) {
-            Text("Hai $points da spendere",color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+                ) {
+                Text("Hai $points PE da spendere",
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontStyle = FontStyle.Italic
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(12.dp))

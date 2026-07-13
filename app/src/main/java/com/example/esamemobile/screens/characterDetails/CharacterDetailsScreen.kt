@@ -312,7 +312,7 @@ private fun CountRow(
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "aggiungi un uso",
-                        tint = Color.Magenta
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
