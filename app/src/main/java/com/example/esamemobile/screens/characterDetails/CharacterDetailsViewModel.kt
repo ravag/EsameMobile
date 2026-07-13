@@ -1,9 +1,10 @@
-//TODO: Per pura visione grafica sarebbe figo se l'abilità potere evoluzione potenziata visto che è solo una, fosse di un colore evidenziato, magari solo il testo in grassetto in un altro colore o proprio tutto il container.
 //TODO: Manca il funzionamento del tasto aggiungi abilità
 //TODO: Bisonga mostrare quanti PE disponibili si hanno in caso si volessero aggiungere abilità e poteri o aumentare le stats e quindi mettere anche il modo di modificare le stats, Tutto questo si potrebbe fare richiamando il charactercreationscreen dandogli in pasto un vecchio personaggio così da avere le sue info e poterlo modificare quando si vuole
 //TODO: Le abilità di classe di base vanno divise da quelle avanzate e solo in quelle avanzate va messo il contatore di usi
 //TODO: Le abilità di altre classi non vengono mostrate oppure più di 3 non ne vengono mostrate
 //TODO: Mettere un modo per modificare il personaggio (Nome, Età, Armatura(quindi ancher gli effetti delle armature), poteri evoluzione, oggetti)
+//TODO: Da inserire un modo per segnare gli hp temporanei (come in dnd funzionano)
+//TODO: Gli hp current/max ogni tanto vanno a capo e non va bene
 
 package com.example.esamemobile.screens.characterDetails
 
