@@ -43,6 +43,7 @@ import java.io.File
 @Composable
 fun ChangeImageCard(
     context: Context,
+    enabled: Boolean = true,
     modifier: Modifier,
     useUri: (String) -> Unit,
     content: @Composable (ColumnScope.() -> Unit)
@@ -88,7 +89,10 @@ fun ChangeImageCard(
     }
 
     Card(
-        modifier = modifier.clickable(onClick = { showAvatarOptionDialog = true })
+        modifier = modifier.clickable(
+            onClick = { showAvatarOptionDialog = true },
+            enabled = enabled
+        )
     ) {
         Column(
             modifier = Modifier

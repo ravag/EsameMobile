@@ -1,20 +1,18 @@
 package com.example.esamemobile.screens.home
 
 import android.util.Log
-import androidx.compose.foundation.text.input.TextFieldState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.Group
 import com.example.esamemobile.data.Member
 import com.example.esamemobile.data.firebase.AuthRepository
-import com.example.esamemobile.data.firebase.firestore.CharacterRepository
+import com.example.esamemobile.data.repositories.CharacterRepository
 import com.example.esamemobile.data.firebase.firestore.GroupRepository
 import com.example.esamemobile.data.firebase.firestore.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -37,7 +35,7 @@ data class HomeState(
 
 data class HomeActions(
     val onPageSelect: (Int) -> Unit,
-    val getAllCharacters: () -> Unit,
+    val syncCharacters: () -> Unit,
     val getAllGroups: () -> Unit,
     val onCharactersSearch: (String) -> Unit,
     val onGroupsSearch: (String) -> Unit,
@@ -59,7 +57,7 @@ class HomeViewModel(
 
     val actions = HomeActions(
         onPageSelect = { index -> _state.update { it.copy(homePage = HomePage.entries[index]) } },
-        getAllCharacters = { loadCharacters() },
+        syncCharacters = { viewModelScope.launch { characterRepository.fireStoreSync(authRepository.currentUser?.uid) } },
         getAllGroups = { loadGroups() },
         onCharactersSearch = { text ->
             _state.update {
@@ -132,16 +130,11 @@ class HomeViewModel(
         loadGroups()
     }
 
-    //Funzione che carica tutti i personaggi e i gruppi
     private fun loadCharacters() {
-        val userId = authRepository.currentUser?.uid ?: return
-
         viewModelScope.launch {
-            characterRepository.getAllUserCharacters(userId)
-                .onSuccess { loadedCharacters ->
-                    _state.update { it.copy(characters = loadedCharacters, filteredCharacters = loadedCharacters) }
-                }
-                .onFailure { exception -> Log.w("debug","OOPSIE ${exception.message}")}
+            characterRepository.getAllUserCharacters().collect() { loadedCharacters ->
+                _state.update { it.copy(characters = loadedCharacters, filteredCharacters = loadedCharacters) }
+            }
         }
     }
 
@@ -154,28 +147,5 @@ class HomeViewModel(
                 }
                 .onFailure {  exception -> Log.w("debug","OOPSIE ${exception.message}") }
         }
-//        _state.update { it.copy(groups = listOf(
-//                Group(id = "1", name = "I Zingari", ""),
-//                Group(id = "2", name = "I fantastici 2", ""),
-//                Group(id = "3", name = "I tre moschettoni", ""),
-//                Group(id = "4", name = "I quattro gatti", ""),
-//                Group(id = "5", name = "I cojo(n)ti", ""),
-//                Group(id = "6", name = "Giovanni", ""),
-//                Group(id = "7", name = "Miku club", ""),
-//                Group(id = "8", name = "Il gioco perso", ""),
-//                Group(id = "9", name = "Ci piacciono i treni", ""),
-//                Group(id = "10", name = "Impottibile!", "")),
-//            filteredGroups = listOf(
-//                Group(id = "1", name = "I Zingari", ""),
-//                Group(id = "2", name = "I fantastici 2", ""),
-//                Group(id = "3", name = "I tre moschettoni", ""),
-//                Group(id = "4", name = "I quattro gatti", ""),
-//                Group(id = "5", name = "I cojo(n)ti", ""),
-//                Group(id = "6", name = "Giovanni", ""),
-//                Group(id = "7", name = "Miku club", ""),
-//                Group(id = "8", name = "Il gioco perso", ""),
-//                Group(id = "9", name = "Ci piacciono i treni", ""),
-//                Group(id = "10", name = "Impottibile!", ""))
-//        ) }
     }
 }

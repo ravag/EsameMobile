@@ -26,6 +26,7 @@ import com.example.esamemobile.screens.characterLevelUp.LevelUpViewModel
 import com.example.esamemobile.screens.groupDetails.GroupDetailsScreen
 import com.example.esamemobile.screens.groupDetails.GroupDetailsViewModel
 import com.example.esamemobile.screens.home.HomeViewModel
+import com.example.esamemobile.screens.loading.LoadingScreen
 import com.example.esamemobile.screens.login.LoginViewModel
 import com.example.esamemobile.screens.settings.SettingsScreen
 import com.example.esamemobile.screens.settings.SettingsViewModel
@@ -41,6 +42,7 @@ sealed interface EsameMobileRoute {
     @Serializable data class LevelUp(val charId: String) : EsameMobileRoute
     @Serializable data class GroupDetails(val groupId: String): EsameMobileRoute
     @Serializable data class AddCharacter(val groupId: String): EsameMobileRoute
+    @Serializable data object Loading: EsameMobileRoute
 }
 
 
@@ -124,6 +126,9 @@ fun EsameMobileNavGraph(
 
             val addCharacterState by addCharacterVm.state.collectAsStateWithLifecycle()
             AddCharacterScreen(addCharacterState,addCharacterVm.actions,navController)
+        }
+        composable<EsameMobileRoute.Loading> {
+            LoadingScreen()
         }
     }
 }

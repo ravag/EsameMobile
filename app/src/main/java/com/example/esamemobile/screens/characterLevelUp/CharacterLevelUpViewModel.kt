@@ -4,14 +4,12 @@ import android.content.Context
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.esamemobile.data.firebase.AuthRepository
-import com.example.esamemobile.data.firebase.firestore.CharacterRepository
+import com.example.esamemobile.data.repositories.CharacterRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.logging.Level
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.calculateModifier
 import com.example.esamemobile.data.repositories.StaticDataRepository
@@ -115,7 +113,7 @@ class LevelUpViewModel(
 
         viewModelScope.launch {
             val userId = authRepository.currentUser?.uid ?: return@launch
-            val character = characterRepository.readCharacter(userId = userId, charId = charId).getOrNull() ?: return@launch
+            val character = characterRepository.readCharacter(userId = userId, ownerId = userId ,charId = charId).getOrNull() ?: return@launch
 
             val nextLevel = character.level + 1
             val options = mutableListOf<LevelUpOption>()

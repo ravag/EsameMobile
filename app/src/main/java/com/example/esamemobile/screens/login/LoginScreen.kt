@@ -15,9 +15,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicSecureTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -165,6 +168,31 @@ fun LoginScreen(
 
                     Text(
                         text = "Accedi con Google",
+                        color = Color.Black,
+                        fontSize = 18.sp
+                    )
+                }
+            }
+
+            //Bottone continua senza un account
+            Button(
+                onClick = loginActions.onGuestLogin,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Anonimo",
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = "Continua senza un account",
                         color = Color.Black,
                         fontSize = 18.sp
                     )

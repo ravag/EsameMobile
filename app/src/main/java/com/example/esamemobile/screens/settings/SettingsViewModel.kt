@@ -9,6 +9,7 @@ import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.firebase.AuthenticationResult
 import com.example.esamemobile.data.firebase.firestore.UserRepository
 import com.example.esamemobile.data.repositories.FileRepository
+import com.example.esamemobile.data.repositories.GuestRepository
 import com.example.esamemobile.data.repositories.SettingsRepository
 import com.example.esamemobile.data.supabase.ImagesRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -59,7 +60,8 @@ data class SettingsActions(
     val onAvatarSelected: (String) -> Unit,
     val onGoogleReauth: (String) -> Unit,
     val onGoogleError: (Exception) -> Unit,
-    val onPasswordDeleteAccount: () -> Unit
+    val onPasswordDeleteAccount: () -> Unit,
+    val goToLogin: () -> Unit
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -68,7 +70,8 @@ class SettingsViewModel(
     val authRepository: AuthRepository,
     val userRepository: UserRepository,
     val imagesRepository: ImagesRepository,
-    val fileRepository: FileRepository
+    val fileRepository: FileRepository,
+    val guestRepository: GuestRepository
 ) : ViewModel() {
 
     private val userData: Flow<Pair<String, String>> = authRepository.authState.flatMapLatest { user ->
@@ -85,7 +88,8 @@ class SettingsViewModel(
         authRepository.authState,
         userData,
         _state
-    ) { theme,colors,user, fetchedData,currentState -> currentState.copy(
+    ) { theme,colors,user, fetchedData,currentState -> 
+        currentState.copy(
             username = fetchedData.first,
             tempName = if (currentState.changeName) currentState.tempName else fetchedData.first,
             imageUrl = fetchedData.second,
@@ -131,7 +135,7 @@ class SettingsViewModel(
                 )
             }
         },
-        onClickChangePassword = { _state.update { it.copy(changePassword = true) } } ,
+        onClickChangePassword = { _state.update { it.copy(changePassword = true) } },
         onThemeChange = { themeValue -> viewModelScope.launch { repository.setTheme(themeValue) } },
         onDynamicColorsChange = { colors ->
             viewModelScope.launch {
@@ -219,9 +223,10 @@ class SettingsViewModel(
         onGoogleError = { exception -> Log.w("debug", "Errore google: ${exception.message}") },
         onPasswordDeleteAccount = {
             viewModelScope.launch {
-                val reauthResult = authRepository.reauthenticateWithPassword(_state.value.currentPassword)
+                val reauthResult =
+                    authRepository.reauthenticateWithPassword(_state.value.currentPassword)
                 if (reauthResult is AuthenticationResult.Error) {
-                    Log.w("debug","Errore eliminazione account password: ${reauthResult.message}")
+                    Log.w("debug", "Errore eliminazione account password: ${reauthResult.message}")
                     return@launch
                 }
                 deleteAccount()
@@ -229,7 +234,16 @@ class SettingsViewModel(
         },
         onChangePasswordInput = { text -> _state.update { it.copy(currentPassword = text) } },
         onChangeNewPasswordInput = { text -> _state.update { it.copy(newPassword = text) } },
-        onCancelChangePassword = { _state.update { it.copy(changePassword = false, newPassword = "", currentPassword = "") } }
+        onCancelChangePassword = {
+            _state.update {
+                it.copy(
+                    changePassword = false,
+                    newPassword = "",
+                    currentPassword = ""
+                )
+            }
+        },
+        goToLogin = { viewModelScope.launch { guestRepository.setGuest(false) } }
     )
 
     private suspend fun deleteAccount() {

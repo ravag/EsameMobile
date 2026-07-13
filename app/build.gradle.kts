@@ -13,6 +13,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.serialization)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -88,7 +89,10 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(platform(libs.bom))
     implementation(libs.storage.kt)
-    implementation(libs.ktor.client.android) // engine HTTP per Android
+    implementation(libs.ktor.client.android)
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
