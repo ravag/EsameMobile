@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.runtime.Composable
@@ -15,6 +16,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -33,8 +35,10 @@ fun ImageWithPlaceholder(url: String?, size: Size) {
             contentDescription = "Immagine personaggio",
             modifier = Modifier
                 .size(if (size == Size.Sm) 72.dp else 128.dp)
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(if (size == Size.Sm) 10.dp else 18.dp),
+                .background(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = RoundedCornerShape(8.dp)
+                ).clip(RoundedCornerShape(8.dp)),
             contentScale = ContentScale.Crop
         ) {
             when(painter.state) {
@@ -56,8 +60,9 @@ fun ImageWithPlaceholder(url: String?, size: Size) {
             colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary),
             modifier = Modifier
                 .size(if (size == Size.Sm) 72.dp else 128.dp)
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(if (size == Size.Sm) 20.dp else 36.dp)
+                .background(MaterialTheme.colorScheme.primary,
+                    shape = RoundedCornerShape(8.dp)
+                ).clip(RoundedCornerShape(8.dp))
             )
     }
 }
