@@ -80,10 +80,7 @@ fun EsameMobileNavGraph(
             CharacterDetailsScreen(
                 charState,
                 characterVm.actions.copy(),
-                navController,
-                onNavigateToLevelup = {
-                    navController.navigate(EsameMobileRoute.LevelUp(charId = route.charId))
-                }
+                navController
             )
         }
         composable<EsameMobileRoute.CharacterCreation> {

@@ -69,7 +69,11 @@ import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: CharacterDetailsActions, navController: NavHostController, onNavigateToLevelup: () -> Unit) {
+fun CharacterDetailsScreen(
+    detailsState: CharacterDetailsState,
+    detailsActions: CharacterDetailsActions,
+    navController: NavHostController
+) {
 
     val context = LocalContext.current
     var deleting by mutableStateOf(false)
@@ -168,7 +172,7 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                         modifier = Modifier,
                         onLevelUpClick = detailsActions.onLevelUp?.let { {
                                 detailsActions.onLevelUp()
-                                onNavigateToLevelup()
+                                navController.navigate(EsameMobileRoute.LevelUp(detailsState.character.character.id))
                             } }
                         )
                     when (detailsState.selectedTab) {

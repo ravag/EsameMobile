@@ -1,6 +1,7 @@
 package com.example.esamemobile.screens.characterLevelUp
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -112,7 +113,7 @@ class LevelUpViewModel(
         if (_state.value != null) return
 
         viewModelScope.launch {
-            val userId = authRepository.currentUser?.uid ?: return@launch
+            val userId = authRepository.currentUser?.uid
             val character = characterRepository.readCharacter(userId = userId, ownerId = userId ,charId = charId).getOrNull() ?: return@launch
 
             val nextLevel = character.level + 1
@@ -246,7 +247,7 @@ class LevelUpViewModel(
         onConfirmLevelUp = { context, navigateBack ->
             val currentState = _state.value ?: return@LevelUpActions
             val char = currentState.character ?: return@LevelUpActions
-            val userId = authRepository.currentUser?.uid ?: return@LevelUpActions
+            val userId = authRepository.currentUser?.uid
 
             if (!currentState.isHpRolled) {
                 Toast.makeText(context, "Tira il dado per gli HP", Toast.LENGTH_SHORT).show()
