@@ -1,5 +1,3 @@
-//TODO: Gli hp non rollati devono disabilitare il bottone avanti rendendolo grigio
-
 package com.example.esamemobile.screens.characterCreation
 
 import android.content.Context
@@ -71,6 +69,11 @@ data class CharacterCreationState(
     val speed: Double get() = 6 + (1.5 * agilityModifier)
     val inventoryCapacity: Int get() = maxOf(1, strengthModifier + 1)
     val baseDamage: String get() = calculateBaseDamage(power)
+
+    val isNextStepEnabled: Boolean get() = when (currentStep) {
+        CreationStep.STATISTICS -> hpBase > 0
+        else -> true
+    }
 }
 
 data class CharacterCreationActions(
