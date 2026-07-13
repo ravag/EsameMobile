@@ -310,11 +310,12 @@ private fun CountRow(
             title,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
+            maxLines = 1
         )
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             onDecrease?.let {
-                IconButton(onClick = onDecrease, modifier = Modifier.weight(0.1f)) {
+                IconButton(onClick = onDecrease) {
                     Icon(
                         Icons.Default.Remove,
                         contentDescription = "togli un uso",
@@ -327,11 +328,13 @@ private fun CountRow(
                 "$current/$max",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(horizontal = 8.dp)
+                modifier = Modifier.padding(horizontal = 8.dp),
+                maxLines = 1,
+                softWrap = false
             )
 
             onIncrease?.let {
-                IconButton(onClick = onIncrease, modifier = Modifier.weight(0.1f)) {
+                IconButton(onClick = onIncrease) {
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "aggiungi un uso",

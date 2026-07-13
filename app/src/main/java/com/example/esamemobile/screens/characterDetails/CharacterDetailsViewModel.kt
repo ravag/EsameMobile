@@ -2,8 +2,8 @@
 //TODO: Le abilità di altre classi non vengono mostrate oppure più di 3 non ne vengono mostrate
 //TODO: Mettere un modo per modificare il personaggio (Nome, Età, Armatura(quindi ancher gli effetti delle armature), poteri evoluzione, oggetti)
 //TODO: Da inserire un modo per segnare gli hp temporanei (come in dnd funzionano)
-//TODO: Gli hp current/max ogni tanto vanno a capo e non va bene
 //TODO: Devi mettere un modo per aumentare le statistiche con i PE spendibili
+//TODO: Quando si arriva al livello 11 e non si hanno più opzioni di level up, bisogna togliere il pulsante di level up e dire che si è raggiungo il livello massimo
 
 package com.example.esamemobile.screens.characterDetails
 
