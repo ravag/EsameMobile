@@ -315,17 +315,11 @@ fun CharacterHeader(
     characterClass: String?,
     level: Int,
     imageUrl: String?,
+    points: Int,
     modifier: Modifier = Modifier,
     onMalusClick: () -> Unit,
     onLevelUpClick: (() -> Unit)?,
 ) {
-//    val parsedUri = remember(imageUri) {
-//        if (!imageUri.isNullOrEmpty()) {
-//            Uri.parse(imageUri)
-//        } else {
-//            Uri.EMPTY
-//        }
-//    }
 
     Column(
         modifier = modifier
@@ -409,6 +403,9 @@ fun CharacterHeader(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
+        if (points != 0) {
+            Text("Hai $points da spendere",color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 

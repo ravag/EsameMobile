@@ -176,6 +176,7 @@ fun CharacterDetailsScreen(
                         characterClass = detailsState.character.chosenClass?.name,
                         level = detailsState.character.character.level,
                         imageUrl = detailsState.character.character.imageUrl,
+                        points = detailsState.character.character.peAvailable,
                         onMalusClick = detailsActions.onMalusButton,
                         modifier = Modifier,
                         onLevelUpClick = detailsActions.onLevelUp?.let { {
