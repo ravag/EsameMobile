@@ -1,7 +1,4 @@
-//TODO: Quando inserisco manualmente le statistiche dopo averle tirate o se sono diverse da uno mi impedisce di cambiarle manualmente
-//TODO: Controlla che non mi faccia andare avanti nella creazione se non ho rollato anche gli hp
-//TODO: Per le scelte stilistiche che hai fatto, devi assolutamente aggiungere un controllo nel caracter creation dove eviti che il nome di una abilità creata possa terminare con il carattere +, semplicemente mandando un toast che dica che non può terminare con + e che mi mantenga aperto il dialog dell'inserimento nuova abilità
-//TODO: Quando crei un'abilità non puoi averne due con lo stesso nome visto che l'id è ricavato dal nome e quindi causa casino più in là e sinceramnete non so come gestire con id automatici visto che non ci caspisco più niente
+//TODO: Gli hp non rollati devono disabilitare il bottone avanti rendendolo grigio
 
 package com.example.esamemobile.screens.characterCreation
 
@@ -95,12 +92,12 @@ data class CharacterCreationActions(
     val onSetAvatarOptionDialogVisible: (Boolean) -> Unit,
     val onAvatarSelected: (String?) -> Unit,
 
-    val onAddAbility: (String, String, Int, Context) -> Unit,
-    val onEditAbility: (String, String, String, Int, Context) -> Unit,
+    val onAddAbility: (String, String, Int, Context) -> Boolean,
+    val onEditAbility: (String, String, String, Int, Context) -> Boolean,
     val onDeleteAbility: (AbilityItem, Context) -> Unit,
 
-    val onAddItem: (String, String, Int, Context) -> Unit,
-    val onEditItem: (String, String, String, Int, Context) -> Unit,
+    val onAddItem: (String, String, Int, Context) -> Boolean,
+    val onEditItem: (String, String, String, Int, Context) -> Boolean,
     val onDeleteItem: (InventoryItem, Context) -> Unit,
 )
 
@@ -129,7 +126,14 @@ class CharacterCreationViewModel(
         onNextStep = { context, onCreationComplete ->
             _state.update { currentState ->
                 when (currentState.currentStep) {
-                    CreationStep.STATISTICS -> currentState.copy(currentStep = CreationStep.ABILITIES)
+                    CreationStep.STATISTICS -> {
+                        if (currentState.hpBase <= 0) {
+                            Toast.makeText(context, "Non puoi proseguire senza tirare prima per determinare i tuoi HP.", Toast.LENGTH_SHORT).show()
+                            currentState
+                        } else {
+                            currentState.copy(currentStep = CreationStep.ABILITIES)
+                        }
+                    }
                     CreationStep.ABILITIES -> currentState.copy(currentStep = CreationStep.INVENTORY)
                     CreationStep.INVENTORY -> {
                         viewModelScope.launch {
@@ -251,14 +255,14 @@ class CharacterCreationViewModel(
         },
 
         onStatManualChange = { statLabel, value ->
-            if (value in 1..10) {
+            if (value in 0..10) {
                 _state.update { currentState ->
                     val newState = when (statLabel) {
-                        "Forza" -> currentState.copy(strength = value)
-                        "Agilità" -> currentState.copy(agility = value)
-                        "Intelligenza" -> currentState.copy(intelligence = value)
-                        "Carisma" -> currentState.copy(charisma = value)
-                        "Potere" -> currentState.copy(power = value)
+                        "Forza" -> currentState.copy(strength = value, baseStrength = value)
+                        "Agilità" -> currentState.copy(agility = value, baseAgility = value)
+                        "Intelligenza" -> currentState.copy(intelligence = value, baseIntelligence = value)
+                        "Carisma" -> currentState.copy(charisma = value, baseCharisma = value)
+                        "Potere" -> currentState.copy(power = value, basePower = value)
                         else -> currentState
                     }
                     newState.copy(maxWeightCapacity = newState.inventoryCapacity)
@@ -383,8 +387,20 @@ class CharacterCreationViewModel(
         },
 
         onAddAbility = { name, desc, cost, context ->
+            var success = false
             _state.update { currentState ->
+                if (name.trim().endsWith("+")) {
+                    Toast.makeText(context, "Il nome dell'abilità non può terminare con \"+\"", Toast.LENGTH_SHORT).show()
+                    return@update currentState.copy(showAbilityDialog = true)
+                }
+
+                if (currentState.abilitiesList.any { it.name.equals(name.trim(), ignoreCase = true) }) {
+                    Toast.makeText(context, "Esiste già un'abilità con questo nome!", Toast.LENGTH_SHORT).show()
+                    return@update currentState.copy(showAbilityDialog = true)
+                }
+
                 if (cost <= currentState.peLeft) {
+                    success = true
                     currentState.copy(
                         peLeft = currentState.peLeft - cost,
                         abilitiesList = currentState.abilitiesList + AbilityItem(
@@ -398,14 +414,27 @@ class CharacterCreationViewModel(
                     currentState
                 }
             }
+            success
         },
 
         onEditAbility = { id, name, desc, newCost, context ->
+            var success = false
             _state.update { currentState ->
+                if (name.trim().endsWith("+")) {
+                    Toast.makeText(context, "Il nome dell'abilità non può terminare con \"+\"", Toast.LENGTH_SHORT).show()
+                    return@update currentState.copy(showAbilityDialog = true)
+                }
+
+                if (currentState.abilitiesList.any { it.id != id && it.name.equals(name.trim(), ignoreCase = true) }) {
+                    Toast.makeText(context, "Esiste già un'abilità con questo nome!", Toast.LENGTH_SHORT).show()
+                    return@update currentState.copy(showAbilityDialog = true)
+                }
+
                 val old = currentState.abilitiesList.find { it.id == id }
                 if (old != null) {
                     val currentPool = currentState.peLeft + old.numericValue
                     if (newCost <= currentPool) {
+                        success = true
                         val updatedList = currentState.abilitiesList.map {
                             if (it.id == id) AbilityItem(id, name, desc, newCost) else it
                         }
@@ -419,6 +448,7 @@ class CharacterCreationViewModel(
                     }
                 } else currentState
             }
+            success
         },
 
         onDeleteAbility = { item, context ->
@@ -433,10 +463,12 @@ class CharacterCreationViewModel(
 
         onAddItem = { name, desc, weight, context ->
             val safeWeight = if (weight < 0) 0 else weight
+            var success = false
 
             _state.update { currentState ->
                 val currentWeight = currentState.inventoryList.sumOf { it.numericValue }
                 if (currentWeight + safeWeight <= currentState.maxWeightCapacity) {
+                    success = true
                     currentState.copy(
                         inventoryList = currentState.inventoryList + InventoryItem(
                             name = name,
@@ -450,16 +482,19 @@ class CharacterCreationViewModel(
                     currentState
                 }
             }
+            success
         },
 
         onEditItem = { id, name, desc, newWeight, context ->
             val safeNewWeight = if (newWeight < 0) 0 else newWeight
+            var success = false
             _state.update { currentState ->
                 val old = currentState.inventoryList.find { it.id == id }
                 if (old != null) {
                     val weightWithoutOld =
                         currentState.inventoryList.sumOf { it.numericValue } - old.numericValue
                     if (weightWithoutOld + safeNewWeight <= currentState.maxWeightCapacity) {
+                        success = true
                         val updatedList = currentState.inventoryList.map {
                             if (it.id == id) InventoryItem(id, name, desc, safeNewWeight) else it
                         }
@@ -474,6 +509,7 @@ class CharacterCreationViewModel(
                     }
                 } else currentState
             }
+            success
         },
 
         onDeleteItem = { item, context ->

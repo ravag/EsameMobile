@@ -354,7 +354,12 @@ fun StatisticStepContent(
                                     actions.onStatManualChange(stat.label, parsed)
                                 },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                                keyboardActions = KeyboardActions(onDone = {
+                                    if (stat.value == 0) {
+                                        actions.onStatManualChange(stat.label, 1)
+                                    }
+                                    focusManager.clearFocus()
+                                }),
                                 modifier = Modifier.size(55.dp),
                                 textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.Center, fontWeight = FontWeight.Bold),
                                 singleLine = true

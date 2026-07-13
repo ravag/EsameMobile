@@ -76,8 +76,8 @@ fun GenericStepContent(
    dialogNameLabel: String,
    dialogNumericLabel: String,
 
-   onAddItem: (name: String, desc: String, value: Int) -> Unit,
-   onEditItem: (id: String, name: String, desc: String, value: Int) -> Unit,
+   onAddItem: (name: String, desc: String, value: Int) -> Boolean,
+   onEditItem: (id: String, name: String, desc: String, value: Int) -> Boolean,
    onDeleteItem: (DisplayableItem) -> Unit,
 
    focusManager: FocusManager,
@@ -320,13 +320,16 @@ fun GenericStepContent(
                                     }
                                 }
 
-                                if (isEditing) {
+                                val statusOperation = if (isEditing) {
                                     onEditItem(itemIdToEdit, inputName, inputDescription, costInt)
                                 } else {
                                     onAddItem(inputName, inputDescription, costInt)
                                 }
-                                onDialogVisibilityChange(false)
-                                resetDialogFields()
+
+                                if (statusOperation) {
+                                    onDialogVisibilityChange(false)
+                                    resetDialogFields()
+                                }
                             }
                         ) {
                             Text(if (isEditing) "Salva" else "Aggiungi")
