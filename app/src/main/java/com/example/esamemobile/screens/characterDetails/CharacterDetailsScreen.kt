@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -25,12 +26,16 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,9 +45,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -52,7 +59,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.R
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavHostController
@@ -69,7 +75,12 @@ import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: CharacterDetailsActions, navController: NavHostController, onNavigateToLevelup: () -> Unit) {
+fun CharacterDetailsScreen(
+    detailsState: CharacterDetailsState,
+    detailsActions: CharacterDetailsActions,
+    navController: NavHostController,
+    onNavigateToLevelup: () -> Unit
+) {
 
     val context = LocalContext.current
     var deleting by mutableStateOf(false)
@@ -148,7 +159,7 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center) {
-                    Text("Errore nel caricamento personaggio")
+                    Text("Errore nel caricamento personaggio", color = MaterialTheme.colorScheme.error)
                 }
             }
             else -> {
@@ -156,6 +167,7 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
+                        .padding(horizontal = 16.dp)
                 ) {
                     CharacterHeader(
                         name = detailsState.character.character.name,
@@ -171,6 +183,9 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                                 onNavigateToLevelup()
                             } }
                         )
+
+                    Spacer(Modifier.height(8.dp))
+
                     when (detailsState.selectedTab) {
                         CharacterDetailsTab.STATS  -> {
                             StatSection(
@@ -186,20 +201,24 @@ fun CharacterDetailsScreen(detailsState: CharacterDetailsState, detailsActions: 
                         }
 
                         CharacterDetailsTab.POWERS ->  {
-                            EvolutionPowersSection(
-                                abilities = detailsState.character.character.abilitiesList,
-                                modifier = Modifier.weight(1f),
-                                onAddPower = detailsActions.onAddPower?.let { { detailsActions.onAddPower(context) } }
-                            )
-                            Spacer(Modifier.height(10.dp))
-                            AbilitiesSection(
-                                abilities = detailsState.character.classAbilities,
-                                usageCurrent = detailsState.abilityUsageCurrent,
-                                usageMax = detailsState.abilityUsageMax,
-                                modifier = Modifier.weight(1f),
-                                onDecreaseUsage = detailsActions.onDecreaseUsage,
-                                onIncreaseUsage = detailsActions.onIncreaseUsage
-                            )
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                EvolutionPowersSection(
+                                    abilities = detailsState.character.character.abilitiesList,
+                                    modifier = Modifier.weight(1f),
+                                    onAddPower = detailsActions.onAddPower?.let { { detailsActions.onAddPower(context) } }
+                                )
+                                AbilitiesSection(
+                                    abilities = detailsState.character.classAbilities,
+                                    usageCurrent = detailsState.abilityUsageCurrent,
+                                    usageMax = detailsState.abilityUsageMax,
+                                    modifier = Modifier.weight(1f),
+                                    onDecreaseUsage = detailsActions.onDecreaseUsage,
+                                    onIncreaseUsage = detailsActions.onIncreaseUsage
+                                )
+                            }
                         }
 
                         CharacterDetailsTab.INVENTORY ->  {
@@ -226,16 +245,16 @@ private fun PowersHeader(
     title: String,
     onAddClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
-    titleWeight: Float = 0.9f
+    titleWeight: Float = 0.85f
 ) {
     Row(
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             title,
-            fontSize = 25.sp,
-            fontWeight = FontWeight.ExtraBold,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
             modifier = Modifier.weight(titleWeight)
         )
         onAddClick?.let {
@@ -243,7 +262,7 @@ private fun PowersHeader(
                 onClick = onAddClick,
                 modifier = Modifier.weight(1f - titleWeight)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "aggiungi", tint = Color.Magenta)
+                Icon(Icons.Default.Add, contentDescription = "aggiungi", tint = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -259,30 +278,36 @@ private fun CountRow(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             title,
-            fontSize = 25.sp,
-            fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.weight(0.7f)
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
         )
 
-        onDecrease?.let {
-            IconButton(onClick = onDecrease, modifier = Modifier.weight(0.1f)) {
-                Icon(Icons.Default.Remove, contentDescription = "togli un uso", tint = Color.Magenta)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            onDecrease?.let {
+                IconButton(onClick = onDecrease, modifier = Modifier.weight(0.1f)) {
+                    Icon(Icons.Default.Remove, contentDescription = "togli un uso", tint = MaterialTheme.colorScheme.primary)
+                }
+            }
+
+            Text(
+                "$current/$max",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+
+            onIncrease?.let {
+                IconButton(onClick = onIncrease, modifier = Modifier.weight(0.1f)) {
+                    Icon(Icons.Default.Add, contentDescription = "aggiungi un uso", tint = MaterialTheme.colorScheme.primary)
+                }
             }
         }
-
-        Text("$current/$max", modifier = Modifier.weight(0.1f))
-
-        onIncrease?.let {
-            IconButton(onClick = onIncrease, modifier = Modifier.weight(0.1f)) {
-                Icon(Icons.Default.Add, contentDescription = "aggiungi un uso", tint = Color.Magenta)
-            }
-        }
-
     }
 }
 
@@ -294,19 +319,26 @@ private fun InventoryHeader(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            "INVENTARIO",
-            fontSize = 25.sp,
-            fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.weight(0.7f)
-        )
-        Text("Capacità $current/$max", modifier = Modifier.weight(0.2f))
+        Column {
+            Text(
+                "INVENTARIO",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                "Capacità $current/$max",
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (current > max) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
         onAddClick?.let {
-            IconButton(onClick = onAddClick, modifier = Modifier.weight(0.1f)) {
-                Icon(Icons.Default.Add, contentDescription = "nuovo oggetto", tint = Color.Magenta)
+            IconButton(onClick = onAddClick) {
+                Icon(Icons.Default.Add, contentDescription = "nuovo oggetto", tint = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -318,18 +350,25 @@ private fun EvolutionPowersSection(
     modifier: Modifier,
     onAddPower: (() -> Unit)?
 ) {
-    Column(
-        modifier = modifier
-    ) {
+    Column(modifier = modifier) {
         PowersHeader(
             title = "POTERI EVOLUZIONE",
             onAddClick = onAddPower,
             titleWeight = 0.9f
         )
+        Spacer(Modifier.height(4.dp))
         ListItems(
             elements = abilities,
             modifier =  Modifier.fillMaxWidth().weight(1f),
-            costText = { item -> Text("${item.numericValue} PE", fontSize = 18.sp) })
+            costText = { item ->
+                Text(
+                    "${item.numericValue} PE",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        )
     }
 }
 
@@ -342,9 +381,7 @@ private fun AbilitiesSection(
     onDecreaseUsage: (() -> Unit)?,
     onIncreaseUsage: (() -> Unit)?
 ) {
-    Column(
-        modifier = modifier
-    ) {
+    Column(modifier = modifier) {
         CountRow(
             title = "ABILITA'",
             current = usageCurrent,
@@ -352,6 +389,7 @@ private fun AbilitiesSection(
             onDecrease = onDecreaseUsage,
             onIncrease = onIncreaseUsage
         )
+        Spacer(Modifier.height(4.dp))
         ListItems(
             elements = abilities.map {
                 AbilityItem(
@@ -361,26 +399,33 @@ private fun AbilitiesSection(
     }
 }
 
-//Per testare tengo capacità a 2 al momento
 @Composable
 private fun InventorySection(
-    items: List<InventoryItem>, //Al momento uso abilities per testare, sarà da costruire anche un nuovo metodo per le liste quando faremo gli oggetti
-    capacityCurrent: Int,   //Da reperire dal personaggio
-    capacityMax: Int,       //Da reperire dal personaggio
+    items: List<InventoryItem>,
+    capacityCurrent: Int,
+    capacityMax: Int,
     onAddItem: (() -> Unit)?,
     onUseItem: ((InventoryItem) -> Unit)?
 ) {
-    Column {
+    Column(modifier = Modifier.fillMaxSize()) {
         InventoryHeader(
             current = capacityCurrent,
             max = capacityMax,
             onAddClick = onAddItem
         )
+        Spacer(Modifier.height(8.dp))
         ListItems(
             elements = items,
             modifier = Modifier.fillMaxWidth().weight(1f),
             onUseItem = onUseItem,
-            costText = { item -> Text("Peso: ${item.numericValue}", fontSize = 18.sp) })
+            costText = { item ->
+                Text(
+                    "Peso: ${item.numericValue}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        )
     }
 }
 
@@ -395,63 +440,107 @@ private fun StatSection(
     armor: String,
     normalizedStats: List<Float>
 ) {
-    CountRow("HP",hp,maxHp,onDecrease,onIncrease)
-    //Questa è la soluzione più rapida che ho trovato, si potrebbe provare se no a usare due rettangoli sovrapposti per fare l'effetto, ci si pensa
-    LinearProgressIndicator(
-        modifier = Modifier.height(15.dp).fillMaxWidth(),
-        progress = { if (maxHp > 0) hp.toFloat()/maxHp else 0f },
-        color = Color.Green,
-        trackColor = Color.Red
-    )
-
-    Spacer(Modifier.height(10.dp))
-
-    Row(
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Velocità")
-            Text("${speed}m", fontSize = 25.sp)
-        }
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text("Armatura")
-            Text(armor, fontSize = 25.sp)
+        Column(modifier = Modifier.padding(16.dp)) {
+            CountRow("HP", hp, maxHp, onDecrease, onIncrease)
+            Spacer(Modifier.height(8.dp))
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .height(10.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(5.dp)),
+                progress = { if (maxHp > 0) hp.toFloat()/maxHp else 0f },
+                color = if (hp < maxHp * 0.3f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                strokeCap = StrokeCap.Round
+            )
         }
     }
 
-    Spacer(Modifier.height(20.dp))
+    Spacer(Modifier.height(16.dp))
 
     Row(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(
+        Card(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
         ) {
-            Text("Statistiche")
-            Text("Forza ${stats[0]}  (${calculateModifier(stats[0])})")
-            Text("Agilità ${stats[1]} (${calculateModifier(stats[1])})")
-            Text("Intelligenza ${stats[2]} (${calculateModifier(stats[2])})")
-            Text("Carisma ${stats[3]} (${calculateModifier(stats[3])})")
-            Text("Potenza ${stats[4]} (${calculateModifier(stats[4])})")
+            Column(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Velocità", style = MaterialTheme.typography.bodyMedium)
+                Text("${speed} m", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            }
         }
 
-        Column(
+        Card(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
         ) {
-            statChart(normalizedStats,listOf("FOR","AGI","INT","CAR","POT"), lineColor = Color.Magenta, fillColor = Color.Magenta.copy(alpha = 0.3f))
+            Column(
+                modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Armatura", style = MaterialTheme.typography.bodyMedium)
+                Text(armor, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            }
+        }
+
+    }
+
+    Spacer(Modifier.height(16.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedCard(
+            modifier = Modifier.weight(1.1f),
+            colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(
+                modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text("Statistiche", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                val labels = listOf("Forza", "Agilità", "Intelligenza", "Carisma", "Potere")
+                stats.forEachIndexed { index, value ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            labels[index],
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Text(
+                            "$value (${if (calculateModifier(value) >= 0) "+" else ""}${calculateModifier(value)})",
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+
+        Box(
+            modifier = Modifier.weight(0.9f),
+            contentAlignment = Alignment.Center
+        ) {
+            statChart(
+                normalizedStats,
+                listOf("FOR","AGI","INT","CAR","POT"),
+                lineColor = MaterialTheme.colorScheme.primary,
+                fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
         }
     }
 }
@@ -462,12 +551,13 @@ private fun ListItems(
     elements: List<DisplayableItem>,
     modifier: Modifier,
     costText: @Composable (DisplayableItem) -> Unit = { },
-    onUseItem: ((InventoryItem) -> Unit)? = null) { //Per quando avremo oggetti funzionanti e utilizzabili
+    onUseItem: ((InventoryItem) -> Unit)? = null) {
     var selectedItem by remember { mutableStateOf<DisplayableItem?>(null) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(10.dp)
+        contentPadding = PaddingValues(vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(elements) { element ->
             GenericListElement(
@@ -475,7 +565,6 @@ private fun ListItems(
                 onClick = { selectedItem = element },
                 costText = costText
             )
-            Spacer(Modifier.height(5.dp))
         }
     }
 
@@ -504,33 +593,34 @@ private fun GenericListElement(
     item: DisplayableItem,
     onClick: () -> Unit,
     costText: @Composable (DisplayableItem) -> Unit = { }) {
-    Column() {
+
+    OutlinedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         Row(
             modifier = Modifier
-                .border(
-                    width = 1.dp,
-                    color = Color.Magenta
-                )
-                .padding(8.dp)
-                .fillMaxWidth()
-                .clickable(onClick = onClick),
+                .padding(12.dp)
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Top
         ) {
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                Text(item.name, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text(item.description, fontSize = 16.sp)
+                Text(item.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(item.description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
             costText(item)
         }
     }
-}
+    }
 
 private fun calculateModifier(stat: Int): Int {
     return when (stat) {
@@ -545,7 +635,7 @@ private fun calculateModifier(stat: Int): Int {
 
 @Composable
 fun statChart(
-    values: List<Float>,    //Serve normalizzato tra 0 e 1, farò una funzione per farlo
+    values: List<Float>,
     labels: List<String>,
     modifier: Modifier = Modifier,
     lineColor: Color,
@@ -555,13 +645,16 @@ fun statChart(
     val sides = values.size
     val textMeasurer = rememberTextMeasurer()
 
+    val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+    val labelColor = MaterialTheme.colorScheme.onSurface
+
     Canvas(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(1f)
-            .padding(40.dp)
+            .padding(24.dp)
     ) {
-        val center = Offset(size.width/2,size.height/2)
+        val center = Offset(size.width / 2,size.height / 2)
         val radius = size.minDimension / 2
         val vertexAngle = (2* Math.PI / sides)
 
@@ -578,7 +671,7 @@ fun statChart(
                 if (i == 0) path.moveTo(point.x,point.y) else path.lineTo(point.x,point.y)
             }
             path.close()
-            drawPath(path, Color.Gray,style = Stroke(width = 1.dp.toPx()))
+            drawPath(path, gridColor ,style = Stroke(width = 1.dp.toPx()))
         }
 
         //Disegna una riga dal centro al vertice del pentagono
@@ -588,7 +681,7 @@ fun statChart(
                 x = center.x + (radius * cos(angle)).toFloat(),
                 y = center.y + (radius * sin(angle)).toFloat()
             )
-            drawLine(Color.Gray,center,end, strokeWidth = 1.dp.toPx())
+            drawLine(gridColor, center, end, strokeWidth = 1.dp.toPx())
         }
 
         val dataPath = Path()
@@ -608,7 +701,7 @@ fun statChart(
         //Disegna le etichette sui vertici
         for (i in 0 until sides) {
             val angle = -Math.PI / 2 + i * vertexAngle
-            val labelRadius = radius + 20.dp.toPx()
+            val labelRadius = radius + 14.dp.toPx()
             val labelPosition = Offset(
                 x = center.x + (labelRadius * cos(angle)).toFloat(),
                 y = center.y + (labelRadius * sin(angle)).toFloat()
@@ -616,7 +709,7 @@ fun statChart(
 
             val textLayoutResult = textMeasurer.measure(
                 text = labels[i],
-                style = TextStyle(fontSize = 12.sp, color = Color.White)
+                style = TextStyle(fontSize = 11.sp, color = labelColor, fontWeight = FontWeight.Bold)
             )
 
             drawText(
