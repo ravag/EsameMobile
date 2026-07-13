@@ -5,6 +5,7 @@
 //TODO: Mettere un modo per modificare il personaggio (Nome, Età, Armatura(quindi ancher gli effetti delle armature), poteri evoluzione, oggetti)
 //TODO: Da inserire un modo per segnare gli hp temporanei (come in dnd funzionano)
 //TODO: Gli hp current/max ogni tanto vanno a capo e non va bene
+//TODO: Devi mettere un modo per aumentare le statistiche con i PE spendibili
 
 package com.example.esamemobile.screens.characterDetails
 

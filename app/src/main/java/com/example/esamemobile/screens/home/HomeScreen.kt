@@ -1,5 +1,6 @@
 package com.example.esamemobile.screens.home
 
+import com.example.esamemobile.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -38,10 +39,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.esamemobile.utilities.NavigationBottomBarWithFAB
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -90,7 +93,7 @@ fun HomeScreen(
                 firstOptionText = "Personaggi",
                 firstOptionImage = Icons.Outlined.Person,
                 secondOptionText = "Gruppi",
-                secondOptionImage = Icons.Outlined.AccountBox,
+                secondOptionImage = ImageVector.vectorResource(id = R.drawable.ic_groups),
                 selectedIndex = homeState.homePage.ordinal,
                 onTabSelected = { newIndex ->
                     focusManager.clearFocus()
