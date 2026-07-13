@@ -12,7 +12,7 @@ import com.example.esamemobile.utilities.DisplayableItem
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.calculateModifier
 import com.example.esamemobile.data.firebase.AuthRepository
-import com.example.esamemobile.data.firebase.firestore.CharacterRepository
+import com.example.esamemobile.data.repositories.CharacterRepository
 import com.example.esamemobile.data.supabase.ImagesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

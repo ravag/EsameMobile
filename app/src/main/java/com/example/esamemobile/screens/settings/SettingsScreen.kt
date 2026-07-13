@@ -164,6 +164,7 @@ fun SettingsScreen(
             //Immagine e username
             ChangeImageCard(
                 context = context,
+                enabled = settingsState.isLoggedIn,
                 modifier = Modifier.weight(0.2f),
                 useUri = settingsActions.onAvatarSelected
             ) {
@@ -171,24 +172,7 @@ fun SettingsScreen(
                 Text(settingsState.username)
             }
 
-            Row(
-                modifier = Modifier
-                    .border(
-                        width = 1.dp,
-                        color = Color.Magenta
-                    )
-                    .weight(0.1f)
-                    .fillMaxWidth()
-                    .clickable(onClick = {
-                        settingsActions.onClickChangeName()
-                        Log.i("debug","premuto cambio nome")
-                    })
-            ) {
-                Text("Cambia nome utente")
-                Spacer(Modifier.width(15.dp))
-                Icon(Icons.Filled.KeyboardDoubleArrowRight,"avanti?")
-            }
-            if (settingsState.providerType == AuthProviderType.PASSWORD) {
+            if (settingsState.isLoggedIn) {
                 Row(
                     modifier = Modifier
                         .border(
@@ -198,15 +182,35 @@ fun SettingsScreen(
                         .weight(0.1f)
                         .fillMaxWidth()
                         .clickable(onClick = {
-                            settingsActions.onClickChangePassword()
-                            Log.i("debug","premuto cambio password")
+                            settingsActions.onClickChangeName()
+                            Log.i("debug","premuto cambio nome")
                         })
                 ) {
-                    Text("cambia password")
+                    Text("Cambia nome utente")
                     Spacer(Modifier.width(15.dp))
                     Icon(Icons.Filled.KeyboardDoubleArrowRight,"avanti?")
                 }
+                if (settingsState.providerType == AuthProviderType.PASSWORD) {
+                    Row(
+                        modifier = Modifier
+                            .border(
+                                width = 1.dp,
+                                color = Color.Magenta
+                            )
+                            .weight(0.1f)
+                            .fillMaxWidth()
+                            .clickable(onClick = {
+                                settingsActions.onClickChangePassword()
+                                Log.i("debug","premuto cambio password")
+                            })
+                    ) {
+                        Text("cambia password")
+                        Spacer(Modifier.width(15.dp))
+                        Icon(Icons.Filled.KeyboardDoubleArrowRight,"avanti?")
+                    }
+                }
             }
+
             Column(
                 modifier = Modifier
                     .border(
@@ -235,34 +239,44 @@ fun SettingsScreen(
                 }
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(0.1f)
-            ) {
-                //Bottone logout
-                Button(
-                    onClick = {
-                        settingsActions.onLogOut()
-                    }
+            if (settingsState.isLoggedIn) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.1f)
                 ) {
-                    Text("Logout")
+                    //Bottone logout
+                    Button(
+                        onClick = {
+                            settingsActions.onLogOut()
+                        }
+                    ) {
+                        Text("Logout")
+                        Icon(Icons.AutoMirrored.Filled.Logout,"Logout")
+                    }
+
+                    Spacer(Modifier.width(10.dp))
+
+                    //Bottone elimina account
+                    Button(
+                        onClick = {
+                            Log.i("debug","Elimina")
+                            deleteAccountPopup = true
+                        }
+                    ) {
+                        Text("Elimina account")
+                        Icon(Icons.Filled.Cancel,"Elimina account")
+                    }
+                }
+            } else {
+                Button(
+                    onClick = settingsActions.goToLogin
+                ) {
+                    Text("Vai al login")
                     Icon(Icons.AutoMirrored.Filled.Logout,"Logout")
                 }
-
-                Spacer(Modifier.width(10.dp))
-
-                //Bottone elimina account
-                Button(
-                    onClick = {
-                        Log.i("debug","Elimina")
-                        deleteAccountPopup = true
-                    }
-                ) {
-                    Text("Elimina account")
-                    Icon(Icons.Filled.Cancel,"Elimina account")
-                }
             }
+
         }
 
     }

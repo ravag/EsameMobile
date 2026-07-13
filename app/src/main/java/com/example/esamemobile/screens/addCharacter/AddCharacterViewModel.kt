@@ -5,10 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.firebase.AuthRepository
-import com.example.esamemobile.data.firebase.firestore.CharacterRepository
+import com.example.esamemobile.data.repositories.CharacterRepository
 import com.example.esamemobile.data.firebase.firestore.GroupRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
@@ -39,11 +40,9 @@ class AddCharacterViewModel(
         val userId = authRepository.currentUser!!.uid
 
         viewModelScope.launch {
-            characterRepository.getAllUserCharacters(userId)
-                .onSuccess { loadedCharacters ->
-                    _state.update { it.copy(characters = loadedCharacters, filteredCharacters = loadedCharacters) }
-                }
-                .onFailure { exception -> Log.w("debug","OOPSIE ${exception.message}")}
+            characterRepository.getAllUserCharacters().collect() { loadedCharacters ->
+                _state.update { it.copy(characters = loadedCharacters, filteredCharacters = loadedCharacters) }
+            }
         }
     }
     
@@ -54,15 +53,15 @@ class AddCharacterViewModel(
                     character.name.contains(text, ignoreCase = true)
                 }) } },
         onChooseCharacter = { character ->
+            val id = groupId.value ?: return@AddCharacterActions
+            val currentUser = authRepository.currentUser?.uid ?: return@AddCharacterActions
+
             viewModelScope.launch {
-                groupId.filterNotNull().collectLatest { id ->
-                    val currentUser = authRepository.currentUser!!.uid
-                    val result = groupRepository.insertMemberCharacter(id,currentUser,character)
-                    result.fold(
-                        onSuccess = { Log.i("debug","Personaggio scelto con successo") },
-                        onFailure = { exception -> Log.w("debug","Errore scelta personaggio ${exception.message}") }
-                    )
-                }
+                val result = groupRepository.insertMemberCharacter(id,currentUser,character)
+                result.fold(
+                    onSuccess = { Log.i("debug","Personaggio scelto con successo") },
+                    onFailure = { exception -> Log.w("debug","Errore scelta personaggio ${exception.message}") }
+                )
             }
         }
     )

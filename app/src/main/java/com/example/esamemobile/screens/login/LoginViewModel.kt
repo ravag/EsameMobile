@@ -6,6 +6,7 @@ import com.example.esamemobile.data.firebase.AuthErrorType
 import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.firebase.AuthenticationResult
 import com.example.esamemobile.data.firebase.firestore.UserRepository
+import com.example.esamemobile.data.repositories.GuestRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -29,12 +30,14 @@ data class LoginActions(
     val onEmailPasswordSubmit: () -> Unit,
     val onGoogleIdTokenReceived: (String) -> Unit,
     val onGoogleSignInError: (Exception) -> Unit,    //Ci sono gia molti onGoogleSignInError, e anche onGoogleError
-    val onMessageShown: () -> Unit
+    val onMessageShown: () -> Unit,
+    val onGuestLogin: () -> Unit
 )
 
 class LoginViewModel (
     private val authRepository: AuthRepository,
-    private val userRepository: UserRepository) : ViewModel() {
+    private val userRepository: UserRepository,
+    private val guestRepository: GuestRepository) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginState())
     val state = _state.asStateFlow()
@@ -62,13 +65,14 @@ class LoginViewModel (
             }
         },
         onGoogleSignInError = { exception -> _state.update { it.copy(message = LoginMessage.Error("Errore login Google ${exception.message}")) } },
-        onMessageShown = { _state.update { it.copy(message = null) } }
+        onMessageShown = { _state.update { it.copy(message = null) } },
+        onGuestLogin = { viewModelScope.launch { guestRepository.setGuest(true) } }
     )
 
     private suspend fun loginToMessage(result: AuthenticationResult): LoginMessage {
         return when(result) {
             is AuthenticationResult.Success -> {
-                var msg: String = ""
+                var msg = ""
                 if (result.isNewUser) {
                     val res = userRepository.insertNewUser(authRepository.currentUser!!.uid)
                     res.fold(

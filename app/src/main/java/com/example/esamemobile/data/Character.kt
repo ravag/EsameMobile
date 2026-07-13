@@ -1,5 +1,6 @@
 package com.example.esamemobile.data
 
+import com.example.esamemobile.data.room.CharacterEntity
 import com.example.esamemobile.data.staticData.AgeMalus
 import com.example.esamemobile.data.staticData.ClassAbility
 import com.example.esamemobile.data.staticData.GameClass
@@ -7,6 +8,8 @@ import com.example.esamemobile.screens.characterCreation.AbilityItem
 import com.example.esamemobile.screens.characterCreation.InventoryItem
 import com.google.firebase.firestore.DocumentId
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.util.UUID
 
 @Serializable
@@ -39,7 +42,31 @@ data class Character(
     val speed: Double = 0.0,
     val maxCapacity: Int = 0,
     val armor: ArmorTypes = ArmorTypes.NONE,
-)
+) {
+    fun toEntity(): CharacterEntity = CharacterEntity(
+        id = id,
+        name = name,
+        imageUrl = imageUrl,
+        age = age,
+        ageMalus = ageMalus,
+        level = level,
+        chosenClass = chosenClass,
+        peAvailable = peAvailable,
+        strength = strength,
+        agility = agility,
+        intelligence = intelligence,
+        charisma = charisma,
+        power = power,
+        currentHP = currentHP,
+        maxHP = maxHP,
+        abilitiesList = Json.encodeToString(abilitiesList),
+        classAbilitiesList = Json.encodeToString(classAbilitiesList),
+        inventoryList = Json.encodeToString(inventoryList),
+        speed = speed,
+        maxCapacity = maxCapacity,
+        armor = armor.name
+    )
+}
 
 enum class ArmorTypes(val text: String) { LIGHT("leggera"), MEDIUM("media"), HEAVY("pesante"), NONE("nessuna") }
 

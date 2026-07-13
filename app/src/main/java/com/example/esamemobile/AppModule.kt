@@ -2,10 +2,11 @@ package com.example.esamemobile
 
 import android.content.Context
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.room.Room
 import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.firebase.AuthRepositoryImpl
-import com.example.esamemobile.data.firebase.firestore.CharacterRepository
-import com.example.esamemobile.data.firebase.firestore.CharacterRepositoryImpl
+import com.example.esamemobile.data.repositories.CharacterRepository
+import com.example.esamemobile.data.repositories.CharacterRepositoryImpl
 import com.example.esamemobile.data.firebase.firestore.GroupRepository
 import com.example.esamemobile.data.firebase.firestore.GroupRepositoryImpl
 import com.example.esamemobile.data.firebase.firestore.UserRepository
@@ -13,8 +14,10 @@ import com.example.esamemobile.data.firebase.firestore.UserRepositoryImpl
 import com.example.esamemobile.data.repositories.CharacterSolver
 import com.example.esamemobile.data.repositories.FileRepository
 import com.example.esamemobile.data.repositories.FileRepositoryImpl
+import com.example.esamemobile.data.repositories.GuestRepository
 import com.example.esamemobile.data.repositories.SettingsRepository
 import com.example.esamemobile.data.repositories.StaticDataRepository
+import com.example.esamemobile.data.room.CharactersDatabase
 import com.example.esamemobile.data.supabase.ImagesRepository
 import com.example.esamemobile.data.supabase.ImagesRepositoryImpl
 import com.example.esamemobile.screens.addCharacter.AddCharacterViewModel
@@ -25,6 +28,7 @@ import com.example.esamemobile.screens.groupDetails.GroupDetailsViewModel
 import com.example.esamemobile.screens.home.HomeViewModel
 import com.example.esamemobile.screens.login.LoginViewModel
 import com.example.esamemobile.screens.settings.SettingsViewModel
+import com.example.esamemobile.utilities.ConnectivityChecker
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import io.github.jan.supabase.SupabaseClient
@@ -49,20 +53,32 @@ val appModule = module {
         }
     }
     single<Storage> { get<SupabaseClient>().storage }
+    single {
+        Room.databaseBuilder(
+        get<Context>(),
+        CharactersDatabase::class.java,
+        "esame-mobile"
+        ).build()
+    }
+    single { ConnectivityChecker(androidContext()) }
+
+
+    single { get<CharactersDatabase>().characterDAO() }
 
     single<FileRepository> { FileRepositoryImpl(androidContext()) }
     single { StaticDataRepository(androidContext()) }
     single { CharacterSolver(get()) }
     single { SettingsRepository(get()) }
+    single { GuestRepository(get()) }
     single<ImagesRepository> { ImagesRepositoryImpl(get()) }
     single<AuthRepository> { AuthRepositoryImpl(get()) }
-    single<CharacterRepository> { CharacterRepositoryImpl(get()) }
+    single<CharacterRepository> { CharacterRepositoryImpl(get(),get(),get()) }
     single<GroupRepository> { GroupRepositoryImpl(get()) }
     single<UserRepository> { UserRepositoryImpl(get(),get()) }
 
-    viewModel { LoginViewModel(get(),get()) }
-    viewModel { SettingsViewModel(get(),get(),get(),get(),get()) }
-    viewModel { SessionViewModel(get(),get()) }
+    viewModel { LoginViewModel(get(),get(),get()) }
+    viewModel { SettingsViewModel(get(),get(),get(),get(),get(), get()) }
+    viewModel { SessionViewModel(get(),get(),get()) }
     viewModel { HomeViewModel(get(),get(), get(), get()) }
     viewModel { CharacterDetailsViewModel(get(),get(),get(),get()) }
     viewModel { CharacterCreationViewModel(get(),get(),get(),get(),get()) }

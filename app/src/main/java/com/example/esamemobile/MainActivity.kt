@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
             val settingsVm = koinViewModel<SettingsViewModel>()
             val settingsState by settingsVm.state.collectAsStateWithLifecycle()
             val sessionVm = koinViewModel<SessionViewModel>()
-            val sessionState by sessionVm.isLoggedIn.collectAsStateWithLifecycle()
+            val sessionState by sessionVm.sessionState.collectAsStateWithLifecycle()
 
             EsameMobileTheme(
                 darkTheme = when(settingsState.theme) {
@@ -87,9 +87,13 @@ class MainActivity : ComponentActivity() {
                 EsameMobileNavGraph(
                     navController,
                     settingsVm,
-                    if (sessionState) EsameMobileRoute.Home else EsameMobileRoute.Login
+                    when (sessionState) {
+                        is SessionState.Authenticated, is SessionState.Guest -> EsameMobileRoute.Home
+                        is SessionState.LoggedOut -> EsameMobileRoute.Login
+                        is SessionState.Loading -> EsameMobileRoute.Loading
+                    }
                 )
-                SessionEffect(navController,sessionState)
+                SessionEffect(navController,sessionState,sessionVm::canNavigate)
             }
         }
     }

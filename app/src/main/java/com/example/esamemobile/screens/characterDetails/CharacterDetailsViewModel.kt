@@ -15,7 +15,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.UiCharacter
 import com.example.esamemobile.data.firebase.AuthRepository
-import com.example.esamemobile.data.firebase.firestore.CharacterRepository
+import com.example.esamemobile.data.repositories.CharacterRepository
 import com.example.esamemobile.data.repositories.CharacterSolver
 import com.example.esamemobile.data.repositories.StaticDataRepository
 import com.example.esamemobile.screens.characterCreation.InventoryItem
@@ -23,12 +23,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -73,7 +70,7 @@ class CharacterDetailsViewModel (
     var hasChanged: Boolean = false
     val charId = MutableStateFlow<String?>(null)
     //Potrei vedere un personaggio non mio, ho bisogno di tenermi userId per recuperare il personaggio
-    private var userId = MutableStateFlow<String?>(null)
+    private var ownerId = MutableStateFlow<String?>(null)
     private val _state = MutableStateFlow(CharacterDetailsState())
     val state = _state.asStateFlow()
 
@@ -81,7 +78,7 @@ class CharacterDetailsViewModel (
 
     fun setIds(charId: String, userId: String?) {
         this.charId.value = charId
-        this.userId.value = userId ?: authRepository.currentUser?.uid
+        this.ownerId.value = userId ?: authRepository.currentUser?.uid
     }
 
     val actions: CharacterDetailsActions
@@ -126,7 +123,7 @@ class CharacterDetailsViewModel (
             },
             onLoad = { load() },
             onDelete = if (editable) { {
-                val userId = userId.value ?: return@CharacterDetailsActions
+                val userId = ownerId.value ?: return@CharacterDetailsActions
 
                 viewModelScope.launch {
                     val result = characterRepository.deleteCharacter(userId,state.value.character?.character!!.id)
@@ -145,8 +142,8 @@ class CharacterDetailsViewModel (
             charId.filterNotNull().collectLatest { id ->
                 _state.update { it.copy(isLoading = true) }
 
-                val currentUserId = userId.value ?: return@collectLatest
-                val result = characterRepository.readCharacter(currentUserId,id)
+                val currentUserId = authRepository.currentUser?.uid
+                val result = characterRepository.readCharacter(currentUserId,ownerId.value,id)
                 result.fold(
                     onSuccess = { char ->
                         val character = char?.let { characterSolver.solve(it) }
@@ -176,7 +173,7 @@ class CharacterDetailsViewModel (
     }
 
     private fun saveCharacter(scope: CoroutineScope) {
-        val userId = userId.value ?: return
+        val userId = ownerId.value ?: return
         val char = _state.value.character?.character ?: return
 
         if (hasChanged) {

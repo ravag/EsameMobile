@@ -10,24 +10,27 @@ import androidx.navigation.NavHostController
 
 //Metodo migliore per tenere traccia se un utente è loggato oppure no
 @Composable
-fun SessionEffect(navController: NavHostController, sessionState: Boolean) {
-    //Serve per evitare che al cambio di tema non da applicazione si ripartà dalla home o dal login
-    var isFirstComposition by remember { mutableStateOf(true) }
-
+fun SessionEffect(
+    navController: NavHostController,
+    sessionState: SessionState,
+    canNavigate: (SessionState) -> Boolean
+) {
     LaunchedEffect(sessionState) {
-        if (isFirstComposition) {
-            isFirstComposition = false
-            return@LaunchedEffect
-        }
+        if (sessionState is SessionState.Loading) return@LaunchedEffect
+        if (!canNavigate(sessionState)) return@LaunchedEffect
 
-        if (sessionState) {
-            navController.navigate(EsameMobileRoute.Home) {
-                popUpTo(0) {inclusive = true}
+        when (sessionState) {
+            is SessionState.Guest, is SessionState.Authenticated -> {
+                navController.navigate(EsameMobileRoute.Home) {
+                    popUpTo(0) {inclusive = true}
+                }
             }
-        } else {
-            navController.navigate(EsameMobileRoute.Login) {
-                popUpTo(0) {inclusive = true}
+            is SessionState.LoggedOut -> {
+                navController.navigate(EsameMobileRoute.Login) {
+                    popUpTo(0) {inclusive = true}
+                }
             }
+            else -> {}
         }
     }
 }
