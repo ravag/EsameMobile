@@ -360,6 +360,7 @@ private fun EvolutionPowersSection(
         ListItems(
             elements = abilities,
             modifier =  Modifier.fillMaxWidth().weight(1f),
+            checkEnhanched = true,
             costText = { item ->
                 Text(
                     "${item.numericValue} PE",
@@ -550,6 +551,7 @@ private fun StatSection(
 private fun ListItems(
     elements: List<DisplayableItem>,
     modifier: Modifier,
+    checkEnhanched: Boolean = false,
     costText: @Composable (DisplayableItem) -> Unit = { },
     onUseItem: ((InventoryItem) -> Unit)? = null) {
     var selectedItem by remember { mutableStateOf<DisplayableItem?>(null) }
@@ -560,9 +562,11 @@ private fun ListItems(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(elements) { element ->
+            val isHighLighted = checkEnhanched && element.name.endsWith("+")
             GenericListElement(
                 item = element,
                 onClick = { selectedItem = element },
+                isHighlighted = isHighLighted,
                 costText = costText
             )
         }
@@ -592,13 +596,29 @@ private fun ListItems(
 private fun GenericListElement(
     item: DisplayableItem,
     onClick: () -> Unit,
-    costText: @Composable (DisplayableItem) -> Unit = { }) {
+    isHighlighted: Boolean,
+    costText: @Composable (DisplayableItem) -> Unit = { }
+) {
+    val cardColors = if (isHighlighted) {
+        CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+    } else {
+        CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+    }
+
+    val modifierWithEffects = if (isHighlighted) {
+        Modifier
+            .fillMaxWidth()
+            .border(2.dp, MaterialTheme.colorScheme.tertiary, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+    } else {
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    }
 
     OutlinedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+        modifier = modifierWithEffects,
+        colors = cardColors
     ) {
         Row(
             modifier = Modifier
