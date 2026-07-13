@@ -3,7 +3,6 @@
 //TODO: Mettere un modo per modificare il personaggio (Nome, Età, Armatura(quindi ancher gli effetti delle armature), poteri evoluzione, oggetti)
 //TODO: Da inserire un modo per segnare gli hp temporanei (come in dnd funzionano)
 //TODO: Devi mettere un modo per aumentare le statistiche con i PE spendibili
-//TODO: Quando si arriva al livello 11 e non si hanno più opzioni di level up, bisogna togliere il pulsante di level up e dire che si è raggiungo il livello massimo
 
 package com.example.esamemobile.screens.characterDetails
 
@@ -101,7 +100,7 @@ class CharacterDetailsViewModel (
                 _state.update { it.copy(selectedTab = CharacterDetailsTab.entries[index]) }
                             },
 
-            onLevelUp =  if (editable) { {
+            onLevelUp =  if (editable && (_state.value.character?.character?.level ?: 0) < 11) { {
                 saveCharacter(viewModelScope)
                 _state.update { it.copy(isLoading = true) }
             } } else null,

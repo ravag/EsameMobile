@@ -208,6 +208,17 @@ fun CharacterDetailsScreen(
                             } }
                         )
 
+                    if (detailsState.character.character.level >= 11) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Livello massimo raggiunto!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
+
                     Spacer(Modifier.height(8.dp))
 
                     when (detailsState.selectedTab) {
