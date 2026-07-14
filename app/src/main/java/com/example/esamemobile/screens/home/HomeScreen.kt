@@ -36,6 +36,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -48,7 +49,6 @@ import androidx.compose.ui.unit.sp
 import com.example.esamemobile.utilities.composables.NavigationBottomBarWithFAB
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavHostController
@@ -91,6 +91,9 @@ fun HomeScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {Text("")},
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                ),
                 actions = {
                     IconButton({navController.navigate(EsameMobileRoute.Settings)}) {
                         Icon(Icons.Filled.Settings,"Impostazioni")
@@ -122,17 +125,17 @@ fun HomeScreen(
 
         when (homeState.currentDialog) {
             HomeDialog.CHOICE -> {
-                Dialog(
+                BasicAlertDialog(
                     onDismissRequest = homeActions.onDismissDialog,
                 ) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                            .padding(16.dp)
+                    Surface(
+                        shape = RoundedCornerShape(28.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        tonalElevation = 6.dp
                     ) {
                         Column(
-                            verticalArrangement = Arrangement.Top,
+                            modifier = Modifier.padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Button(
@@ -141,22 +144,14 @@ fun HomeScreen(
                             ) {
                                 Text("Nuovo gruppo")
                             }
-                            HorizontalDivider(
-                                modifier = Modifier.fillMaxWidth(),
-                                thickness = 1.dp,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
+
                             Button(
                                 onClick = { homeActions.onOpenDialog(HomeDialog.JOIN_GROUP) },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text("Entra in un gruppo")
                             }
-                            HorizontalDivider(
-                                modifier = Modifier.fillMaxWidth(),
-                                thickness = 1.dp,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
+
                             Button(
                                 onClick = homeActions.onDismissDialog,
                                 modifier = Modifier.fillMaxWidth()
@@ -225,8 +220,6 @@ fun HomeScreen(
                 },
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
             Spacer(modifier = Modifier.height(16.dp))
 
             SimpleSearchBar(textFieldState,if (homeState.homePage == HomePage.CHARACTERS) homeActions.onCharactersSearch else homeActions.onGroupsSearch)
