@@ -146,7 +146,7 @@ fun GroupDetailsScreen(
                         context = context,
                         message = "Entra nel mio gruppo ${groupState.group?.name} " +
                                 "inserendo il codice ${groupState.group?.inviteCode} " +
-                                "nell'app EsameMobile", //TODO(CAMBIA NOME APP)
+                                "nell'app M.U.T.A",
                         title = "Condividi codice invito")
                 } else {
                     groupActions.onChangePage()
