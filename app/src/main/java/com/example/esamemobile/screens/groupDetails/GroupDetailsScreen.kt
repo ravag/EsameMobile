@@ -34,10 +34,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
@@ -55,6 +53,7 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -96,6 +95,13 @@ fun GroupDetailsScreen(
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         groupActions.onLoad()
+    }
+
+    LaunchedEffect(groupState.message) {
+        groupState.message?.let { msg ->
+            Toast.makeText(context,msg, Toast.LENGTH_SHORT).show()
+            groupActions.onMessageShown()
+        }
     }
 
     Scaffold(
@@ -183,32 +189,6 @@ fun GroupDetailsScreen(
                                     Text(groupState.group.name)
                                 }
                             }
-//                            Card(
-//                                modifier = Modifier
-//                                    .fillMaxWidth()
-//                                    .weight(0.5f)
-//                                    .clickable(onClick = { })
-//                            ) {
-//                                Column(
-//                                    modifier = Modifier
-//                                        .padding(16.dp)
-//                                        .fillMaxSize(),
-//                                    verticalArrangement = Arrangement.Center,
-//                                    horizontalAlignment = Alignment.CenterHorizontally
-//                                ) {
-//                                    ImageWithPlaceholder(groupState.group.imageUrl, Size.Lg)
-//
-//                                    if (groupState.isEditing) {
-//                                        OutlinedTextField(
-//                                            value = groupState.tempName,
-//                                            onValueChange = groupActions.onChangeName,
-//                                            label = {Text("Nome gruppo")}
-//                                        )
-//                                    } else {
-//                                        Text(groupState.group.name)
-//                                    }
-//                                }
-//                            }
 
                             //DM e prossima sessione questa parte adesso che abbiamo cambiato idea è da sistemare un attimo
                             Row(
@@ -230,7 +210,7 @@ fun GroupDetailsScreen(
                                 if (groupState.isOwner) {
                                     SessionDateButton(
                                         dateText = formatDate(groupState.group.nextSession) ?: "Nessuna sessione prevista",
-                                        onDateSelected = groupActions.onChageSessionDate
+                                        onDateSelected = groupActions.onChangeSessionDate
                                     )
                                 } else {
                                     Button(

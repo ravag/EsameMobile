@@ -59,7 +59,9 @@ data class LevelUpState(
 
     val gameClasses: List<GameClass>,
 
-    val isLevelUpComplete: Boolean = false
+    val isLevelUpComplete: Boolean = false,
+
+    val message: String? = null
 ) {
     fun getStatPreview(statName: String): Int {
         val baseValue = when (statName.lowercase().trim()) {
@@ -96,9 +98,10 @@ data class LevelUpActions(
     val onUpdateAbilityDescription: (String) -> Unit,
     val onSelectedClass: (String) -> Unit,
     val onSelectedSubClass: (String) -> Unit,
-    val onConfirmLevelUp: (Context, () -> Unit) -> Unit,
+    val onConfirmLevelUp: (() -> Unit) -> Unit,
     val onNextStep: () -> Unit,
-    val onBackStep: (() -> Unit) -> Unit
+    val onBackStep: (() -> Unit) -> Unit,
+    val onMessageShown: () -> Unit
 )
 
 class LevelUpViewModel(
@@ -203,7 +206,11 @@ class LevelUpViewModel(
                 val diceRoll = (1..6).random()
                 val strengthModifier = calculateModifier(char.strength)
                 val finalHpGained = maxOf(1, diceRoll + strengthModifier)
-                currentState.copy(pureDiceRoll = diceRoll, hpRolled = finalHpGained, isHpRolled = true)
+                currentState.copy(
+                    pureDiceRoll = diceRoll,
+                    hpRolled = finalHpGained,
+                    isHpRolled = true
+                )
             }
         },
 
@@ -223,7 +230,9 @@ class LevelUpViewModel(
 
         onSelectAbilityToUpgrade = { ability ->
             _state.update { currentState ->
-                val currentDesc = currentState?.character?.abilitiesList?.find { it.name == ability }?.description ?: ""
+                val currentDesc =
+                    currentState?.character?.abilitiesList?.find { it.name == ability }?.description
+                        ?: ""
 
                 currentState?.copy(
                     selectedAbilityToUpgrade = ability,
@@ -244,27 +253,27 @@ class LevelUpViewModel(
             _state.update { it?.copy(selectedSubClassId = subClassId) }
         },
 
-        onConfirmLevelUp = { context, navigateBack ->
+        onConfirmLevelUp = { navigateBack ->
             val currentState = _state.value ?: return@LevelUpActions
             val char = currentState.character ?: return@LevelUpActions
             val userId = authRepository.currentUser?.uid
 
             if (!currentState.isHpRolled) {
-                Toast.makeText(context, "Tira il dado per gli HP", Toast.LENGTH_SHORT).show()
+                newMsg("Tira il dado per gli HP")
                 return@LevelUpActions
             }
             if (currentState.selectedOption == null) {
-                Toast.makeText(context, "Seleziona una ricompensa", Toast.LENGTH_SHORT).show()
+                newMsg("Seleziona una ricompensa")
                 return@LevelUpActions
             }
 
             if (char.level == 0 && currentState.selectedClassId == null) {
-                Toast.makeText(context, "Seleziona una classe", Toast.LENGTH_SHORT).show()
+                newMsg("Seleziona una classe")
                 return@LevelUpActions
             }
 
             if (currentState.currentLevel == 6 && currentState.selectedSubClassId == null) {
-                Toast.makeText(context, "Seleziona una sotto-classe", Toast.LENGTH_SHORT).show()
+                newMsg("Seleziona una sotto-classe")
                 return@LevelUpActions
             }
 
@@ -279,7 +288,10 @@ class LevelUpViewModel(
             }
 
             if (currentState.currentLevel == 6) {
-                updatedChar = updatedChar.copy(classAbilitiesList = updatedChar.classAbilitiesList + "SUBCLASS_${currentState.selectedSubClassId}")
+                updatedChar = updatedChar.copy(
+                    classAbilitiesList = updatedChar.classAbilitiesList + "SUBCLASS_${currentState.selectedSubClassId}",
+                    chosenSubClass = _state.value?.selectedSubClassId
+                )
             }
 
             val charismaModifier = calculateModifier(char.charisma)
@@ -292,6 +304,7 @@ class LevelUpViewModel(
                         classAbilitiesList = updatedChar.classAbilitiesList + "BONUS_PE_3"
                     )
                 }
+
                 LevelUpOption.GAIN_PE_CHAR_5 -> {
                     val pe = charismaModifier + 5
                     updatedChar.copy(
@@ -299,29 +312,59 @@ class LevelUpViewModel(
                         classAbilitiesList = updatedChar.classAbilitiesList + "BONUS_PE_5"
                     )
                 }
+
                 LevelUpOption.STAT_BONUS_2 -> {
                     val currentAbilities = updatedChar.classAbilitiesList.toMutableList()
                     currentAbilities.add("BONUS_STAT_2")
 
-                    val baseUpgradedChar = when (currentState.selectedStatToUpgrade?.lowercase()?.trim()) {
-                        "forza" -> updatedChar.copy(strength = minOf(10, updatedChar.strength + 2))
-                        "agilità" -> updatedChar.copy(agility = minOf(10, updatedChar.agility + 2))
-                        "intelligenza" -> updatedChar.copy(intelligence = minOf(10, updatedChar.intelligence + 2))
-                        "carisma" -> updatedChar.copy(charisma = minOf(10, updatedChar.charisma + 2))
-                        "potere" -> updatedChar.copy(power = minOf(10, updatedChar.power + 2))
-                        else -> updatedChar
-                    }
-                        baseUpgradedChar.copy(classAbilitiesList = currentAbilities)
+                    val baseUpgradedChar =
+                        when (currentState.selectedStatToUpgrade?.lowercase()?.trim()) {
+                            "forza" -> updatedChar.copy(
+                                strength = minOf(
+                                    10,
+                                    updatedChar.strength + 2
+                                )
+                            )
+
+                            "agilità" -> updatedChar.copy(
+                                agility = minOf(
+                                    10,
+                                    updatedChar.agility + 2
+                                )
+                            )
+
+                            "intelligenza" -> updatedChar.copy(
+                                intelligence = minOf(
+                                    10,
+                                    updatedChar.intelligence + 2
+                                )
+                            )
+
+                            "carisma" -> updatedChar.copy(
+                                charisma = minOf(
+                                    10,
+                                    updatedChar.charisma + 2
+                                )
+                            )
+
+                            "potere" -> updatedChar.copy(power = minOf(10, updatedChar.power + 2))
+                            else -> updatedChar
+                        }
+                    baseUpgradedChar.copy(classAbilitiesList = currentAbilities)
                 }
+
                 LevelUpOption.UPGRADE_ABILITY -> {
                     val chosenAbilityName = currentState.selectedAbilityToUpgrade
-                    val hasEvolution = updatedChar.abilitiesList.any { it.name == chosenAbilityName }
+                    val hasEvolution =
+                        updatedChar.abilitiesList.any { it.name == chosenAbilityName }
 
                     if (hasEvolution) {
                         val updatedAbilities = updatedChar.abilitiesList.map { ability ->
                             if (ability.name == chosenAbilityName) {
-                                val newName = if (!ability.name.endsWith("+")) "${ability.name}+" else ability.name
-                                val cleanDesc = ability.description.substringBefore("\n[Potenziata]")
+                                val newName =
+                                    if (!ability.name.endsWith("+")) "${ability.name}+" else ability.name
+                                val cleanDesc =
+                                    ability.description.substringBefore("\n[Potenziata]")
 
                                 ability.copy(
                                     name = newName,
@@ -342,12 +385,14 @@ class LevelUpViewModel(
                         updatedChar.copy(classAbilitiesList = currentAbilities)
                     }
                 }
+
                 LevelUpOption.BASE_CLASS_ABILITY,
                 LevelUpOption.ADVANCED_CLASS_ABILITY -> {
                     val currentAbilities = updatedChar.classAbilitiesList.toMutableList()
                     currentState.selectedAbilityToUpgrade?.let { currentAbilities.add(it) }
                     updatedChar.copy(classAbilitiesList = currentAbilities)
                 }
+
                 LevelUpOption.NEW_CLASS_BASE_ABILITY -> {
                     val currentAbilities = updatedChar.classAbilitiesList.toMutableList()
                     currentAbilities.add("TAKEN_NEW_CLASS_BASE_ABILITIES")
@@ -362,7 +407,7 @@ class LevelUpViewModel(
                     _state.update { it?.copy(isLevelUpComplete = true, character = updatedChar) }
                     navigateBack()
                 } else {
-                    Toast.makeText(context, "Errore durante il salvataggio: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
+                    newMsg("Errore durante il salvataggio: ${result.exceptionOrNull()?.message}")
                 }
             }
         },
@@ -380,9 +425,11 @@ class LevelUpViewModel(
                             LevelUpOption.BASE_CLASS_ABILITY,
                             LevelUpOption.ADVANCED_CLASS_ABILITY,
                             LevelUpOption.NEW_CLASS_BASE_ABILITY -> LevelUpStep.EDIT_ABILITIES
+
                             else -> currentState.currentStep
                         }
                     }
+
                     else -> currentState.currentStep
                 }
                 currentState.copy(currentStep = nextStep)
@@ -398,6 +445,7 @@ class LevelUpViewModel(
                         onNavigateBack()
                         currentState
                     }
+
                     LevelUpStep.CHOOSE_PERK_TYPE -> {
                         if (currentState.character?.level == 0 || currentState.character?.level == 6) {
                             currentState.copy(currentStep = LevelUpStep.CHOOSE_CLASS)
@@ -406,12 +454,16 @@ class LevelUpViewModel(
                             currentState
                         }
                     }
+
                     LevelUpStep.EDIT_STATISTICS, LevelUpStep.EDIT_ABILITIES -> {
                         currentState.copy(currentStep = LevelUpStep.CHOOSE_PERK_TYPE)
                     }
                 }
             }
-        }
+        },
+        onMessageShown = { _state.update { it?.copy(message = null) } }
     )
+
+    private fun newMsg(msg: String) = _state.update { it?.copy(message = msg) }
 }
 

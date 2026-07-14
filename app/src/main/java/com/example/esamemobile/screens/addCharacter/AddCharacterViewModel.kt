@@ -17,12 +17,14 @@ import kotlinx.coroutines.launch
 
 data class AddCharacterState(
     val characters: List<Character> = emptyList(),
-    val filteredCharacters: List<Character> = emptyList()
+    val filteredCharacters: List<Character> = emptyList(),
+    val message: String? = null
 )
 
 data class AddCharacterActions(
     val onCharacterSearch: (String) -> Unit,
-    val onChooseCharacter: (Character) -> Unit
+    val onChooseCharacter: (Character) -> Unit,
+    val onMessageShown: () -> Unit
 )
 
 class AddCharacterViewModel(
@@ -36,9 +38,6 @@ class AddCharacterViewModel(
     val state = _state.asStateFlow()
 
     init {
-        //Se sono in questa schermata è impossibile che l'utente non sia loggato
-        val userId = authRepository.currentUser!!.uid
-
         viewModelScope.launch {
             characterRepository.getAllUserCharacters().collect() { loadedCharacters ->
                 _state.update { it.copy(characters = loadedCharacters, filteredCharacters = loadedCharacters) }
@@ -51,23 +50,33 @@ class AddCharacterViewModel(
             _state.update {
                 it.copy(filteredCharacters = if (text.isBlank()) it.characters else it.characters.filter { character ->
                     character.name.contains(text, ignoreCase = true)
-                }) } },
+                })
+            }
+        },
         onChooseCharacter = { character ->
             val id = groupId.value ?: return@AddCharacterActions
             val currentUser = authRepository.currentUser?.uid ?: return@AddCharacterActions
 
             viewModelScope.launch {
-                val result = groupRepository.insertMemberCharacter(id,currentUser,character)
+                val result = groupRepository.insertMemberCharacter(id, currentUser, character)
                 result.fold(
-                    onSuccess = { Log.i("debug","Personaggio scelto con successo") },
-                    onFailure = { exception -> Log.w("debug","Errore scelta personaggio ${exception.message}") }
+                    onSuccess = { newMsg("Il personaggio è stato selezionato") },
+                    onFailure = { exception ->
+                        newMsg("Si è verificato un errore durante la scelta del personaggio")
+                        Log.w(
+                            "debug",
+                            "Errore scelta personaggio ${exception.message}"
+                        )
+                    }
                 )
             }
-        }
+        },
+        onMessageShown = { _state.update { it.copy(message = null) } }
     )
 
     fun setId(groupId: String) {
         this.groupId.value = groupId
     }
-    
+
+    private fun newMsg(msg: String) = _state.update { it.copy(message = msg) }
 }

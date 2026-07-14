@@ -66,6 +66,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -246,7 +247,7 @@ fun StatisticStepContent(
                 IconButton(
                     onClick = {
                         focusManager.clearFocus()
-                        actions.onRollAge(context)
+                        actions.onRollAge()
                     },
                     modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer,
                         RoundedCornerShape(8.dp))
@@ -538,6 +539,13 @@ fun CharacterCreationScreen(
 ) {
     val context = LocalContext.current
 
+    LaunchedEffect(creationState.message) {
+        creationState.message?.let { msg ->
+            Toast.makeText(context,msg,Toast.LENGTH_SHORT).show()
+            creationActions.onMessageShown()
+        }
+    }
+
     Scaffold(
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
@@ -593,13 +601,13 @@ fun CharacterCreationScreen(
                             dialogNameLabel = "Nome Abilità",
                             dialogNumericLabel = "Costo in PE",
                             onAddItem = { name, desc, value ->
-                                creationActions.onAddAbility(name, desc, value, context)
+                                creationActions.onAddAbility(name, desc, value)
                             },
                             onEditItem = { id, name, desc, value ->
-                                creationActions.onEditAbility(id, name, desc, value, context)
+                                creationActions.onEditAbility(id, name, desc, value)
                             },
                             onDeleteItem = { item ->
-                                (item as? AbilityItem)?.let { creationActions.onDeleteAbility(it, context) }
+                                (item as? AbilityItem)?.let { creationActions.onDeleteAbility(it) }
                             },
                             focusManager = focusManager,
                             context = context,
@@ -623,13 +631,13 @@ fun CharacterCreationScreen(
                             dialogNameLabel = "Nome Oggetto",
                             dialogNumericLabel = "Peso",
                             onAddItem = { name, desc, value ->
-                                creationActions.onAddItem(name, desc, value, context)
+                                creationActions.onAddItem(name, desc, value)
                             },
                             onEditItem = { id, name, desc, value ->
-                                creationActions.onEditItem(id, name, desc, value, context)
+                                creationActions.onEditItem(id, name, desc, value)
                             },
                             onDeleteItem = { item ->
-                                (item as? InventoryItem)?.let { creationActions.onDeleteItem(item, context) }
+                                (item as? InventoryItem)?.let { creationActions.onDeleteItem(item) }
                             },
                             focusManager = focusManager,
                             context = context,
@@ -660,7 +668,7 @@ fun CharacterCreationScreen(
                 Button(
                     onClick = {
                         focusManager.clearFocus()
-                        creationActions.onNextStep(context) {
+                        creationActions.onNextStep() {
                             navController.popBackStack()
                         }
                     },

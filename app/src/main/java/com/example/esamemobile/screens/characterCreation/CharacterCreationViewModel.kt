@@ -57,7 +57,9 @@ data class CharacterCreationState(
     val hpBase: Int = 0,
 
     val ageMalusDescription: AgeMalus? = null,
-    val ageMalusId: Int? = null
+    val ageMalusId: Int? = null,
+
+    val message: String? = null
 ) {
     val strengthModifier: Int get() = calculateModifier(strength)
     val agilityModifier: Int get() = calculateModifier(agility)
@@ -77,7 +79,7 @@ data class CharacterCreationState(
 }
 
 data class CharacterCreationActions(
-    val onNextStep: (Context, (Character) -> Unit) -> Unit,
+    val onNextStep: ((Character) -> Unit) -> Unit,
     val onPreviousStep: (() -> Unit) -> Unit,
     val onSetAbilityDialogVisible: (Boolean) -> Unit,
     val onSetItemDialogVisible: (Boolean) -> Unit,
@@ -85,7 +87,7 @@ data class CharacterCreationActions(
 
     val onNameChange: (String) -> Unit,
     val onAgeChange: (String) -> Unit,
-    val onRollAge: (Context) -> Unit,
+    val onRollAge: () -> Unit,
     val onTogglePEMode: (Boolean) -> Unit,
     val onStatManualChange: (String, Int) -> Unit,
     val onStatPointBuy: (String, Boolean) -> Unit,
@@ -95,13 +97,15 @@ data class CharacterCreationActions(
     val onSetAvatarOptionDialogVisible: (Boolean) -> Unit,
     val onAvatarSelected: (String?) -> Unit,
 
-    val onAddAbility: (String, String, Int, Context) -> Boolean,
-    val onEditAbility: (String, String, String, Int, Context) -> Boolean,
-    val onDeleteAbility: (AbilityItem, Context) -> Unit,
+    val onAddAbility: (String, String, Int) -> Boolean,
+    val onEditAbility: (String, String, String, Int) -> Boolean,
+    val onDeleteAbility: (AbilityItem) -> Unit,
 
-    val onAddItem: (String, String, Int, Context) -> Boolean,
-    val onEditItem: (String, String, String, Int, Context) -> Boolean,
-    val onDeleteItem: (InventoryItem, Context) -> Unit,
+    val onAddItem: (String, String, Int) -> Boolean,
+    val onEditItem: (String, String, String, Int) -> Boolean,
+    val onDeleteItem: (InventoryItem) -> Unit,
+
+    val onMessageShown: () -> Unit
 )
 
 class CharacterCreationViewModel(
@@ -126,17 +130,18 @@ class CharacterCreationViewModel(
     }
 
     val actions = CharacterCreationActions(
-        onNextStep = { context, onCreationComplete ->
+        onNextStep = { onCreationComplete ->
             _state.update { currentState ->
                 when (currentState.currentStep) {
                     CreationStep.STATISTICS -> {
                         if (currentState.hpBase <= 0) {
-                            Toast.makeText(context, "Non puoi proseguire senza tirare prima per determinare i tuoi HP.", Toast.LENGTH_SHORT).show()
+                            newMsg("Non puoi proseguire senza tirare prima per determinare i tuoi HP.")
                             currentState
                         } else {
                             currentState.copy(currentStep = CreationStep.ABILITIES)
                         }
                     }
+
                     CreationStep.ABILITIES -> currentState.copy(currentStep = CreationStep.INVENTORY)
                     CreationStep.INVENTORY -> {
                         viewModelScope.launch {
@@ -146,22 +151,32 @@ class CharacterCreationViewModel(
                                 val bytes = fileRepository.readBytes(currentState.avatarUri.toUri())
 
                                 bytes?.let {
-                                    val result = imagesRepository.uploadImage(it,id,"characters")
+                                    val result = imagesRepository.uploadImage(it, id, "characters")
                                     result.fold(
                                         onSuccess = { res -> url = res },
-                                        onFailure = { exception -> Log.w("debug","Errore salvataggio supabase ${exception.message}") }
+                                        onFailure = { exception ->
+                                            newMsg("Si è verificato un errore durante il salvataggio dell'immagine")
+                                            Log.w(
+                                                "debug",
+                                                "Errore salvataggio supabase ${exception.message}"
+                                            )
+                                        }
                                     )
                                 }
                             }
-                            val newCharacter = currentState.toCharacter(id,url)
-                            val result = characterRepository.insertNewCharacter(authRepository.currentUser?.uid,newCharacter)
+                            val newCharacter = currentState.toCharacter(id, url)
+                            val result = characterRepository.insertNewCharacter(
+                                authRepository.currentUser?.uid,
+                                newCharacter
+                            )
                             result.fold(
                                 onSuccess = {
-                                    Toast.makeText(context, "Personaggio Creato!", Toast.LENGTH_SHORT).show()
+                                    newMsg("Personaggio Creato!")
                                     onCreationComplete(newCharacter)
                                 },
                                 onFailure = { exception ->
-                                    Log.w("debug","Errore ${exception.message}")
+                                    newMsg("Si è verificato un errore durante la creazione del personaggio")
+                                    Log.w("debug", "Errore ${exception.message}")
                                 }
                             )
                         }
@@ -178,6 +193,7 @@ class CharacterCreationViewModel(
                         onCancelCreation()
                         currentState
                     }
+
                     CreationStep.ABILITIES -> currentState.copy(currentStep = CreationStep.STATISTICS)
                     CreationStep.INVENTORY -> currentState.copy(currentStep = CreationStep.ABILITIES)
                 }
@@ -210,26 +226,28 @@ class CharacterCreationViewModel(
 
         onAgeChange = { newAge ->
             val malus = getMalusForAge(newAge)
-            _state.update { it.copy(
-                age = newAge,
-                ageMalusDescription = malus,
-                ageMalusId = getMalusDrawableId(malus)) }
+            _state.update {
+                it.copy(
+                    age = newAge,
+                    ageMalusDescription = malus,
+                    ageMalusId = getMalusDrawableId(malus)
+                )
+            }
         },
 
-        onRollAge = { context ->
+        onRollAge = {
             val randomAge = (1..100).random()
             val malus = getMalusForAge(randomAge.toString())
             if (randomAge > 70) {
-                Toast.makeText(
-                    context,
-                    "Età superiore a 70, TODO: Malus Casuale",
-                    Toast.LENGTH_SHORT
-                ).show()
+                newMsg("Età superiore a 70 malus età")
             }
-            _state.update { it.copy(
-                age = randomAge.toString(),
-                ageMalusDescription = malus,
-                ageMalusId = getMalusDrawableId(malus)) }
+            _state.update {
+                it.copy(
+                    age = randomAge.toString(),
+                    ageMalusDescription = malus,
+                    ageMalusId = getMalusDrawableId(malus)
+                )
+            }
         },
 
         onTogglePEMode = { enabled ->
@@ -263,7 +281,11 @@ class CharacterCreationViewModel(
                     val newState = when (statLabel) {
                         "Forza" -> currentState.copy(strength = value, baseStrength = value)
                         "Agilità" -> currentState.copy(agility = value, baseAgility = value)
-                        "Intelligenza" -> currentState.copy(intelligence = value, baseIntelligence = value)
+                        "Intelligenza" -> currentState.copy(
+                            intelligence = value,
+                            baseIntelligence = value
+                        )
+
                         "Carisma" -> currentState.copy(charisma = value, baseCharisma = value)
                         "Potere" -> currentState.copy(power = value, basePower = value)
                         else -> currentState
@@ -389,16 +411,21 @@ class CharacterCreationViewModel(
             }
         },
 
-        onAddAbility = { name, desc, cost, context ->
+        onAddAbility = { name, desc, cost ->
             var success = false
             _state.update { currentState ->
                 if (name.trim().endsWith("+")) {
-                    Toast.makeText(context, "Il nome dell'abilità non può terminare con \"+\"", Toast.LENGTH_SHORT).show()
+                    newMsg("Il nome dell'abilità non può terminare con \"+\"")
                     return@update currentState.copy(showAbilityDialog = true)
                 }
 
-                if (currentState.abilitiesList.any { it.name.equals(name.trim(), ignoreCase = true) }) {
-                    Toast.makeText(context, "Esiste già un'abilità con questo nome!", Toast.LENGTH_SHORT).show()
+                if (currentState.abilitiesList.any {
+                        it.name.equals(
+                            name.trim(),
+                            ignoreCase = true
+                        )
+                    }) {
+                    newMsg("Esiste già un'abilità con questo nome!")
                     return@update currentState.copy(showAbilityDialog = true)
                 }
 
@@ -413,23 +440,28 @@ class CharacterCreationViewModel(
                         )
                     )
                 } else {
-                    Toast.makeText(context, "PE insufficienti!", Toast.LENGTH_SHORT).show()
+                    newMsg("PE insufficienti!")
                     currentState
                 }
             }
             success
         },
 
-        onEditAbility = { id, name, desc, newCost, context ->
+        onEditAbility = { id, name, desc, newCost ->
             var success = false
             _state.update { currentState ->
                 if (name.trim().endsWith("+")) {
-                    Toast.makeText(context, "Il nome dell'abilità non può terminare con \"+\"", Toast.LENGTH_SHORT).show()
+                    newMsg("Il nome dell'abilità non può terminare con \"+\"")
                     return@update currentState.copy(showAbilityDialog = true)
                 }
 
-                if (currentState.abilitiesList.any { it.id != id && it.name.equals(name.trim(), ignoreCase = true) }) {
-                    Toast.makeText(context, "Esiste già un'abilità con questo nome!", Toast.LENGTH_SHORT).show()
+                if (currentState.abilitiesList.any {
+                        it.id != id && it.name.equals(
+                            name.trim(),
+                            ignoreCase = true
+                        )
+                    }) {
+                    newMsg("Esiste già un'abilità con questo nome!")
                     return@update currentState.copy(showAbilityDialog = true)
                 }
 
@@ -446,7 +478,7 @@ class CharacterCreationViewModel(
                             abilitiesList = updatedList
                         )
                     } else {
-                        Toast.makeText(context, "PE insufficienti!", Toast.LENGTH_SHORT).show()
+                        newMsg("PE insufficienti!")
                         currentState
                     }
                 } else currentState
@@ -454,9 +486,9 @@ class CharacterCreationViewModel(
             success
         },
 
-        onDeleteAbility = { item, context ->
+        onDeleteAbility = { item ->
             _state.update { currentState ->
-                Toast.makeText(context, "Abilità rimossa", Toast.LENGTH_SHORT).show()
+                newMsg("Abilità rimossa")
                 currentState.copy(
                     peLeft = currentState.peLeft + item.numericValue,
                     abilitiesList = currentState.abilitiesList - item
@@ -464,7 +496,7 @@ class CharacterCreationViewModel(
             }
         },
 
-        onAddItem = { name, desc, weight, context ->
+        onAddItem = { name, desc, weight ->
             val safeWeight = if (weight < 0) 0 else weight
             var success = false
 
@@ -480,15 +512,14 @@ class CharacterCreationViewModel(
                         )
                     )
                 } else {
-                    Toast.makeText(context, "Capacità di carico superata!", Toast.LENGTH_SHORT)
-                        .show()
+                    newMsg("Capacità di carico superata!")
                     currentState
                 }
             }
             success
         },
 
-        onEditItem = { id, name, desc, newWeight, context ->
+        onEditItem = { id, name, desc, newWeight ->
             val safeNewWeight = if (newWeight < 0) 0 else newWeight
             var success = false
             _state.update { currentState ->
@@ -503,11 +534,7 @@ class CharacterCreationViewModel(
                         }
                         currentState.copy(inventoryList = updatedList)
                     } else {
-                        Toast.makeText(
-                            context,
-                            "Supereresti il carico trasportabile!",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        newMsg("Supereresti il carico trasportabile!")
                         currentState
                     }
                 } else currentState
@@ -515,9 +542,9 @@ class CharacterCreationViewModel(
             success
         },
 
-        onDeleteItem = { item, context ->
+        onDeleteItem = { item ->
             _state.update { currentState ->
-                Toast.makeText(context, "Oggetto rimosso", Toast.LENGTH_SHORT).show()
+                newMsg("Oggetto rimosso")
                 currentState.copy(inventoryList = currentState.inventoryList - item)
             }
         },
@@ -531,13 +558,22 @@ class CharacterCreationViewModel(
         onModifyHpPe = { incrememnt ->
             _state.update { currentState ->
                 if (incrememnt && currentState.peLeft > 0) {
-                    currentState.copy(peSpentHP = currentState.peSpentHP + 1, peLeft = currentState.peLeft - 1)
+                    currentState.copy(
+                        peSpentHP = currentState.peSpentHP + 1,
+                        peLeft = currentState.peLeft - 1
+                    )
                 } else if (!incrememnt && currentState.peSpentHP > 0) {
-                    currentState.copy(peSpentHP = currentState.peSpentHP - 1, peLeft = currentState.peLeft + 1)
+                    currentState.copy(
+                        peSpentHP = currentState.peSpentHP - 1,
+                        peLeft = currentState.peLeft + 1
+                    )
                 } else currentState
             }
-        }
+        },
+        onMessageShown = { _state.update { it.copy(message = null) } }
     )
+
+    private fun newMsg(msg: String) = _state.update { it.copy(message = msg) }
 }
 
 fun calculateBaseDamage(power: Int): String {

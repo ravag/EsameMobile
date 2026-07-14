@@ -1,5 +1,6 @@
 package com.example.esamemobile.screens.addCharacter
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,12 +23,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,6 +51,14 @@ fun AddCharacterScreen(
     val focusManager = LocalFocusManager.current
     val textFieldState = rememberTextFieldState()
     var selectedChar by remember { mutableStateOf<Character?>(null) }
+    val context = LocalContext.current
+
+    LaunchedEffect(addCharacterState.message) {
+        addCharacterState.message?.let { msg ->
+            Toast.makeText(context,msg,Toast.LENGTH_SHORT).show()
+            addCharacterActions.onMessageShown()
+        }
+    }
 
     Scaffold(
         topBar = {
