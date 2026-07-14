@@ -32,7 +32,6 @@ data class CharacterEntity(
 
     val abilitiesList: String,
     val classAbilitiesList: String,
-    val subClassAbilitiesList: String,
     val inventoryList: String,
 
     val speed: Double,
@@ -58,7 +57,6 @@ data class CharacterEntity(
         maxHP = maxHP,
         abilitiesList = Json.decodeFromString(abilitiesList),
         classAbilitiesList = Json.decodeFromString(classAbilitiesList),
-        subClassAbilitiesList = Json.decodeFromString(subClassAbilitiesList),
         inventoryList = Json.decodeFromString(inventoryList),
         speed = speed,
         maxCapacity = maxCapacity,
