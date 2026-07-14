@@ -361,7 +361,7 @@ private fun InputDialog(
                                         icon,
                                         if (visiblePassword) "Nascondi password" else "Mostra password"
                                     )
-                                } 
+                                }
                             }
                         } else null
                     )
