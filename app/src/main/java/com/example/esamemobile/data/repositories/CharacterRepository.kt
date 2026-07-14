@@ -50,7 +50,6 @@ class CharacterRepositoryImpl(
     override suspend fun readCharacter(userId: String?,ownerId: String?, charId: String?): Result<Character?> {
         if (charId == null) return Result.failure(IllegalStateException("Nessun personaggio selezionato"))
         return try {
-            Log.i("debug","Owner: $ownerId User: $userId")
             if (ownerId == null || userId == null || userId == ownerId) {
                 Result.success(characterDAO.getFromId(charId).firstOrNull()?.toCharacter())
             } else {
