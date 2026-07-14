@@ -49,6 +49,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -109,6 +110,9 @@ fun GroupDetailsScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {Text("")},
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                ),
                 navigationIcon = {
                     IconButton({ navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack,"Indietro")
@@ -158,16 +162,20 @@ fun GroupDetailsScreen(
         when {
             groupState.isLoading -> {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize()
+                        .background(color = MaterialTheme.colorScheme.background),
                     contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
             (groupState.group == null) -> {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize()
+                        .background(color = MaterialTheme.colorScheme.background),
                     contentAlignment = Alignment.Center) {
-                    Text("Errore nel caricamento del gruppo")
+                    Text("Errore nel caricamento del gruppo",
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.bodyLarge)
                 }
             }
             else -> {
@@ -175,6 +183,7 @@ fun GroupDetailsScreen(
                     modifier = Modifier
                         .padding(innerPadding)
                         .fillMaxSize()
+                        .background(color = MaterialTheme.colorScheme.background),
                 ) {
                     when (groupState.selectedTab) {
                         GroupDetailsTab.DESCRIPTION -> {

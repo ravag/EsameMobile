@@ -3,6 +3,7 @@ package com.example.esamemobile
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -33,12 +34,18 @@ import com.example.esamemobile.utilities.navigation.SessionViewModel
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
+
+    private val pendingGroup = mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
         windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
+
+        pendingGroup.value = intent?.getStringExtra("groupId")
+
         setContent {
             val settingsVm = koinViewModel<SettingsViewModel>()
             val settingsState by settingsVm.state.collectAsStateWithLifecycle()
@@ -95,8 +102,14 @@ class MainActivity : ComponentActivity() {
                         is SessionState.Loading -> EsameMobileRoute.Loading
                     }
                 )
-                SessionEffect(navController, sessionState, sessionVm::canNavigate)
+                SessionEffect(navController, sessionState, pendingGroup,sessionVm::canNavigate)
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pendingGroup.value = intent.getStringExtra("groupId")
     }
 }

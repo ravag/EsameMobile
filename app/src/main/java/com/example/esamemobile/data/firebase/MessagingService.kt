@@ -1,7 +1,10 @@
 package com.example.esamemobile.data.firebase
 
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Intent
 import androidx.core.app.NotificationCompat
+import com.example.esamemobile.MainActivity
 import com.example.esamemobile.R
 import com.example.esamemobile.data.firebase.firestore.UserRepository
 import com.google.firebase.messaging.FirebaseMessaging
@@ -21,47 +24,50 @@ class MessagingService : FirebaseMessagingService(), KoinComponent {
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
 
-        // Se hai usato .setNotification() nel backend, arriva qui:
-        message.notification?.let {
-            showNotification(it.title, it.body)
-        }
-
-        // Se hai usato .putData() nel backend, arriva qui come mappa:
         val data = message.data
         if (data.isNotEmpty()) {
-            val docId = data["docId"]
-            val changeType = data["changeType"]
-            // gestisci la logica in base ai dati, es. refresh di una lista
+            val groupId = data["groupId"]
+            val title = data["title"]
+            val body = data["body"]
+
+            showNotification(title,body, groupId)
         }
     }
 
-    //Ho controllato, questi sono i metodi da usare, non so perchè dica sono deprecati che non lo sono
-    //Messaggio di deprecated in java
+    //onNewToken è deprecato in java, la documentazione dice di usare questo metodo, io sopprimo il warning
     @Deprecated("Deprecated in Java")
     @Suppress("DEPRECATION")
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        // il token è cambiato: va rimandato al tuo backend Java
         TokenReceiver.sendTokenToServer(token, userRepository)
     }
 
-    private fun showNotification(title: String?, body: String?) {
+    private fun showNotification(title: String?, body: String?, groupId: String?) {
         val channelId = "canale_gdr"
+
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("groupId",groupId)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            System.currentTimeMillis().toInt(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         val notification = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(title)
             .setContentText(body)
             .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
             .build()
 
         val manager = getSystemService(NotificationManager::class.java)
         manager.notify(System.currentTimeMillis().toInt(), notification)
     }
-
-
-
-
 }
 
 object TokenReceiver {
