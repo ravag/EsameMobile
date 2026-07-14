@@ -32,7 +32,8 @@ data class GroupDetailsState(
     val tempName: String = "",
     val isLoading: Boolean = true,
     val isOwner: Boolean = false,
-    val isEditing: Boolean = false
+    val isEditing: Boolean = false,
+    val message: String? = null
 )
 
 data class GroupDetailsActions(
@@ -46,7 +47,8 @@ data class GroupDetailsActions(
     val onLoad: () -> Unit,
     val onChangePage: () -> Unit,
     val toggleEdit: () -> Unit,
-    val onChageSessionDate: (Timestamp) -> Unit
+    val onChageSessionDate: (Timestamp) -> Unit,
+    val onMessageShown: () -> Unit
 )
 
 class GroupDetailsViewModel (
@@ -72,11 +74,19 @@ class GroupDetailsViewModel (
                     val result = if (_state.value.isOwner) {
                         groupRepository.deleteGroup(_state.value.group!!.id)
                     } else {
-                        groupRepository.removeGroupMember(authRepository.currentUser!!.uid,_state.value.group!!.id)
+                        groupRepository.removeGroupMember(
+                            authRepository.currentUser!!.uid,
+                            _state.value.group!!.id
+                        )
                     }
                     result.fold(
-                        onSuccess = { Log.i("debug","Eliminazione avvenuta con successo") },
-                        onFailure = { exception -> Log.w("debug","Errore nell'eliminazione ${exception.message}") }
+                        onSuccess = { Log.i("debug", "Eliminazione avvenuta con successo") },
+                        onFailure = { exception ->
+                            Log.w(
+                                "debug",
+                                "Errore nell'eliminazione ${exception.message}"
+                            )
+                        }
                     )
                 }
 
@@ -86,69 +96,90 @@ class GroupDetailsViewModel (
             onSaveChange = {
                 val current = _state.value.group ?: return@GroupDetailsActions
                 viewModelScope.launch {
-                    val updated = current.copy(description = _state.value.tempDesc, name = _state.value.tempName)
+                    val updated = current.copy(
+                        description = _state.value.tempDesc,
+                        name = _state.value.tempName
+                    )
                     _state.update { it.copy(group = updated, isEditing = false) }
                     val result = groupRepository.updateGroup(_state.value.group!!)
                     result.fold(
-                        onSuccess = { Log.i("debug","salvataggio gruppo con successo") },
-                        onFailure = { exception -> Log.w("debug","Errore nel salvataggio del gruppo ${exception.message}") }
+                        onSuccess = { Log.i("debug", "salvataggio gruppo con successo") },
+                        onFailure = { exception ->
+                            Log.w(
+                                "debug",
+                                "Errore nel salvataggio del gruppo ${exception.message}"
+                            )
+                        }
                     )
                 }
             },
-            onUpdateGroupPhoto = {uri ->
+            onUpdateGroupPhoto = { uri ->
                 val current = _state.value.group ?: return@GroupDetailsActions
-                    viewModelScope.launch {
-                        var url = ""
-                        val bytes = fileRepository.readBytes(uri.toUri())
+                viewModelScope.launch {
+                    var url = ""
+                    val bytes = fileRepository.readBytes(uri.toUri())
 
-                        bytes?.let {
-                            val result = imagesRepository.uploadImage(
-                                it,
-                                current.id,
-                                "groups"
-                            )
-                            result.fold(
-                                onSuccess = { path -> url = path },
-                                onFailure = {exception ->
-                                    Log.w("debug","Errore salvataggio supabase ${exception.message}")
-                                    return@launch
-                                }
-                            )
-                        }
-                        val result = groupRepository.updateGroupImage(
+                    bytes?.let {
+                        val result = imagesRepository.uploadImage(
+                            it,
                             current.id,
-                            url
+                            "groups"
                         )
                         result.fold(
-                            onSuccess = {
-                                val updated = current.copy(imageUrl = url)
-                                _state.update { it.copy(group = updated) }
-                                Log.i("debug","immagine forse salvata con successo")
-
-                            },
+                            onSuccess = { path -> url = path },
                             onFailure = { exception ->
-                                Log.w("debug", "Errore ${exception.message}")
+                                Log.w("debug", "Errore salvataggio supabase ${exception.message}")
+                                return@launch
                             }
                         )
+                    }
+                    val result = groupRepository.updateGroupImage(
+                        current.id,
+                        url
+                    )
+                    result.fold(
+                        onSuccess = {
+                            val updated = current.copy(imageUrl = url)
+                            _state.update { it.copy(group = updated) }
+                            Log.i("debug", "immagine forse salvata con successo")
+
+                        },
+                        onFailure = { exception ->
+                            Log.w("debug", "Errore ${exception.message}")
+                        }
+                    )
                 }
             },
             onLoad = { load() },
             onChangePage = { _state.update { it.copy(isLoading = true) } },
-            toggleEdit = { _state.update { it.copy(isEditing = !it.isEditing, tempDesc = it.group!!.description) } },
+            toggleEdit = {
+                _state.update {
+                    it.copy(
+                        isEditing = !it.isEditing,
+                        tempDesc = it.group!!.description
+                    )
+                }
+            },
             onChageSessionDate = { timestamp ->
                 val current = _state.value.group ?: return@GroupDetailsActions
                 viewModelScope.launch {
-                    Log.i("debug","ciao $timestamp")
                     val updated = current.copy(nextSession = timestamp)
-                    Log.i("debug","come butta $timestamp")
                     _state.update { it.copy(group = updated) }
-                    val result = groupRepository.insertSessionDate(_state.value.group!!.id,timestamp)
+                    val result =
+                        groupRepository.insertSessionDate(_state.value.group!!.id, timestamp)
                     result.fold(
-                        onSuccess = { Log.i("debug","data inserita con successo") },
-                        onFailure = { exception -> Log.w("debug","Errore nell'inserimento data ${exception.message}") }
+                        onSuccess = { newMsg("Nuova sessione inserita con successo") },
+                        onFailure = { exception ->
+                            newMsg("Si è verificato un errore nell'inserimento della sessione")
+                            Log.w(
+                                "debug",
+                                "Errore nell'inserimento data ${exception.message}"
+                            )
+                        }
                     )
                 }
-            }
+            },
+            onMessageShown = { _state.update { it.copy(message = null) } }
         )
 
     fun setId(groupId: String) {
@@ -193,4 +224,6 @@ class GroupDetailsViewModel (
             }
         }
     }
+
+    private fun newMsg(msg: String) = _state.update { it.copy(message = msg) }
 }

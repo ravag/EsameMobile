@@ -17,6 +17,7 @@ data class CharacterEntity(
     val level: Int,
 
     val chosenClass: String?,
+    val chosenSubClass: String?,
 
     val peAvailable: Int,
 
@@ -45,6 +46,7 @@ data class CharacterEntity(
         ageMalus = ageMalus,
         level = level,
         chosenClass = chosenClass,
+        chosenSubClass = chosenSubClass,
         peAvailable = peAvailable,
         strength = strength,
         agility = agility,

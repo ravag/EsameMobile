@@ -19,7 +19,7 @@ class CharacterSolver (private val staticRepository: StaticDataRepository) {
             },
             classAbilities = chosenClass?.let { it.baseAbilities + it.advancedAbilities }
                 ?.filter { it.id in character.classAbilitiesList } ?: emptyList(),
-            subClassAbilities = chosenSubClass?.let { it.baseAbilities }
+            subClassAbilities = chosenSubClass?.baseAbilities
                 ?.filter { it.id in character.classAbilitiesList } ?: emptyList()
         )
     }

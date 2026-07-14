@@ -52,6 +52,7 @@ data class Character(
         ageMalus = ageMalus,
         level = level,
         chosenClass = chosenClass,
+        chosenSubClass = chosenSubClass,
         peAvailable = peAvailable,
         strength = strength,
         agility = agility,
