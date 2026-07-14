@@ -32,7 +32,7 @@ fun ImageWithPlaceholder(url: String?, size: Size) {
             modifier = Modifier
                 .size(if (size == Size.Sm) 72.dp else 128.dp)
                 .background(
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     shape = RoundedCornerShape(8.dp)
                 ).clip(RoundedCornerShape(8.dp)),
             contentScale = ContentScale.Crop
@@ -53,10 +53,11 @@ fun ImageWithPlaceholder(url: String?, size: Size) {
             Icons.Outlined.Person,
             "Immagine personaggio",
             contentScale = ContentScale.Fit,
-            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary),
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.inversePrimary),
             modifier = Modifier
                 .size(if (size == Size.Sm) 72.dp else 128.dp)
-                .background(MaterialTheme.colorScheme.primary,
+                .background(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     shape = RoundedCornerShape(8.dp)
                 ).clip(RoundedCornerShape(8.dp))
             )

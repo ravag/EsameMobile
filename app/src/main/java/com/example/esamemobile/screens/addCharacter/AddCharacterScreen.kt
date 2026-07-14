@@ -105,7 +105,9 @@ fun AddCharacterScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text("SCEGLI PERSONAGGIO", fontSize = 25.sp)
+            Text("SCEGLI PERSONAGGIO",
+                color = MaterialTheme.colorScheme.onBackground,
+                style = MaterialTheme.typography.headlineMedium)
 
             Spacer(modifier = Modifier.height(16.dp))
 
