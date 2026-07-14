@@ -1,15 +1,16 @@
 //TODO: Le abilità di classe di base vanno divise da quelle avanzate e solo in quelle avanzate va messo il contatore di usi
 //TODO: Le abilità di altre classi non vengono mostrate, vengono solo mostrate le abilità della mia classe principale
-//TODO: Mettere un modo per modificare il personaggio (Nome, Età, Armatura(quindi ancher gli effetti delle armature), poteri evoluzione, oggetti)
+//TODO: Mettere un modo per modificare il personaggio (Armatura(quindi ancher gli effetti delle armature)) cardclickable che fa vedere le opzioni e le descrizioni
 //TODO: Da inserire un modo per segnare gli hp temporanei (come in dnd funzionano)
-//TODO: Devi mettere un modo per aumentare le statistiche con i PE spendibili
 
 package com.example.esamemobile.screens.characterDetails
 
+import android.util.Log
 import android.content.Context
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.esamemobile.data.ArmorTypes
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.UiCharacter
 import com.example.esamemobile.data.firebase.AuthRepository
@@ -44,6 +45,7 @@ data class CharacterDetailsState(
     val isLoading: Boolean = true,
     val showAddPowerDialog: Boolean = false,
     val showAddItemDialog: Boolean = false,
+    val showArmorDialog: Boolean = false,
     val tempName: String = "",
     val tempDesc: String = "",
     val tempValue: Int = 0,
@@ -60,6 +62,9 @@ data class CharacterDetailsActions(
 
     val onOpenAddPowerDialog: (() -> Unit)? = null,
     val onOpenAddItemDialog: (() -> Unit)? = null,
+    val onOpenArmorDialog: (() -> Unit)? = null,
+    val onCloseArmorDialog: () -> Unit = {},
+    val onChangeArmor: ((ArmorTypes) -> Unit)? = null,
     val onCloseDialogs: () -> Unit,
     val onTempDataChanged: (String, String, Int) -> Unit,
     val onConfirmAddPower: (() -> Unit)? = null,
@@ -150,6 +155,21 @@ class CharacterDetailsViewModel (
                             tempValue = 1
                         )
                     }
+                }
+            } else null,
+
+            onOpenArmorDialog = if (editable) {
+                { _state.update { it.copy(showArmorDialog = true) } }
+            } else null,
+
+            onCloseArmorDialog = {
+                _state.update { it.copy(showArmorDialog = false) }
+            },
+
+            onChangeArmor = if (editable) {
+                { newArmor ->
+                    updateCharacter { it.copy(armor = newArmor) }
+                    _state.update { it.copy(showArmorDialog = false) }
                 }
             } else null,
 
@@ -286,7 +306,10 @@ class CharacterDetailsViewModel (
                 saveCharacter(viewModelScope)
             },
 
-            onLoad = { load() },
+            onLoad = {
+                load()
+                Log.i("DEBUG", state.value.character?.subClassAbilities.toString())
+                     },
 
             onDelete = if (editable) {
                 {
