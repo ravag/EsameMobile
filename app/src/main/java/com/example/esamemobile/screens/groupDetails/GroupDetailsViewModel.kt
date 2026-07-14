@@ -103,8 +103,9 @@ class GroupDetailsViewModel (
                     _state.update { it.copy(group = updated, isEditing = false) }
                     val result = groupRepository.updateGroup(_state.value.group!!)
                     result.fold(
-                        onSuccess = { Log.i("debug", "salvataggio gruppo con successo") },
+                        onSuccess = { newMsg("Modifiche salvate") },
                         onFailure = { exception ->
+                            newMsg("Si è verificato un errore nel salvataggio delle modifiche")
                             Log.w(
                                 "debug",
                                 "Errore nel salvataggio del gruppo ${exception.message}"
@@ -116,7 +117,7 @@ class GroupDetailsViewModel (
             onUpdateGroupPhoto = { uri ->
                 val current = _state.value.group ?: return@GroupDetailsActions
                 viewModelScope.launch {
-                    var url = ""
+                    var url: String
                     val bytes = fileRepository.readBytes(uri.toUri())
 
                     bytes?.let {
@@ -126,28 +127,32 @@ class GroupDetailsViewModel (
                             "groups"
                         )
                         result.fold(
-                            onSuccess = { path -> url = path },
+                            onSuccess = { path ->
+                                url = path
+                                val result = groupRepository.updateGroupImage(
+                                    current.id,
+                                    url
+                                )
+                                result.fold(
+                                    onSuccess = {
+                                        val updated = current.copy(imageUrl = url)
+                                        _state.update { it.copy(group = updated) }
+                                        newMsg("Immagine cambiata con successo")
+                                    },
+                                    onFailure = { exception ->
+                                        newMsg("Si è verificato un errore nel salvataggio dell'immagine")
+                                        Log.w("debug", "Errore ${exception.message}")
+                                    }
+                                )
+                            },
                             onFailure = { exception ->
+                                newMsg("Si è verificato un errore nel salvataggio dell'immagine")
                                 Log.w("debug", "Errore salvataggio supabase ${exception.message}")
                                 return@launch
                             }
                         )
                     }
-                    val result = groupRepository.updateGroupImage(
-                        current.id,
-                        url
-                    )
-                    result.fold(
-                        onSuccess = {
-                            val updated = current.copy(imageUrl = url)
-                            _state.update { it.copy(group = updated) }
-                            Log.i("debug", "immagine forse salvata con successo")
 
-                        },
-                        onFailure = { exception ->
-                            Log.w("debug", "Errore ${exception.message}")
-                        }
-                    )
                 }
             },
             onLoad = { load() },
