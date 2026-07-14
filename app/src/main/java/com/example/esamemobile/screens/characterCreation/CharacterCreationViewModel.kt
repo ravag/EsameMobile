@@ -1,14 +1,12 @@
 package com.example.esamemobile.screens.characterCreation
 
-import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.esamemobile.data.ArmorTypes
 import com.example.esamemobile.data.repositories.StaticDataRepository
 import com.example.esamemobile.data.staticData.AgeMalus
-import com.example.esamemobile.utilities.DisplayableItem
+import com.example.esamemobile.utilities.composables.DisplayableItem
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.calculateModifier
 import com.example.esamemobile.data.firebase.AuthRepository

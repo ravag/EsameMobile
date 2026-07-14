@@ -3,7 +3,7 @@ package com.example.esamemobile.data.repositories
 import android.util.Log
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.room.CharacterDAO
-import com.example.esamemobile.utilities.ConnectivityChecker
+import com.example.esamemobile.utilities.connection.ConnectivityChecker
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.toObject
 import kotlinx.coroutines.flow.Flow

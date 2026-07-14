@@ -1,13 +1,11 @@
-package com.example.esamemobile.utilities
+package com.example.esamemobile.utilities.connection
 
 import android.content.Context
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
-import com.example.esamemobile.R
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import kotlinx.coroutines.launch
 
 suspend fun requestGoogleIdToken(
     context: Context,

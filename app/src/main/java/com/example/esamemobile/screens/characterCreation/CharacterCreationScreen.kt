@@ -4,7 +4,7 @@ import android.Manifest.permission
 import com.example.esamemobile.R
 import androidx.compose.ui.layout.ContentScale
 import android.widget.Toast
-import com.example.esamemobile.utilities.GenericStepContent
+import com.example.esamemobile.utilities.composables.GenericStepContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -78,7 +78,7 @@ import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.esamemobile.data.calculateModifier
-import com.example.esamemobile.utilities.GenericBasicDialog
+import com.example.esamemobile.utilities.composables.GenericBasicDialog
 import java.io.File
 
 data class EditableStat(

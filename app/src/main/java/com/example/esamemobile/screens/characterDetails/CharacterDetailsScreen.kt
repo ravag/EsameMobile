@@ -68,11 +68,11 @@ import com.example.esamemobile.EsameMobileRoute
 import com.example.esamemobile.data.staticData.ClassAbility
 import com.example.esamemobile.screens.characterCreation.AbilityItem
 import com.example.esamemobile.screens.characterCreation.InventoryItem
-import com.example.esamemobile.utilities.CharacterDetailsNavigationBar
-import com.example.esamemobile.utilities.CharacterHeader
-import com.example.esamemobile.utilities.DisplayableItem
-import com.example.esamemobile.utilities.GenericBasicDialog
-import com.example.esamemobile.utilities.GenericFormDialog
+import com.example.esamemobile.utilities.composables.CharacterDetailsNavigationBar
+import com.example.esamemobile.utilities.composables.CharacterHeader
+import com.example.esamemobile.utilities.composables.DisplayableItem
+import com.example.esamemobile.utilities.composables.GenericBasicDialog
+import com.example.esamemobile.utilities.composables.GenericFormDialog
 import kotlin.math.cos
 import kotlin.math.sin
 

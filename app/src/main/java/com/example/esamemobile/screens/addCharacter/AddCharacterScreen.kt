@@ -36,9 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.esamemobile.data.Character
-import com.example.esamemobile.utilities.CharacterItem
-import com.example.esamemobile.utilities.GenericBasicDialog
-import com.example.esamemobile.utilities.GenericList
+import com.example.esamemobile.utilities.composables.CharacterItem
+import com.example.esamemobile.utilities.composables.GenericBasicDialog
+import com.example.esamemobile.utilities.composables.GenericList
 import com.example.esamemobile.utilities.composables.SimpleSearchBar
 
 @OptIn(ExperimentalMaterial3Api::class)

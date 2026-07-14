@@ -28,6 +28,9 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.esamemobile.screens.settings.SettingsViewModel
 import com.example.esamemobile.screens.settings.ThemeValues
+import com.example.esamemobile.utilities.navigation.SessionEffect
+import com.example.esamemobile.utilities.navigation.SessionState
+import com.example.esamemobile.utilities.navigation.SessionViewModel
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
@@ -93,7 +96,7 @@ class MainActivity : ComponentActivity() {
                         is SessionState.Loading -> EsameMobileRoute.Loading
                     }
                 )
-                SessionEffect(navController,sessionState,sessionVm::canNavigate)
+                SessionEffect(navController, sessionState, sessionVm::canNavigate)
             }
         }
     }

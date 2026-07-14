@@ -28,7 +28,8 @@ import com.example.esamemobile.screens.groupDetails.GroupDetailsViewModel
 import com.example.esamemobile.screens.home.HomeViewModel
 import com.example.esamemobile.screens.login.LoginViewModel
 import com.example.esamemobile.screens.settings.SettingsViewModel
-import com.example.esamemobile.utilities.ConnectivityChecker
+import com.example.esamemobile.utilities.connection.ConnectivityChecker
+import com.example.esamemobile.utilities.navigation.SessionViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import io.github.jan.supabase.SupabaseClient
@@ -79,7 +80,7 @@ val appModule = module {
 
     viewModel { LoginViewModel(get(),get(),get()) }
     viewModel { SettingsViewModel(get(),get(),get(),get(),get(), get()) }
-    viewModel { SessionViewModel(get(),get(),get()) }
+    viewModel { SessionViewModel(get(), get(), get()) }
     viewModel { HomeViewModel(get(),get(), get(), get()) }
     viewModel { CharacterDetailsViewModel(get(),get(),get(),get(),get(),get()) }
     viewModel { CharacterCreationViewModel(get(),get(),get(),get(),get()) }

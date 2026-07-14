@@ -1,4 +1,4 @@
-package com.example.esamemobile.utilities
+package com.example.esamemobile.utilities.composables
 
 import android.content.Context
 import android.widget.Toast

@@ -2,8 +2,6 @@ package com.example.esamemobile.screens.groupDetails
 
 import android.content.ClipData
 import android.content.Context
-import android.content.Intent
-import android.provider.CalendarContract
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -74,7 +72,7 @@ import androidx.navigation.NavHostController
 import com.example.esamemobile.EsameMobileRoute
 import com.example.esamemobile.R
 import com.example.esamemobile.data.Member
-import com.example.esamemobile.utilities.NavigationBottomBarWithFAB
+import com.example.esamemobile.utilities.composables.NavigationBottomBarWithFAB
 import com.example.esamemobile.utilities.composables.ChangeImageCard
 import com.example.esamemobile.utilities.composables.ImageWithPlaceholder
 import com.example.esamemobile.utilities.composables.Size

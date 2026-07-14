@@ -58,11 +58,11 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.example.esamemobile.R
 import com.example.esamemobile.data.firebase.AuthProviderType
-import com.example.esamemobile.utilities.GenericBasicDialog
+import com.example.esamemobile.utilities.composables.GenericBasicDialog
 import com.example.esamemobile.utilities.composables.ChangeImageCard
 import com.example.esamemobile.utilities.composables.ImageWithPlaceholder
 import com.example.esamemobile.utilities.composables.Size
-import com.example.esamemobile.utilities.requestGoogleIdToken
+import com.example.esamemobile.utilities.connection.requestGoogleIdToken
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -1,9 +1,8 @@
-package com.example.esamemobile.utilities
+package com.example.esamemobile.utilities.connection
 
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-
 
 class ConnectivityChecker (private val context: Context) {
     fun isOnline(): Boolean {

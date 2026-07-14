@@ -21,10 +21,8 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.AccountBox
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,7 +43,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.esamemobile.utilities.NavigationBottomBarWithFAB
+import com.example.esamemobile.utilities.composables.NavigationBottomBarWithFAB
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.window.Dialog
@@ -53,10 +51,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavHostController
 import com.example.esamemobile.EsameMobileRoute
-import com.example.esamemobile.utilities.CharacterItem
-import com.example.esamemobile.utilities.GenericBasicDialog
-import com.example.esamemobile.utilities.GenericList
-import com.example.esamemobile.utilities.GroupItem
+import com.example.esamemobile.utilities.composables.CharacterItem
+import com.example.esamemobile.utilities.composables.GenericBasicDialog
+import com.example.esamemobile.utilities.composables.GenericList
+import com.example.esamemobile.utilities.composables.GroupItem
 import com.example.esamemobile.utilities.composables.SimpleSearchBar
 
 @OptIn(ExperimentalMaterial3Api::class)

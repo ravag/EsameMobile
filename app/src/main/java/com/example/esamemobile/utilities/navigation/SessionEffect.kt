@@ -1,12 +1,9 @@
-package com.example.esamemobile
+package com.example.esamemobile.utilities.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
+import com.example.esamemobile.EsameMobileRoute
 
 //Metodo migliore per tenere traccia se un utente è loggato oppure no
 @Composable

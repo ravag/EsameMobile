@@ -1,4 +1,4 @@
-package com.example.esamemobile
+package com.example.esamemobile.utilities.navigation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
