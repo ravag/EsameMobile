@@ -59,7 +59,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.R
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavHostController
@@ -71,6 +70,7 @@ import com.example.esamemobile.utilities.CharacterDetailsNavigationBar
 import com.example.esamemobile.utilities.CharacterHeader
 import com.example.esamemobile.utilities.DisplayableItem
 import com.example.esamemobile.utilities.GenericBasicDialog
+import com.example.esamemobile.utilities.GenericFormDialog
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -146,6 +146,29 @@ fun CharacterDetailsScreen(
             )
         }
 
+        val isAddingPower = detailsState.showAddPowerDialog
+        val isAddingItem = detailsState.showAddItemDialog
+
+        if (isAddingPower || isAddingItem) {
+            GenericFormDialog(
+                show = true,
+                title = if (isAddingPower) "Aggiungi Nuovo Potere Evoluzione" else "Aggiungi Nuovo Oggetto",
+                valueLabel = if (isAddingPower) "Costo in PE" else "Peso Oggetto",
+                tempName = detailsState.tempName,
+                tempDesc = detailsState.tempDesc,
+                tempValue = detailsState.tempValue,
+                onTempDataChanged = detailsActions.onTempDataChanged,
+                onDismiss = detailsActions.onCloseDialogs,
+                onConfirm = {
+                    if (isAddingPower) {
+                        detailsActions.onConfirmAddPower?.invoke(context)
+                    } else {
+                        detailsActions.onConfirmAddItem?.invoke(context)
+                    }
+                }
+            )
+        }
+
 
         when {
             detailsState.isLoading -> {
@@ -185,6 +208,17 @@ fun CharacterDetailsScreen(
                             } }
                         )
 
+                    if (detailsState.character.character.level >= 11) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Livello massimo raggiunto!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
+
                     Spacer(Modifier.height(8.dp))
 
                     when (detailsState.selectedTab) {
@@ -209,10 +243,11 @@ fun CharacterDetailsScreen(
                                 EvolutionPowersSection(
                                     abilities = detailsState.character.character.abilitiesList,
                                     modifier = Modifier.weight(1f),
-                                    onAddPower = detailsActions.onAddPower?.let { { detailsActions.onAddPower(context) } }
+                                    onAddPower = detailsActions.onOpenAddPowerDialog
                                 )
                                 AbilitiesSection(
-                                    abilities = detailsState.character.classAbilities,
+                                    classAbilities = detailsState.character.classAbilities,
+                                    subClassAbilities = detailsState.character.subClassAbilities,
                                     usageCurrent = detailsState.abilityUsageCurrent,
                                     usageMax = detailsState.abilityUsageMax,
                                     modifier = Modifier.weight(1f),
@@ -227,7 +262,7 @@ fun CharacterDetailsScreen(
                                 items = detailsState.character.character.inventoryList,
                                 capacityCurrent = detailsState.character.character.inventoryList.sumOf { it.numericValue }, // Se numeric value è il peso
                                 capacityMax = detailsState.character.character.maxCapacity,
-                                onAddItem = detailsActions.onAddItem?.let { { detailsActions.onAddItem(context) } },
+                                onAddItem = detailsActions.onOpenAddItemDialog,
                                 onUseItem = detailsActions.onUseItem
                             )
                         }
@@ -287,11 +322,12 @@ private fun CountRow(
             title,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
+            maxLines = 1
         )
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             onDecrease?.let {
-                IconButton(onClick = onDecrease, modifier = Modifier.weight(0.1f)) {
+                IconButton(onClick = onDecrease) {
                     Icon(
                         Icons.Default.Remove,
                         contentDescription = "togli un uso",
@@ -304,11 +340,13 @@ private fun CountRow(
                 "$current/$max",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(horizontal = 8.dp)
+                modifier = Modifier.padding(horizontal = 8.dp),
+                maxLines = 1,
+                softWrap = false
             )
 
             onIncrease?.let {
-                IconButton(onClick = onIncrease, modifier = Modifier.weight(0.1f)) {
+                IconButton(onClick = onIncrease) {
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "aggiungi un uso",
@@ -384,28 +422,79 @@ private fun EvolutionPowersSection(
 
 @Composable
 private fun AbilitiesSection(
-    abilities: List<ClassAbility>,
+    classAbilities: List<ClassAbility>,
+    subClassAbilities: List<ClassAbility>,
     usageCurrent: Int,
     usageMax: Int,
     modifier: Modifier,
     onDecreaseUsage: (() -> Unit)?,
     onIncreaseUsage: (() -> Unit)?
 ) {
+    var selectedItem by remember { mutableStateOf<ClassAbility?>(null) }
+
     Column(modifier = modifier) {
         CountRow(
-            title = "ABILITA'",
+            title = "ABILITÀ",
             current = usageCurrent,
             max = usageMax,
             onDecrease = onDecreaseUsage,
             onIncrease = onIncreaseUsage
         )
-        Spacer(Modifier.height(4.dp))
-        ListItems(
-            elements = abilities.map {
-                AbilityItem(
-                    name = it.name,
-                    description = it.description,
-                    numericValue = 0) }, Modifier.fillMaxWidth().weight(1f))
+        Spacer(Modifier.height(8.dp))
+
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            contentPadding = PaddingValues(vertical = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (classAbilities.isNotEmpty()) {
+                item {
+                    Text(
+                        "Abilità di Classe Base",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+                items(classAbilities) { ability ->
+                    GenericListElement(
+                        item = AbilityItem(name = ability.name, description = ability.description, numericValue = 0),
+                        onClick = { selectedItem = ability },
+                        isHighlighted = false
+                    )
+                }
+            }
+
+            if (subClassAbilities.isNotEmpty()) {
+                item {
+                    Text(
+                        "Abilità di Sotto-Classe Base",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+                items(subClassAbilities) { ability ->
+                    GenericListElement(
+                        item = AbilityItem(name = ability.name, description = ability.description, numericValue = 0),
+                        onClick = { selectedItem = ability },
+                        isHighlighted = false
+                    )
+                }
+            }
+        }
+    }
+
+    selectedItem?.let { ability ->
+        GenericBasicDialog(
+            show = true,
+            title = ability.name,
+            description = ability.description,
+            onConfirm = { selectedItem = null },
+            onConfirmText = "Chiudi"
+        )
     }
 }
 

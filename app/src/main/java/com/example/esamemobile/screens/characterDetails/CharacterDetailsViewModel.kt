@@ -1,10 +1,8 @@
-//TODO: Manca il funzionamento del tasto aggiungi abilità
-//TODO: Bisonga mostrare quanti PE disponibili si hanno in caso si volessero aggiungere abilità e poteri o aumentare le stats e quindi mettere anche il modo di modificare le stats, Tutto questo si potrebbe fare richiamando il charactercreationscreen dandogli in pasto un vecchio personaggio così da avere le sue info e poterlo modificare quando si vuole
 //TODO: Le abilità di classe di base vanno divise da quelle avanzate e solo in quelle avanzate va messo il contatore di usi
-//TODO: Le abilità di altre classi non vengono mostrate oppure più di 3 non ne vengono mostrate
+//TODO: Le abilità di altre classi non vengono mostrate, vengono solo mostrate le abilità della mia classe principale
 //TODO: Mettere un modo per modificare il personaggio (Nome, Età, Armatura(quindi ancher gli effetti delle armature), poteri evoluzione, oggetti)
 //TODO: Da inserire un modo per segnare gli hp temporanei (come in dnd funzionano)
-//TODO: Gli hp current/max ogni tanto vanno a capo e non va bene
+//TODO: Devi mettere un modo per aumentare le statistiche con i PE spendibili
 
 package com.example.esamemobile.screens.characterDetails
 
@@ -19,6 +17,7 @@ import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.repositories.CharacterRepository
 import com.example.esamemobile.data.repositories.CharacterSolver
 import com.example.esamemobile.data.repositories.StaticDataRepository
+import com.example.esamemobile.screens.characterCreation.AbilityItem
 import com.example.esamemobile.screens.characterCreation.InventoryItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +28,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.contracts.contract
+import kotlin.math.cos
 
 enum class CharacterDetailsTab {
     STATS,POWERS,INVENTORY
@@ -41,23 +42,34 @@ data class CharacterDetailsState(
     val abilityUsageMax: Int = 2,
     val malusDrawableId: Int? = null,
     val ageMalusDialog: Boolean = false,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val showAddPowerDialog: Boolean = false,
+    val showAddItemDialog: Boolean = false,
+    val tempName: String = "",
+    val tempDesc: String = "",
+    val tempValue: Int = 0
 )
 
 data class CharacterDetailsActions(
     val onTabSelected: (Int) -> Unit,
-    val onLevelUp: (() -> Unit)?,
+    val onLevelUp: (() -> Unit)? = null,
     val onMalusButton: () -> Unit,
-    val onDecreaseHp: (() -> Unit)?,
-    val onIncreaseHp: (() -> Unit)?,
-    val onAddPower: ((Context) -> Unit)?,
-    val onDecreaseUsage: (() -> Unit)?,
-    val onIncreaseUsage: (() -> Unit)?,
-    val onAddItem: ((Context) -> Unit)?,
-    val onUseItem: ((InventoryItem) -> Unit)?,
+    val onDecreaseHp: (() -> Unit)? = null,
+    val onIncreaseHp: (() -> Unit)? = null,
+
+    val onOpenAddPowerDialog: (() -> Unit)? = null,
+    val onOpenAddItemDialog: (() -> Unit)? = null,
+    val onCloseDialogs: () -> Unit,
+    val onTempDataChanged: (String, String, Int) -> Unit,
+    val onConfirmAddPower: ((Context) -> Unit)? = null,
+    val onConfirmAddItem: ((Context) -> Unit)? = null,
+
+    val onDecreaseUsage: (() -> Unit)? = null,
+    val onIncreaseUsage: (() -> Unit)? = null,
+    val onUseItem: ((InventoryItem) -> Unit)? = null,
     val onScreenExit: () -> Unit,
     val onLoad: () -> Unit,
-    val onDelete: (() -> Unit)?
+    val onDelete: (() -> Unit)? = null
 )
 
 class CharacterDetailsViewModel (
@@ -84,45 +96,133 @@ class CharacterDetailsViewModel (
 
     val actions: CharacterDetailsActions
         get() = CharacterDetailsActions(
-            onTabSelected = { index -> _state.update { it.copy(selectedTab = CharacterDetailsTab.entries[index]) } },
-            onLevelUp =  if (editable) { {
+            onTabSelected = { index ->
+                _state.update { it.copy(selectedTab = CharacterDetailsTab.entries[index]) }
+                            },
+
+            onLevelUp =  if (editable && (_state.value.character?.character?.level ?: 0) < 11) { {
                 saveCharacter(viewModelScope)
                 _state.update { it.copy(isLoading = true) }
             } } else null,
+
             onMalusButton = { _state.update { it.copy(ageMalusDialog = !_state.value.ageMalusDialog) } },
+
             onDecreaseHp = if (editable) { {
                 updateCharacter { it.copy(currentHP = (it.currentHP - 1).coerceAtLeast(0)) }
             } } else null,
+
             onIncreaseHp = if (editable) { {
                 updateCharacter { it.copy(currentHP = (it.currentHP + 1).coerceAtMost(it.maxHP)) }
             } } else null,
-            onAddPower = if (editable) { { context ->
-                hasChanged = true
-                Toast.makeText(context, "aggiungi potere", Toast.LENGTH_SHORT).show() }
-            } else null,
+
+            onOpenAddPowerDialog = if (editable) { {
+                _state.update { it.copy(showAddPowerDialog = true, tempName = "", tempDesc = "", tempValue = 1) }
+            } } else null,
+
+            onOpenAddItemDialog = if (editable) { {
+                _state.update { it.copy(showAddItemDialog = true, tempName = "", tempDesc = "", tempValue = 1) }
+            } } else null,
+
+            onCloseDialogs = {
+                _state.update { it.copy(showAddPowerDialog = false, showAddItemDialog = false, tempName = "", tempDesc = "", tempValue = 0) }
+            },
+
+            onTempDataChanged = { name, desc, value ->
+                _state.update { it.copy(tempName = name, tempDesc = desc, tempValue = value) }
+            },
+
+            onConfirmAddPower = if (editable) { { context ->
+                val name = _state.value.tempName
+                val desc = _state.value.tempDesc
+                val value = _state.value.tempValue
+
+                val currentCharacter = _state.value.character?.character
+
+                if (currentCharacter != null && name.isNotBlank()) {
+
+                    val endsWithPlus = name.trim().endsWith("+")
+                    val alreadyExists = currentCharacter.abilitiesList.any {
+                        it.name.equals(name.trim(), ignoreCase = true)
+                    }
+                    val costTooHigh = value > currentCharacter.peAvailable
+
+                    if (!endsWithPlus && !alreadyExists && !costTooHigh && value >= 0) {
+                        updateCharacter { char ->
+                            val newPower = AbilityItem(name = name.trim(), description = desc, numericValue = value)
+                            char.copy(
+                                abilitiesList = char.abilitiesList + newPower,
+                                peAvailable = currentCharacter.peAvailable - value
+                            )
+                        }
+                        _state.update { it.copy(showAddPowerDialog = false) }
+                    } else {
+                        if (endsWithPlus) {
+                            Toast.makeText(context, "Il nome dell'abilità non può terminare con il carattere \"+\"", Toast.LENGTH_SHORT).show()
+                        }
+                        if (alreadyExists) {
+                            Toast.makeText(context, "Esiste già un'abilità con questo nome", Toast.LENGTH_SHORT).show()
+                        }
+                        if (costTooHigh) {
+                            Toast.makeText(context, "Non possiedi abbastanza PE", Toast.LENGTH_SHORT).show()
+                        }
+                        if (name.isBlank()) {
+                            Toast.makeText(context, "Devi dare un nome al nuovo potere!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            } } else null,
+
+            onConfirmAddItem = if (editable) { { context ->
+                val name = _state.value.tempName
+                val desc = _state.value.tempDesc
+                val weight = _state.value.tempValue
+
+                if (name.isNotBlank()) {
+                    var spaceAvailable = true
+                    updateCharacter { currentCharacter ->
+                        val newItem = InventoryItem(name = name, description = desc, numericValue = weight)
+                        val totalWeight = currentCharacter.inventoryList.sumOf { it.numericValue }
+
+                        if (totalWeight + weight <= currentCharacter.maxCapacity) {
+                            currentCharacter.copy(inventoryList = currentCharacter.inventoryList + newItem)
+                        } else {
+                            spaceAvailable = false
+                            currentCharacter
+                        }
+                    }
+
+                    if (spaceAvailable) {
+                        _state.update { it.copy(showAddItemDialog = false) }
+                    } else {
+                        Toast.makeText(context, "Capacità di carico superata!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } } else null,
+
             onDecreaseUsage = if (editable) {
                 {
                     hasChanged = true
                     _state.update { it.copy(abilityUsageCurrent = (it.abilityUsageCurrent-1).coerceAtLeast(0)) }
                 }
             } else null,
+
             onIncreaseUsage = if (editable) { {
                 hasChanged = true
                 _state.update {
                     it.copy(abilityUsageCurrent = (it.abilityUsageCurrent+1).coerceAtMost(it.abilityUsageMax)) }
-                }
-            } else null,
-            onAddItem = if (editable) { {context ->
-                hasChanged = true
-                Toast.makeText(context, "aggiungi oggetto", Toast.LENGTH_SHORT).show() }
-            } else null,
+                } }else null,
+
+
             onUseItem = if (editable) { { item ->
                 updateCharacter { it.copy(inventoryList = it.inventoryList.filter { obj -> obj != item }) }
             } } else null,
+
             onScreenExit = {
                 saveCharacter(viewModelScope)
             },
+
             onLoad = { load() },
+
             onDelete = if (editable) { {
                 val userId = ownerId.value ?: return@CharacterDetailsActions
 

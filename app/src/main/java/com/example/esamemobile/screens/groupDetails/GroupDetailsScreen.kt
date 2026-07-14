@@ -62,14 +62,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavHostController
 import com.example.esamemobile.EsameMobileRoute
+import com.example.esamemobile.R
 import com.example.esamemobile.data.Member
 import com.example.esamemobile.utilities.NavigationBottomBarWithFAB
 import com.example.esamemobile.utilities.composables.ChangeImageCard
@@ -123,7 +126,7 @@ fun GroupDetailsScreen(
                 firstOptionText = "Descrizione",
                 firstOptionImage = Icons.Default.Book,
                 secondOptionText = "Partecipanti",
-                secondOptionImage = Icons.Outlined.Person,
+                secondOptionImage = ImageVector.vectorResource(id = R.drawable.ic_groups),
                 selectedIndex = groupState.selectedTab.ordinal,
                 onTabSelected = { index ->  groupActions.onSelectTab(index) }
             ) {

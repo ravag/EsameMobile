@@ -21,7 +21,7 @@ enum class HomePage {
 }
 
 enum class HomeDialog {
-    CHOICE,NEW_GROUP,JOIN_GROUP
+    CHOICE,NEW_GROUP,JOIN_GROUP,OFFLINE
 }
 
 data class HomeState(
@@ -30,7 +30,8 @@ data class HomeState(
     val groups: List<Group> = emptyList(),
     val filteredCharacters: List<Character> = emptyList(),
     val filteredGroups: List<Group> = emptyList(),
-    val currentDialog: HomeDialog? = null
+    val currentDialog: HomeDialog? = null,
+    val isLoggedIn: Boolean = false
     )
 
 data class HomeActions(
@@ -133,7 +134,10 @@ class HomeViewModel(
     private fun loadCharacters() {
         viewModelScope.launch {
             characterRepository.getAllUserCharacters().collect() { loadedCharacters ->
-                _state.update { it.copy(characters = loadedCharacters, filteredCharacters = loadedCharacters) }
+                _state.update { it.copy(
+                    characters = loadedCharacters,
+                    filteredCharacters = loadedCharacters,
+                    isLoggedIn = authRepository.currentUser != null) }
             }
         }
     }

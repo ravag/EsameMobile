@@ -23,6 +23,7 @@ data class Character(
     val level: Int = 0,
 
     val chosenClass: String? = null,
+    val chosenSubClass: String? = null,
 
     val peAvailable: Int = 0,
 
