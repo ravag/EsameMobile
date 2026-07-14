@@ -7,8 +7,6 @@
 package com.example.esamemobile.screens.characterDetails
 
 import android.content.Context
-import android.util.Log
-import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -31,8 +29,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.contracts.contract
-import kotlin.math.cos
 
 enum class CharacterDetailsTab {
     STATS,POWERS,INVENTORY
@@ -51,7 +47,8 @@ data class CharacterDetailsState(
     val tempName: String = "",
     val tempDesc: String = "",
     val tempValue: Int = 0,
-    val isOwner: Boolean = false
+    val isOwner: Boolean = false,
+    val message: String? = null
 )
 
 data class CharacterDetailsActions(
@@ -65,8 +62,8 @@ data class CharacterDetailsActions(
     val onOpenAddItemDialog: (() -> Unit)? = null,
     val onCloseDialogs: () -> Unit,
     val onTempDataChanged: (String, String, Int) -> Unit,
-    val onConfirmAddPower: ((Context) -> Unit)? = null,
-    val onConfirmAddItem: ((Context) -> Unit)? = null,
+    val onConfirmAddPower: (() -> Unit)? = null,
+    val onConfirmAddItem: (() -> Unit)? = null,
 
     val onDecreaseUsage: (() -> Unit)? = null,
     val onIncreaseUsage: (() -> Unit)? = null,
@@ -75,7 +72,8 @@ data class CharacterDetailsActions(
     val onLoad: () -> Unit,
     val onDelete: (() -> Unit)? = null,
 
-    val onChangeImage: (String) -> Unit
+    val onChangeImage: (String) -> Unit,
+    val onMessageShown: () -> Unit
 )
 
 class CharacterDetailsViewModel (
@@ -172,7 +170,7 @@ class CharacterDetailsViewModel (
             },
 
             onConfirmAddPower = if (editable) {
-                { context ->
+                {
                     val name = _state.value.tempName
                     val desc = _state.value.tempDesc
                     val value = _state.value.tempValue
@@ -202,40 +200,25 @@ class CharacterDetailsViewModel (
                             _state.update { it.copy(showAddPowerDialog = false) }
                         } else {
                             if (endsWithPlus) {
-                                Toast.makeText(
-                                    context,
-                                    "Il nome dell'abilità non può terminare con il carattere \"+\"",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                newMsg("Il nome dell'abilità non può terminare con il carattere \"+\"")
                             }
                             if (alreadyExists) {
-                                Toast.makeText(
-                                    context,
-                                    "Esiste già un'abilità con questo nome",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                newMsg("Esiste già un'abilità con questo nome")
                             }
                             if (costTooHigh) {
-                                Toast.makeText(
-                                    context,
-                                    "Non possiedi abbastanza PE",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            if (name.isBlank()) {
-                                Toast.makeText(
-                                    context,
-                                    "Devi dare un nome al nuovo potere!",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                newMsg("Non possiedi abbastanza PE")
                             }
                         }
+                    } else if (name.isBlank()) {
+                        newMsg("Devi dare un nome al nuovo potere!")
+                    } else {
+                        newMsg("E' capitato un errore imprevisto")
                     }
                 }
             } else null,
 
             onConfirmAddItem = if (editable) {
-                { context ->
+                {
                     val name = _state.value.tempName
                     val desc = _state.value.tempDesc
                     val weight = _state.value.tempValue
@@ -262,12 +245,10 @@ class CharacterDetailsViewModel (
                         if (spaceAvailable) {
                             _state.update { it.copy(showAddItemDialog = false) }
                         } else {
-                            Toast.makeText(
-                                context,
-                                "Capacità di carico superata!",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            newMsg("Capacità di carico superata!")
                         }
+                    } else {
+                        newMsg("Dai un nome all'oggetto")
                     }
                 }
             } else null,
@@ -318,20 +299,15 @@ class CharacterDetailsViewModel (
                         )
                         result.fold(
                             onSuccess = {
-                                Log.i("debug", "Personaggio eliminato con successo")
+                                newMsg("Personaggio eliminato")
                                 hasChanged = false
                             },
-                            onFailure = { exception ->
-                                Log.w(
-                                    "debug",
-                                    "Errore eliminazione ${exception.message}"
-                                )
-                            }
+                            onFailure = { newMsg("Errore nell'eliminazione del personaggio") }
                         )
                     }
                 }
             } else null,
-            onChangeImage = {  uri ->
+            onChangeImage = { uri ->
                 if (authRepository.currentUser != null) {
                     viewModelScope.launch {
                         var url = ""
@@ -345,17 +321,14 @@ class CharacterDetailsViewModel (
                             )
                             result.fold(
                                 onSuccess = { path -> url = path },
-                                onFailure = { exception ->
-                                    Log.w(
-                                        "debug",
-                                        "Errore salvataggio supabase ${exception.message}"
-                                    )
-                                }
+                                onFailure = { newMsg("Errore nel salvataggio dell'immagine") }
                             )
                         }
                         updateCharacter { it.copy(imageUrl = url) }
                     }
-                } }
+                }
+            },
+            onMessageShown = { _state.update { it.copy(message = null) } }
         )
 
     private fun load() {
@@ -365,12 +338,9 @@ class CharacterDetailsViewModel (
 
                 val currentUserId = authRepository.currentUser?.uid
                 val result = characterRepository.readCharacter(currentUserId,ownerId.value,id)
-                Log.i("debug","result: $result")
                 result.fold(
                     onSuccess = { char ->
-                        Log.i("debug", char.toString())
                         val character = char?.let { characterSolver.solve(it) }
-                        Log.i("debug","character: ${character.toString()} id: $id")
                         _state.update { it.copy(
                             character = character,
                             isLoading = false,
@@ -380,8 +350,8 @@ class CharacterDetailsViewModel (
                         )
                         }
                     },
-                    onFailure = { exception ->
-                        Log.w("debug","Errorazzo ${exception.message}")
+                    onFailure = {
+                        newMsg("Errore nel caricamento del personaggio")
                         _state.update { it.copy(isLoading = false) }
                     }
                 )
@@ -404,6 +374,10 @@ class CharacterDetailsViewModel (
         if (hasChanged) {
             scope.launch { characterRepository.updateCharacter(userId,char) }
         }
+    }
+
+    private fun newMsg(msg: String) {
+        _state.update { it.copy(message = msg) }
     }
 
     //Per salvataggi in casi di crash o di tornare indietro tramite freccia del telefono e non quella della topBar

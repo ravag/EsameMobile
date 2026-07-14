@@ -1,5 +1,6 @@
 package com.example.esamemobile.screens.characterDetails
 
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,8 +24,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -39,6 +38,7 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,7 +52,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -87,6 +86,13 @@ fun CharacterDetailsScreen(
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         detailsActions.onLoad()
+    }
+
+    LaunchedEffect(detailsState.message) {
+        detailsState.message?.let { msg ->
+            Toast.makeText(context,msg, Toast.LENGTH_SHORT).show()
+            detailsActions.onMessageShown()
+        }
     }
 
 
@@ -161,9 +167,9 @@ fun CharacterDetailsScreen(
                 onDismiss = detailsActions.onCloseDialogs,
                 onConfirm = {
                     if (isAddingPower) {
-                        detailsActions.onConfirmAddPower?.invoke(context)
+                        detailsActions.onConfirmAddPower?.invoke()
                     } else {
-                        detailsActions.onConfirmAddItem?.invoke(context)
+                        detailsActions.onConfirmAddItem?.invoke()
                     }
                 }
             )
