@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -157,39 +159,31 @@ fun SettingsScreen(
             )
         }
 
-        Column(
-            modifier = Modifier.padding(innerPadding).fillMaxSize()
-        ) {
-            //Immagine e username
-            ChangeImageCard(
-                context = context,
-                enabled = settingsState.isLoggedIn,
-                modifier = Modifier.weight(0.2f),
-                useUri = settingsActions.onAvatarSelected
+        if (settingsState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center
             ) {
-                ImageWithPlaceholder(settingsState.imageUrl,Size.Lg)
-                Text(settingsState.username)
+                CircularProgressIndicator()
             }
-
-            if (settingsState.isLoggedIn) {
-                Row(
-                    modifier = Modifier
-                        .border(
-                            width = 1.dp,
-                            color = Color.Magenta
-                        )
-                        .weight(0.1f)
-                        .fillMaxWidth()
-                        .clickable(onClick = {
-                            settingsActions.onClickChangeName()
-                            Log.i("debug","premuto cambio nome")
-                        })
+        } else {
+            Column(
+                modifier = Modifier.padding(innerPadding).fillMaxSize()
+            ) {
+                //Immagine e username
+                ChangeImageCard(
+                    context = context,
+                    enabled = settingsState.isLoggedIn,
+                    modifier = Modifier.weight(0.2f),
+                    useUri = settingsActions.onAvatarSelected
                 ) {
-                    Text("Cambia nome utente")
-                    Spacer(Modifier.width(15.dp))
-                    Icon(Icons.Filled.KeyboardDoubleArrowRight,"avanti?")
+                    ImageWithPlaceholder(settingsState.imageUrl,Size.Lg)
+                    Text(settingsState.username)
                 }
-                if (settingsState.providerType == AuthProviderType.PASSWORD) {
+
+                if (settingsState.isLoggedIn) {
                     Row(
                         modifier = Modifier
                             .border(
@@ -199,83 +193,102 @@ fun SettingsScreen(
                             .weight(0.1f)
                             .fillMaxWidth()
                             .clickable(onClick = {
-                                settingsActions.onClickChangePassword()
-                                Log.i("debug","premuto cambio password")
+                                settingsActions.onClickChangeName()
+                                Log.i("debug","premuto cambio nome")
                             })
                     ) {
-                        Text("cambia password")
+                        Text("Cambia nome utente")
                         Spacer(Modifier.width(15.dp))
                         Icon(Icons.Filled.KeyboardDoubleArrowRight,"avanti?")
                     }
-                }
-            }
-
-            Column(
-                modifier = Modifier
-                    .border(
-                        width = 1.dp,
-                        color = Color.Magenta
-                    )
-                    .weight(0.4f)
-                    .fillMaxWidth()
-            ) {
-                Text("Tema applicazione:")
-                ThemeValues.entries.forEach { theme ->
-                    RadioItem(
-                        selected = theme == settingsState.theme,
-                        text = theme.text,
-                        onClick = { settingsActions.onThemeChange(theme) }
-                    )
-                }
-
-                Text("Colori dinamici:")
-                listOf(true,false).forEach { color ->
-                    RadioItem(
-                        selected = color == settingsState.dynamicColors,
-                        text = if (color) "Colori di sistema" else "colori personalizzati",
-                        onClick = { settingsActions.onDynamicColorsChange(color) }
-                    )
-                }
-            }
-
-            if (settingsState.isLoggedIn) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(0.1f)
-                ) {
-                    //Bottone logout
-                    Button(
-                        onClick = {
-                            settingsActions.onLogOut()
+                    if (settingsState.providerType == AuthProviderType.PASSWORD) {
+                        Row(
+                            modifier = Modifier
+                                .border(
+                                    width = 1.dp,
+                                    color = Color.Magenta
+                                )
+                                .weight(0.1f)
+                                .fillMaxWidth()
+                                .clickable(onClick = {
+                                    settingsActions.onClickChangePassword()
+                                    Log.i("debug","premuto cambio password")
+                                })
+                        ) {
+                            Text("cambia password")
+                            Spacer(Modifier.width(15.dp))
+                            Icon(Icons.Filled.KeyboardDoubleArrowRight,"avanti?")
                         }
+                    }
+                }
+
+                Column(
+                    modifier = Modifier
+                        .border(
+                            width = 1.dp,
+                            color = Color.Magenta
+                        )
+                        .weight(0.4f)
+                        .fillMaxWidth()
+                ) {
+                    Text("Tema applicazione:")
+                    ThemeValues.entries.forEach { theme ->
+                        RadioItem(
+                            selected = theme == settingsState.theme,
+                            text = theme.text,
+                            onClick = { settingsActions.onThemeChange(theme) }
+                        )
+                    }
+
+                    Text("Colori dinamici:")
+                    listOf(true,false).forEach { color ->
+                        RadioItem(
+                            selected = color == settingsState.dynamicColors,
+                            text = if (color) "Colori di sistema" else "colori personalizzati",
+                            onClick = { settingsActions.onDynamicColorsChange(color) }
+                        )
+                    }
+                }
+
+                if (settingsState.isLoggedIn) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(0.1f)
                     ) {
-                        Text("Logout")
+                        //Bottone logout
+                        Button(
+                            onClick = {
+                                settingsActions.onLogOut()
+                            }
+                        ) {
+                            Text("Logout")
+                            Icon(Icons.AutoMirrored.Filled.Logout,"Logout")
+                        }
+
+                        Spacer(Modifier.width(10.dp))
+
+                        //Bottone elimina account
+                        Button(
+                            onClick = {
+                                Log.i("debug","Elimina")
+                                deleteAccountPopup = true
+                            }
+                        ) {
+                            Text("Elimina account")
+                            Icon(Icons.Filled.Cancel,"Elimina account")
+                        }
+                    }
+                } else {
+                    Button(
+                        onClick = settingsActions.goToLogin
+                    ) {
+                        Text("Vai al login")
                         Icon(Icons.AutoMirrored.Filled.Logout,"Logout")
                     }
-
-                    Spacer(Modifier.width(10.dp))
-
-                    //Bottone elimina account
-                    Button(
-                        onClick = {
-                            Log.i("debug","Elimina")
-                            deleteAccountPopup = true
-                        }
-                    ) {
-                        Text("Elimina account")
-                        Icon(Icons.Filled.Cancel,"Elimina account")
-                    }
                 }
-            } else {
-                Button(
-                    onClick = settingsActions.goToLogin
-                ) {
-                    Text("Vai al login")
-                    Icon(Icons.AutoMirrored.Filled.Logout,"Logout")
-                }
+
             }
-
         }
 
     }

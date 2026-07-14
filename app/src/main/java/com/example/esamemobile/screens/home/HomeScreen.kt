@@ -90,7 +90,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {Text("HOME")},
+                title = {Text("")},
                 actions = {
                     IconButton({navController.navigate(EsameMobileRoute.Settings)}) {
                         Icon(Icons.Filled.Settings,"Impostazioni")
@@ -226,23 +226,6 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                //Bottone per la schermata di debug
-                Button (
-                    onClick = { navController.navigate(EsameMobileRoute.Debug) },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan)
-                ) {
-                    Text("Debug Database", color = Color.Black, fontSize = 12.sp)
-                }
-
-            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
