@@ -1,5 +1,5 @@
 //TODO: Le abilità di classe di base vanno divise da quelle avanzate e solo in quelle avanzate va messo il contatore di usi
-//TODO: Le abilità di altre classi non vengono mostrate oppure più di 3 non ne vengono mostrate
+//TODO: Le abilità di altre classi non vengono mostrate, vengono solo mostrate le abilità della mia classe principale
 //TODO: Mettere un modo per modificare il personaggio (Nome, Età, Armatura(quindi ancher gli effetti delle armature), poteri evoluzione, oggetti)
 //TODO: Da inserire un modo per segnare gli hp temporanei (come in dnd funzionano)
 //TODO: Devi mettere un modo per aumentare le statistiche con i PE spendibili

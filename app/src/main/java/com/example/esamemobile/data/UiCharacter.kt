@@ -7,8 +7,10 @@ import com.example.esamemobile.data.staticData.GameClass
 data class UiCharacter(
     val character: Character,
     val chosenClass: GameClass?,
+    val chosenSubClass: GameClass?,
     val ageMalus: AgeMalus?,
-    val classAbilities: List<ClassAbility>
+    val classAbilities: List<ClassAbility>,
+    val subClassAbilities: List<ClassAbility>
 ) {
     val stats: List<Int> = listOf(
         character.strength,

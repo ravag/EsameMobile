@@ -246,7 +246,8 @@ fun CharacterDetailsScreen(
                                     onAddPower = detailsActions.onOpenAddPowerDialog
                                 )
                                 AbilitiesSection(
-                                    abilities = detailsState.character.classAbilities,
+                                    classAbilities = detailsState.character.classAbilities,
+                                    subClassAbilities = detailsState.character.subClassAbilities,
                                     usageCurrent = detailsState.abilityUsageCurrent,
                                     usageMax = detailsState.abilityUsageMax,
                                     modifier = Modifier.weight(1f),
@@ -421,28 +422,79 @@ private fun EvolutionPowersSection(
 
 @Composable
 private fun AbilitiesSection(
-    abilities: List<ClassAbility>,
+    classAbilities: List<ClassAbility>,
+    subClassAbilities: List<ClassAbility>,
     usageCurrent: Int,
     usageMax: Int,
     modifier: Modifier,
     onDecreaseUsage: (() -> Unit)?,
     onIncreaseUsage: (() -> Unit)?
 ) {
+    var selectedItem by remember { mutableStateOf<ClassAbility?>(null) }
+
     Column(modifier = modifier) {
         CountRow(
-            title = "ABILITA'",
+            title = "ABILITÀ",
             current = usageCurrent,
             max = usageMax,
             onDecrease = onDecreaseUsage,
             onIncrease = onIncreaseUsage
         )
-        Spacer(Modifier.height(4.dp))
-        ListItems(
-            elements = abilities.map {
-                AbilityItem(
-                    name = it.name,
-                    description = it.description,
-                    numericValue = 0) }, Modifier.fillMaxWidth().weight(1f))
+        Spacer(Modifier.height(8.dp))
+
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            contentPadding = PaddingValues(vertical = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (classAbilities.isNotEmpty()) {
+                item {
+                    Text(
+                        "Abilità di Classe Base",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+                items(classAbilities) { ability ->
+                    GenericListElement(
+                        item = AbilityItem(name = ability.name, description = ability.description, numericValue = 0),
+                        onClick = { selectedItem = ability },
+                        isHighlighted = false
+                    )
+                }
+            }
+
+            if (subClassAbilities.isNotEmpty()) {
+                item {
+                    Text(
+                        "Abilità di Sotto-Classe Base",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+                items(subClassAbilities) { ability ->
+                    GenericListElement(
+                        item = AbilityItem(name = ability.name, description = ability.description, numericValue = 0),
+                        onClick = { selectedItem = ability },
+                        isHighlighted = false
+                    )
+                }
+            }
+        }
+    }
+
+    selectedItem?.let { ability ->
+        GenericBasicDialog(
+            show = true,
+            title = ability.name,
+            description = ability.description,
+            onConfirm = { selectedItem = null },
+            onConfirmText = "Chiudi"
+        )
     }
 }
 
