@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,11 +16,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -30,11 +33,17 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
@@ -43,12 +52,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -60,11 +73,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -94,6 +110,8 @@ fun GroupDetailsScreen(
 ) {
     val context = LocalContext.current
 
+    val scrollState = rememberScrollState()
+
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         groupActions.onLoad()
     }
@@ -108,7 +126,7 @@ fun GroupDetailsScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {Text("")},
+                title = {Text(groupState?.group?.name ?: "Dettagli Gruppo", style = MaterialTheme.typography.titleMedium)},
                 navigationIcon = {
                     IconButton({ navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack,"Indietro")
@@ -120,12 +138,13 @@ fun GroupDetailsScreen(
                         navController.navigateUp()
                     }) {
                         if (groupState.isOwner) {
-                            Icon(Icons.Default.Delete,"Elimina")
+                            Icon(Icons.Default.Delete,"Elimina", tint = MaterialTheme.colorScheme.error)
                         } else {
-                            Icon(Icons.AutoMirrored.Filled.Logout,"Abbandona")
+                            Icon(Icons.AutoMirrored.Filled.Logout,"Abbandona", tint = MaterialTheme.colorScheme.error)
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
             )
         },
         bottomBar = {
@@ -171,154 +190,271 @@ fun GroupDetailsScreen(
                 }
             }
             else -> {
-                Column(
+                Box(
                     modifier = Modifier
-                        .padding(innerPadding)
                         .fillMaxSize()
+                        .padding(innerPadding)
+                        .background(MaterialTheme.colorScheme.background)
                 ) {
                     when (groupState.selectedTab) {
                         GroupDetailsTab.DESCRIPTION -> {
-                            //Immagine e nome gruppo
-                            ChangeImageCard(
-                                context = context,
+                            Column(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(0.5f),
-                                useUri = groupActions.onUpdateGroupPhoto
+                                    .fillMaxSize()
+                                    .verticalScroll(scrollState)
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                ImageWithPlaceholder(groupState.group.imageUrl, Size.Lg)
-
-                                if (groupState.isEditing) {
-                                    OutlinedTextField(
-                                        value = groupState.tempName,
-                                        onValueChange = groupActions.onChangeName,
-                                        label = {Text("Nome gruppo")}
-                                    )
-                                } else {
-                                    Text(groupState.group.name)
-                                }
-                            }
-
-                            //DM e prossima sessione questa parte adesso che abbiamo cambiato idea è da sistemare un attimo
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(0.1f),
-                                horizontalArrangement = Arrangement.SpaceAround
-                            ) {
-                                Text("DM")
-                                Text("Prossima sessione")
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(0.1f),
-                                horizontalArrangement = Arrangement.SpaceAround
-                            ) {
-                                Text(groupState.master?.username ?: "Anonimo")
-                                if (groupState.isOwner) {
-                                    SessionDateButton(
-                                        dateText = formatDate(groupState.group.nextSession) ?: "Nessuna sessione prevista",
-                                        onDateSelected = groupActions.onChangeSessionDate
-                                    )
-                                } else {
-                                    Button(
-                                        onClick = {
-                                            addEventToCalendar(
-                                                context = context,
-                                                title = "Sessione ${groupState.group.name}",
-                                                startTime = groupState.group.nextSession!!.toDate().time
-                                            )
-                                        },
-                                        enabled = groupState.group.nextSession != null
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
-                                        Text(formatDate(groupState.group.nextSession) ?: "Nessuna sessione prevista")
+                                        Box(
+                                            modifier = Modifier
+                                                .height(180.dp)
+                                                .fillMaxWidth(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            //Immagine e nome gruppo
+                                            ChangeImageCard(
+                                                context = context,
+                                                modifier = Modifier
+                                                    .fillMaxWidth(),
+                                                useUri = groupActions.onUpdateGroupPhoto
+                                            ) {
+                                                ImageWithPlaceholder(
+                                                    groupState.group.imageUrl,
+                                                    Size.Lg
+                                                )
+                                            }
+                                        }
+
+                                        if (groupState.isEditing) {
+                                            OutlinedTextField(
+                                                value = groupState.tempName,
+                                                onValueChange = groupActions.onChangeName,
+                                                label = { Text("Nome gruppo") },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                singleLine = true
+                                            )
+                                        } else {
+                                            Text(
+                                                groupState.group.name,
+                                                style = MaterialTheme.typography.headlineSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
                                     }
                                 }
 
-                            }
-                            HorizontalDivider(
-                                modifier = Modifier.fillMaxWidth(),
-                                thickness = 1.dp,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Text("Descrizione")
-                            Column(
-                                modifier = Modifier
-                                    .verticalScroll(rememberScrollState())
-                                    .weight(0.7f)
-                                    .fillMaxWidth()
-                            ) {
-                                if (groupState.isEditing) {
-                                    OutlinedTextField(
-                                        value = groupState.tempDesc,
-                                        onValueChange = groupActions.onChangeDescription,
-                                        label = {Text("Descrizione")}
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.outlineVariant
                                     )
-                                } else {
-                                    Text(groupState.group.description)
-                                }
-                            }
-                            if (groupState.isOwner) {
-                                Row {
-                                    if (groupState.isEditing) {
-                                        IconButton(
-                                            onClick = groupActions.toggleEdit,
-                                            modifier = Modifier
-                                                .weight(0.5f)
-                                                .background(color = MaterialTheme.colorScheme.secondaryContainer)
-                                            ) {
-                                            Row {
-                                                Icon(Icons.Default.Cancel,"Annulla")
-                                                Text("Annulla")
+
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            horizontalAlignment = Alignment.Start
+                                        ) {
+                                            Text(
+                                                "Game Master (GM)",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                            Spacer(Modifier.height(4.dp))
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Person,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.padding(end = 4.dp)
+                                                )
+                                                Text(
+                                                    text = groupState.master?.username
+                                                        ?: "[REDACTED]",
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
                                             }
                                         }
-                                        IconButton(
-                                            onClick = groupActions.onSaveChange,
-                                            modifier = Modifier
-                                                .weight(0.5f)
-                                                .background(color = MaterialTheme.colorScheme.secondaryContainer)
+                                        Spacer(Modifier.width(16.dp))
+
+                                        Column(
+                                            modifier = Modifier.weight(1.2f),
+                                            horizontalAlignment = Alignment.End
                                         ) {
-                                            Row {
-                                                Icon(Icons.Default.Save,"Salva modifiche")
-                                                Text("Salva modifiche")
+                                            Text(
+                                                text = "Prossima Sessione",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.padding(bottom = 4.dp)
+                                            )
+                                            if (groupState.isOwner) {
+                                                SessionDateButton(
+                                                    dateText = formatDate(groupState.group.nextSession)
+                                                        ?: "Programma",
+                                                    onDateSelected = groupActions.onChangeSessionDate
+                                                )
+                                            } else {
+                                                Button(
+                                                    onClick = {
+                                                        addEventToCalendar(
+                                                            context = context,
+                                                            title = "Sessione ${groupState.group.name}",
+                                                            startTime = groupState.group.nextSession!!.toDate().time
+                                                        )
+                                                    },
+                                                    enabled = groupState.group.nextSession != null,
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                    )
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.Event,
+                                                        null,
+                                                        modifier = Modifier.padding(end = 6.dp)
+                                                    )
+                                                    Text(
+                                                        formatDate(groupState.group.nextSession)
+                                                            ?: "Nessuna sessione prevista"
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+
+                                Text(
+                                    "Descrizione Gruppo",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                                ) {
+                                    Box(modifier = Modifier.padding(16.dp)) {
+                                        if (groupState.isEditing) {
+                                            OutlinedTextField(
+                                                value = groupState.tempDesc,
+                                                onValueChange = groupActions.onChangeDescription,
+                                                label = { Text("Scrivi una descrizione...") },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                minLines = 3
+                                            )
+                                        } else {
+                                            Text(
+                                                groupState.group.description.ifBlank { "Nessuna descrizione inserita." },
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                    }
+                                }
+                                if (groupState.isOwner) {
+                                    InviteCodeCard(context, groupState.group.inviteCode)
+                                }
+                                if (groupState.isOwner) {
+                                    Spacer(Modifier.height(8.dp))
+                                    if (groupState.isEditing) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            OutlinedButton(
+                                                onClick = groupActions.toggleEdit,
+                                                modifier = Modifier.weight(1f),
+                                                colors = ButtonDefaults.outlinedButtonColors(
+                                                    contentColor = MaterialTheme.colorScheme.error
+                                                ),
+                                                border = BorderStroke(
+                                                    1.dp,
+                                                    MaterialTheme.colorScheme.error
+                                                )
+                                            ) {
+                                                Icon(Icons.Default.Cancel, "Annulla")
+                                                Spacer(Modifier.width(8.dp))
+                                                Text("Annulla")
+                                            }
+
+                                            Button(
+                                                onClick = groupActions.onSaveChange,
+                                                modifier = Modifier.weight(1f),
+                                                colors = ButtonDefaults.buttonColors(contentColor = MaterialTheme.colorScheme.primary)
+                                            ) {
+                                                Icon(Icons.Default.Save, "Salva")
+                                                Spacer(Modifier.width(8.dp))
+                                                Text("Salva")
                                             }
                                         }
                                     } else {
-                                        IconButton(
+                                        Button(
                                             onClick = groupActions.toggleEdit,
-                                            modifier = Modifier
-                                                .background(color = MaterialTheme.colorScheme.secondaryContainer)
-                                                .fillMaxWidth()
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                            )
                                         ) {
-                                            Row {
-                                                Icon(Icons.Default.Edit,"Modifica")
-                                                Text("Modifica")
-                                            }
+                                            Icon(Icons.Default.Edit, "Modifica")
+                                            Spacer(Modifier.width(8.dp))
+                                            Text("Modifica Gruppo")
                                         }
                                     }
                                 }
-                                InviteCodeRow(context,groupState.group.inviteCode, Modifier.weight(0.1f))
                             }
                         }
+
                         GroupDetailsTab.MEMBERS -> {
                             if (groupState.members.isEmpty()) {
                                 Column(
-                                    modifier = Modifier.fillMaxHeight(0.8f)
-                                        .padding(8.dp),
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(24.dp),
                                     verticalArrangement = Arrangement.Center,
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Groups,
+                                        contentDescription = null,
+                                        modifier = Modifier.height(64.dp).width(64.dp),
+                                        tint = MaterialTheme.colorScheme.secondary
+                                    )
+                                    Spacer(Modifier.height(16.dp))
                                     Text(
                                         "Non ci sono membri presenti, invita altri utenti con il codice invito." +
                                                 " Puoi inviare direttamente il codice premendo il tasto +",
                                         style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center
                                     )
                                 }
                             } else {
                                 LazyColumn(
-                                    modifier = Modifier.padding(8.dp)
+                                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     items(groupState.members) { user ->
                                         ExpandableListItem(user) {
@@ -327,9 +463,9 @@ fun GroupDetailsScreen(
                                                     charId,
                                                     groupActions.onCharacterClick(user.userId),
                                                     user.userId
-                                                ))
+                                                )
+                                                )
                                             }
-
                                         }
                                     }
                                 }
@@ -338,9 +474,7 @@ fun GroupDetailsScreen(
                     }
                 }
             }
-
         }
-
     }
 }
 
@@ -351,162 +485,242 @@ fun ExpandableListItem(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = {
-                    expanded = !expanded
-                    Log.i("debug", expanded.toString())
-                }),
-            horizontalArrangement = Arrangement.SpaceBetween
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
+        Column (
+            modifier = Modifier.padding(12.dp)
         ) {
-            ImageWithPlaceholder(user.userImgUrl,Size.Sm)
-            Text(user.username)
-            if (expanded) {
-                Icon( Icons.Default.KeyboardArrowUp, "comprimi")
-            } else {
-                Icon(Icons.Default.KeyboardArrowDown,"espandi")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = {
+                        expanded = !expanded
+                    }),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    ImageWithPlaceholder(user.userImgUrl, Size.Sm)
+                    Text(
+                        user.username,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Icon(
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (expanded) "Comprimi" else "Espandi"
+                )
             }
 
-        }
-
-        AnimatedVisibility(visible = expanded) {
-            Column(modifier = Modifier.padding(top = 8.dp)) {
-                if (user.characterName.isNullOrBlank()) {
-                    Text("Personaggio non inserito, per inserirlo premere il pulsante +")
-                } else {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(onClick = onClick),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        ImageWithPlaceholder(user.characterImgUrl, Size.Sm)
-                        Text(user.characterName)
+                AnimatedVisibility(visible = expanded) {
+                    Column {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 12.dp),
+                            thickness = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+                        if (user.characterName.isNullOrBlank()) {
+                            Text(
+                                "Personaggio non inserito, per inserirlo premere il pulsante +",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            ListItem(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable(onClick = onClick)
+                                    .background(MaterialTheme.colorScheme.surfaceContainer),
+                                headlineContent = { Text(user.characterName, fontWeight = FontWeight.Bold) },
+                                supportingContent = { Text("Vedi scheda personaggio", color = MaterialTheme.colorScheme.primary) },
+                                leadingContent = { ImageWithPlaceholder(user.characterImgUrl, Size.Sm) }
+                            )
+                        }
                     }
                 }
-            }
         }
     }
 }
 
 @Composable
-fun InviteCodeRow(
+fun InviteCodeCard(
     context: Context,
-    inviteCode: String,
-    modifier: Modifier
+    inviteCode: String
 ) {
     val clipboardManager = LocalClipboard.current
     val scope = rememberCoroutineScope()
 
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Top
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        )
     ) {
-        SelectionContainer {
-            Text("Codice Invito:\n $inviteCode")
-        }
-        Spacer(Modifier.width(5.dp))
-        IconButton(onClick = {
-            scope.launch {
-                clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("invite code", inviteCode)))
-                Toast.makeText(context,"Codice invito copiato", Toast.LENGTH_SHORT).show()
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Codice Invito:\n $inviteCode", style = MaterialTheme.typography.labelMedium)
+                Spacer(Modifier.width(4.dp))
+                SelectionContainer {
+                    Text(
+                        inviteCode,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
             }
-        }) {
-            Icon(Icons.Default.ContentCopy, "Copia codice invito")
+            IconButton(
+                onClick = {
+                    scope.launch {
+                        clipboardManager.setClipEntry(
+                            ClipEntry(
+                                ClipData.newPlainText(
+                                    "invite code",
+                                    inviteCode
+                                )
+                            )
+                        )
+                        Toast.makeText(context, "Codice invito copiato", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier.background(
+                    MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                        alpha = 0.1f
+                    )
+                )
+            ) {
+                Icon(
+                    Icons.Default.ContentCopy,
+                    "Copia codice invito",
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SessionDateButton(
-    dateText: String,
-    onDateSelected: (Timestamp) -> Unit
-) {
-    var showDatePicker by remember { mutableStateOf(false) }
-    var showTimePicker by remember { mutableStateOf(false) }
-    var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun SessionDateButton(
+        dateText: String,
+        onDateSelected: (Timestamp) -> Unit
+    ) {
+        var showDatePicker by remember { mutableStateOf(false) }
+        var showTimePicker by remember { mutableStateOf(false) }
+        var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
 
-    Button( {showDatePicker = true} ) {
-        Text(dateText)
-    }
-
-    if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = System.currentTimeMillis()
-        )
-
-        DatePickerDialog(onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    selectedDateMillis = datePickerState.selectedDateMillis
-                    showDatePicker = false
-                    showTimePicker = true
-                }) {
-                    Text("Conferma")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text("Annulla")
-                }
-            }
-        ) {
-            DatePicker(state = datePickerState)
+        Button({ showDatePicker = true }) {
+            Text(dateText)
         }
-    }
 
-    if (showTimePicker) {
-        val timePickerState = rememberTimePickerState(
-            initialHour = 12,
-            initialMinute = 0,
-            is24Hour = true
-        )
+        if (showDatePicker) {
+            val datePickerState = rememberDatePickerState(
+                initialSelectedDateMillis = System.currentTimeMillis()
+            )
 
-        BasicAlertDialog(
-            onDismissRequest = { showTimePicker = false }
-        ) {
-            Column {
-                TimePicker(timePickerState)
-                Row {
-                    TextButton(onClick = { showTimePicker = false }) {
-                        Text("Annulla")
-                    }
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
                     TextButton(onClick = {
-                        selectedDateMillis?.let { dateMillis ->
-                            val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
-                                timeInMillis = dateMillis
-                            }
-
-                            val year = calendar.get(Calendar.YEAR)
-                            val month = calendar.get(Calendar.MONTH)
-                            val day = calendar.get(Calendar.DAY_OF_MONTH)
-
-                            val localCalendar = Calendar.getInstance().apply {
-                                set(year,month,day,timePickerState.hour,timePickerState.minute)
-                            }
-
-                            val finalDate = localCalendar.time
-                            val timestamp = Timestamp(finalDate)
-
-                            onDateSelected(timestamp)
-                        }
-                        showTimePicker = false
+                        selectedDateMillis = datePickerState.selectedDateMillis
+                        showDatePicker = false
+                        showTimePicker = true
                     }) {
                         Text("Conferma")
                     }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) {
+                        Text("Annulla")
+                    }
                 }
+            ) {
+                DatePicker(state = datePickerState)
             }
         }
 
+        if (showTimePicker) {
+            val timePickerState = rememberTimePickerState(
+                initialHour = 12,
+                initialMinute = 0,
+                is24Hour = true
+            )
 
+            BasicAlertDialog(
+                onDismissRequest = { showTimePicker = false }
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(28.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tonalElevation = 6.dp
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        Text("Seleziona l'orario", style = MaterialTheme.typography.titleMedium)
+                        TimePicker(timePickerState)
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            TextButton(onClick = { showTimePicker = false }) {
+                                Text("Annulla")
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            Button(onClick = {
+                                selectedDateMillis?.let { dateMillis ->
+                                    val calendar =
+                                        Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                                            timeInMillis = dateMillis
+                                        }
+
+                                    val year = calendar.get(Calendar.YEAR)
+                                    val month = calendar.get(Calendar.MONTH)
+                                    val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+                                    val localCalendar = Calendar.getInstance().apply {
+                                        set(
+                                            year,
+                                            month,
+                                            day,
+                                            timePickerState.hour,
+                                            timePickerState.minute
+                                        )
+                                    }
+
+                                    val finalDate = localCalendar.time
+                                    val timestamp = Timestamp(finalDate)
+
+                                    onDateSelected(timestamp)
+                                }
+                                showTimePicker = false
+                            }) {
+                                Text("Conferma")
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
     }
-}
-private fun formatDate(timestamp: Timestamp?): String? {
-    if (timestamp == null) return null
-    val instant = timestamp.toDate().toInstant()
-    val localDate = instant.atZone(ZoneId.systemDefault())
-    return localDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
-}
+
+    private fun formatDate(timestamp: Timestamp?): String? {
+        if (timestamp == null) return null
+        val instant = timestamp.toDate().toInstant()
+        val localDate = instant.atZone(ZoneId.systemDefault())
+        return localDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+    }
