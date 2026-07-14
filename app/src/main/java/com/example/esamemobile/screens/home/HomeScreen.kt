@@ -204,7 +204,7 @@ fun HomeScreen(
                 GenericBasicDialog(
                     show = true,
                     title = "Sei offline",
-                    description = "Impossibile creare o unirsi ai gruppi da offline",
+                    description = "Impossibile creare o unirsi ai gruppi da offline o senza un account",
                     onConfirmText = "OK",
                     onConfirm = homeActions.onDismissDialog
                 )
