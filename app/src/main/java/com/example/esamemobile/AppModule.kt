@@ -58,7 +58,8 @@ val appModule = module {
         get<Context>(),
         CharactersDatabase::class.java,
         "esame-mobile"
-        ).build()
+        ).fallbackToDestructiveMigration(true)
+            .build()
     }
     single { ConnectivityChecker(androidContext()) }
 
