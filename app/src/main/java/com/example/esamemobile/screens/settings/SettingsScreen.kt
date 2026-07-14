@@ -1,13 +1,7 @@
 package com.example.esamemobile.screens.settings
 
-import android.Manifest.permission
-import android.content.Context
-import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,15 +12,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowRight
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -34,15 +30,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,13 +46,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import com.example.esamemobile.R
 import com.example.esamemobile.data.firebase.AuthProviderType
@@ -67,10 +61,7 @@ import com.example.esamemobile.utilities.composables.ChangeImageCard
 import com.example.esamemobile.utilities.composables.ImageWithPlaceholder
 import com.example.esamemobile.utilities.composables.Size
 import com.example.esamemobile.utilities.requestGoogleIdToken
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.io.File
-import kotlin.toString
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,6 +74,13 @@ fun SettingsScreen(
     val coroutineScope = rememberCoroutineScope()
     val webClientId = stringResource(R.string.default_web_client_id)
     var deleteAccountPopup by remember { mutableStateOf(false) }
+
+    LaunchedEffect(settingsState.message) {
+        settingsState.message?.let { msg ->
+            Toast.makeText(context,msg,Toast.LENGTH_SHORT).show()
+            settingsActions.onMessageShown()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -153,6 +151,7 @@ fun SettingsScreen(
                 labels = listOf("password attuale","nuova password"),
                 textValues = listOf(settingsState.currentPassword,settingsState.newPassword),
                 updateTexts = listOf(settingsActions.onChangePasswordInput,settingsActions.onChangeNewPasswordInput),
+                isPassword = true,
                 onDismiss = settingsActions.onCancelChangePassword,
                 onConfirm = settingsActions.onConfirmPasswordChange
             )
@@ -308,9 +307,12 @@ private fun InputDialog(
     labels: List<String>,
     textValues:List <String>,
     updateTexts: List<(String) -> Unit>,
+    isPassword: Boolean = false,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
+    var visiblePassword by remember { mutableStateOf(!isPassword) }
+
     Dialog(
         onDismissRequest = onDismiss,
     ) {
@@ -330,7 +332,15 @@ private fun InputDialog(
                         value = textValues[i],
                         onValueChange = updateTexts[i],
                         label = { Text(labels[i]) },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation = if (visiblePassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        keyboardOptions = if (isPassword) KeyboardOptions(keyboardType = KeyboardType.Password) else KeyboardOptions(keyboardType = KeyboardType.Text),
+                        trailingIcon =  if (isPassword) {{
+                            val icon = if (visiblePassword) Icons.Default.VisibilityOff else Icons.Default.Visibility
+                            IconButton( { visiblePassword = !visiblePassword } ) {
+                                Icon(icon,if (visiblePassword) "Nascondi password" else "Mostra password")
+                            }
+                        }} else { { } }
                     )
                 }
                 Row() {

@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.esamemobile.data.firebase.AuthErrorType
 import com.example.esamemobile.data.firebase.AuthProviderType
 import com.example.esamemobile.data.firebase.AuthRepository
 import com.example.esamemobile.data.firebase.AuthenticationResult
@@ -41,7 +42,8 @@ data class SettingsState(
     val changeName: Boolean = false,
     val changePassword: Boolean = false,
     val isLoading: Boolean = false,
-    val providerType: AuthProviderType = AuthProviderType.UNKNOWN
+    val providerType: AuthProviderType = AuthProviderType.UNKNOWN,
+    val message: String? = null
 )
 
 data class SettingsActions(
@@ -61,7 +63,8 @@ data class SettingsActions(
     val onGoogleReauth: (String) -> Unit,
     val onGoogleError: (Exception) -> Unit,
     val onPasswordDeleteAccount: () -> Unit,
-    val goToLogin: () -> Unit
+    val goToLogin: () -> Unit,
+    val onMessageShown: () -> Unit
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -107,7 +110,6 @@ class SettingsViewModel(
     val actions = SettingsActions(
         onClickChangeName = {
             _state.update { it.copy(changeName = true) }
-            Log.i("debug", state.value.changeName.toString())
         },
         onUsernameChange = { name -> _state.update { it.copy(tempName = name) } },
         onConfirmNameChange = {
@@ -118,10 +120,11 @@ class SettingsViewModel(
                 )
                 result.fold(
                     onSuccess = {
-                        Log.i("debug", "Nome cambiato con successo")
+                        newMsg("Cambio nome avvenuto con successo")
                         _state.update { it.copy(changeName = false, username = it.tempName) }
                     },
                     onFailure = {
+                        newMsg("Si è verificato un errore durante il cambio di nome")
                         Log.w("debug", "Errore a cambiare nome nel db")
                     }
                 )
@@ -158,8 +161,22 @@ class SettingsViewModel(
                             "users"
                         )
                         result.fold(
-                            onSuccess = { path -> url = path },
+                            onSuccess = { path ->
+                                url = path
+                                val result = userRepository.updateUserImage(
+                                    authRepository.currentUser!!.uid,
+                                    url
+                                )
+                                result.fold(
+                                    onSuccess = { newMsg("Immagine salvata con successo") },
+                                    onFailure = { exception ->
+                                        newMsg("Si è verificato un errore durante il salvataggio dell'immagine")
+                                        Log.w("debug", "Errore ${exception.message}")
+                                    }
+                                )
+                            },
                             onFailure = { exception ->
+                                newMsg("Si è verificato un errore durante il salvataggio dell'immagine")
                                 Log.w(
                                     "debug",
                                     "Errore salvataggio supabase ${exception.message}"
@@ -167,18 +184,7 @@ class SettingsViewModel(
                             }
                         )
                     }
-                    val result = userRepository.updateUserImage(
-                        authRepository.currentUser!!.uid,
-                        url
-                    )
-                    result.fold(
-                        onSuccess = {
-                            Log.i("debug", "immagine forse salvata con successo")
-                        },
-                        onFailure = { exception ->
-                            Log.w("debug", "Errore ${exception.message}")
-                        }
-                    )
+
                 }
             }
         },
@@ -190,15 +196,22 @@ class SettingsViewModel(
 
                 val reauthResult = authRepository.reauthenticateWithPassword(current)
                 if (reauthResult is AuthenticationResult.Error) {
+                    newMsg("Si è verificato un errore durante la riautenticazione, potresti avere sbagliato password")
                     Log.w("debug", "Errore riautenticazione: ${reauthResult.message}")
                     return@launch
                 }
                 when (val result = authRepository.updatePassword(new)) {
                     is AuthenticationResult.Error -> {
+                        if (result.type == AuthErrorType.WEAK_PASSWORD) {
+                            newMsg("La nuova password inserita è troppo debole, deve essere di almeno 6 caratteri")
+                        } else {
+                            newMsg("Si è verificato un errore durante il cambio password")
+                        }
                         Log.w("debug", "Errore cambio password: ${result.message}")
                     }
 
                     is AuthenticationResult.Success -> {
+                        newMsg("Password cambiata con successo")
                         _state.update {
                             it.copy(
                                 changePassword = false,
@@ -214,6 +227,7 @@ class SettingsViewModel(
             viewModelScope.launch {
                 val reauthResult = authRepository.reauthenticateWithGoogle(idToken)
                 if (reauthResult is AuthenticationResult.Error) {
+                    newMsg("Si è verificato un errore durante il processo di riautenticazione")
                     Log.w("debug", "Errore riautenticazione: ${reauthResult.message}")
                     return@launch
                 }
@@ -226,6 +240,7 @@ class SettingsViewModel(
                 val reauthResult =
                     authRepository.reauthenticateWithPassword(_state.value.currentPassword)
                 if (reauthResult is AuthenticationResult.Error) {
+                    newMsg("Si è verificato un errore durante l'eliminazione dell'account")
                     Log.w("debug", "Errore eliminazione account password: ${reauthResult.message}")
                     return@launch
                 }
@@ -243,20 +258,34 @@ class SettingsViewModel(
                 )
             }
         },
-        goToLogin = { viewModelScope.launch { guestRepository.setGuest(false) } }
+        goToLogin = { viewModelScope.launch { guestRepository.setGuest(false) } },
+        onMessageShown = { _state.update { it.copy(message = null) } }
     )
 
     private suspend fun deleteAccount() {
         val user = authRepository.currentUser?.uid ?: return
-        val result = userRepository.deleteUser(user)
-        result.fold(
-            onSuccess = {
-                authRepository.deleteAccount()
-                _state.update { it.copy(isLoggedIn = false) }
-            },
-            onFailure = { exception ->
-                Log.w("debug","Errore eliminazione account db ${exception.message}")
+        val result =  authRepository.deleteAccount()
+        when (result) {
+            is AuthenticationResult.Error -> {
+                newMsg("Si è verificato un errore durante l'eliminazione dell'account")
             }
-        )
+            is AuthenticationResult.Success -> {
+                val res =  userRepository.deleteUser(user)
+                res.fold(
+                    onSuccess = {
+                        newMsg("Account eliminato con successo")
+                        _state.update { it.copy(isLoggedIn = false) }
+                    },
+                    onFailure = { exception ->
+                        newMsg("Si è verificato un errore durante l'eliminazione dell'account")
+                        Log.w("debug","Errore eliminazione account db ${exception.message}")
+                    }
+                )
+            }
+        }
+
+
     }
+
+    private fun newMsg(msg: String) = _state.update { it.copy(message = msg) }
 }
