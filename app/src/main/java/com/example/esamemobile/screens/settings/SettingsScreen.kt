@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowRight
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -35,6 +37,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -314,6 +317,7 @@ private fun RadioItem(selected: Boolean, text: String, onClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun InputDialog(
     text: String,
@@ -326,17 +330,17 @@ private fun InputDialog(
 ) {
     var visiblePassword by remember { mutableStateOf(!isPassword) }
 
-    Dialog(
+    BasicAlertDialog(
         onDismissRequest = onDismiss,
     ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .padding(16.dp)
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp
         ) {
             Column(
-                verticalArrangement = Arrangement.Top,
+                modifier = Modifier.padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(text)
@@ -347,16 +351,23 @@ private fun InputDialog(
                         label = { Text(labels[i]) },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = if (visiblePassword) VisualTransformation.None else PasswordVisualTransformation(),
-                        keyboardOptions = if (isPassword) KeyboardOptions(keyboardType = KeyboardType.Password) else KeyboardOptions(keyboardType = KeyboardType.Text),
-                        trailingIcon =  if (isPassword) {{
-                            val icon = if (visiblePassword) Icons.Default.VisibilityOff else Icons.Default.Visibility
-                            IconButton( { visiblePassword = !visiblePassword } ) {
-                                Icon(icon,if (visiblePassword) "Nascondi password" else "Mostra password")
+                        keyboardOptions = if (isPassword) KeyboardOptions(keyboardType = KeyboardType.Password) else KeyboardOptions(
+                            keyboardType = KeyboardType.Text
+                        ),
+                        trailingIcon = if (isPassword) {
+                            { val icon = if (visiblePassword) Icons.Default.VisibilityOff else Icons.Default.Visibility
+                                IconButton({ visiblePassword = !visiblePassword }) {
+                                    Icon(
+                                        icon,
+                                        if (visiblePassword) "Nascondi password" else "Mostra password"
+                                    )
+                                } 
                             }
-                        }} else { { } }
+                        } else null
                     )
                 }
-                Row{
+                Spacer(Modifier.height(8.dp))
+                Row {
                     Button(
                         onClick = onDismiss
                     ) {
@@ -371,6 +382,5 @@ private fun InputDialog(
                 }
             }
         }
-
     }
 }
