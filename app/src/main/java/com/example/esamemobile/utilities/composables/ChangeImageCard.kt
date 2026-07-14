@@ -76,7 +76,7 @@ fun ChangeImageCard(
                 tempCameraUri = uri
                 try {
                     cameraLauncher.launch(uri)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     Toast.makeText(context, "Impossibile avviare la fotocamera", Toast.LENGTH_SHORT).show()
                 }
             } else {

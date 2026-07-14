@@ -76,12 +76,6 @@ fun LevelUpScreen(
     val currentState = state ?: return
     val currentStep = currentState.currentStep
 
-    var showEditDescriptionDialog by remember { mutableStateOf(false) }
-
-    if (showEditDescriptionDialog && currentState.selectedOption == LevelUpOption.UPGRADE_ABILITY) {
-
-    }
-
     Scaffold(
         bottomBar = {
             Row(
@@ -501,7 +495,7 @@ fun ChoosePerkContent(
                     )
                     .padding(8.dp)
             ) {
-                state.availableOptions.forEachIndexed { index, availableOption ->
+                state.availableOptions.forEach { availableOption ->
                     val isSelected = state.selectedOption == availableOption
 
                     val label = when (availableOption) {

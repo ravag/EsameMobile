@@ -1,19 +1,15 @@
 package com.example.esamemobile
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.example.esamemobile.data.Character
 import com.example.esamemobile.screens.characterDetails.CharacterDetailsScreen
 import com.example.esamemobile.screens.characterCreation.CharacterCreationScreen
-import com.example.esamemobile.screens.DebugDatabaseScreen
 import com.example.esamemobile.screens.addCharacter.AddCharacterScreen
 import com.example.esamemobile.screens.addCharacter.AddCharacterViewModel
 import com.example.esamemobile.screens.home.HomeScreen
@@ -36,7 +32,6 @@ sealed interface EsameMobileRoute {
     @Serializable data object Home : EsameMobileRoute
     @Serializable data class CharacterDetails(val charId: String, val enabled: Boolean, val userId: String? = null) : EsameMobileRoute
     @Serializable data object Login : EsameMobileRoute
-    @Serializable data object Debug : EsameMobileRoute //Questa è momentanea, sarà da rimuovere in futuro
     @Serializable data object CharacterCreation : EsameMobileRoute
     @Serializable data object Settings: EsameMobileRoute
     @Serializable data class LevelUp(val charId: String) : EsameMobileRoute
@@ -45,9 +40,6 @@ sealed interface EsameMobileRoute {
     @Serializable data object Loading: EsameMobileRoute
 }
 
-
-//Prima di fare questa parte bisogna sistemare bene come passare i parametri in giro perché
-//altrimenti non so come passarli in questi costruttori
 @Composable
 fun EsameMobileNavGraph(
     navController: NavHostController,
@@ -62,9 +54,6 @@ fun EsameMobileNavGraph(
             val homeVm = koinViewModel<HomeViewModel>()
             val homeState by homeVm.state.collectAsStateWithLifecycle()
             HomeScreen(homeState,homeVm.actions.copy(),navController)
-        }
-        composable<EsameMobileRoute.Debug> {
-            DebugDatabaseScreen(navController)
         }
         composable<EsameMobileRoute.Login> {
             val loginVm = koinViewModel<LoginViewModel>()

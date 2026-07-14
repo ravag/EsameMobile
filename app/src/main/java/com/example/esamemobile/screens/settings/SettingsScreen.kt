@@ -356,7 +356,7 @@ private fun InputDialog(
                         }} else { { } }
                     )
                 }
-                Row() {
+                Row{
                     Button(
                         onClick = onDismiss
                     ) {

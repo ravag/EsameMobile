@@ -1,8 +1,5 @@
 package com.example.esamemobile.screens.characterLevelUp
 
-import android.content.Context
-import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.esamemobile.data.firebase.AuthRepository
@@ -363,12 +360,10 @@ class LevelUpViewModel(
                             if (ability.name == chosenAbilityName) {
                                 val newName =
                                     if (!ability.name.endsWith("+")) "${ability.name}+" else ability.name
-                                val cleanDesc =
-                                    ability.description.substringBefore("\n[Potenziata]")
 
                                 ability.copy(
                                     name = newName,
-                                    description = currentState.customAbilityDescription.toString()
+                                    description = currentState.customAbilityDescription
                                 )
                             } else {
                                 ability

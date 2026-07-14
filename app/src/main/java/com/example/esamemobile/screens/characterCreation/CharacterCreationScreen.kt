@@ -125,7 +125,7 @@ fun StatisticStepContent(
                 tempCameraUri = uri
                 try {
                     cameraLauncher.launch(uri)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     Toast.makeText(context, "Impossibile avviare la fotocamera", Toast.LENGTH_SHORT).show()
                 }
             } else {
@@ -617,7 +617,7 @@ fun CharacterCreationScreen(
                         GenericStepContent(
                             title = "EQUIPAGGIAMENTO",
                             counterTitle = "Capacità di Carico:",
-                            counterValueText = "${currentWeight} / ${creationState.maxWeightCapacity}",
+                            counterValueText = "$currentWeight / ${creationState.maxWeightCapacity}",
                             counterContainerColor = if (currentWeight > creationState.maxWeightCapacity) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
                             counterValueColor = if (currentWeight > creationState.maxWeightCapacity) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primary,
                             emptyListText = "L'inventario è vuoto.\nUsa il tasto \"+\" in basso per aggiungere un oggetto.",
@@ -666,7 +666,7 @@ fun CharacterCreationScreen(
                 Button(
                     onClick = {
                         focusManager.clearFocus()
-                        creationActions.onNextStep() {
+                        creationActions.onNextStep {
                             navController.popBackStack()
                         }
                     },

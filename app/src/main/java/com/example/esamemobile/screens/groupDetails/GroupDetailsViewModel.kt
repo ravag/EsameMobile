@@ -120,9 +120,9 @@ class GroupDetailsViewModel (
                     var url: String
                     val bytes = fileRepository.readBytes(uri.toUri())
 
-                    bytes?.let {
+                    bytes?.let { fileBytes ->
                         val result = imagesRepository.uploadImage(
-                            it,
+                            fileBytes,
                             current.id,
                             "groups"
                         )

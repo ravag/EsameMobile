@@ -61,9 +61,6 @@ data class CharacterCreationState(
 ) {
     val strengthModifier: Int get() = calculateModifier(strength)
     val agilityModifier: Int get() = calculateModifier(agility)
-    val intelligenceModifier: Int get() = calculateModifier(intelligence)
-    val charismaModifier: Int get() = calculateModifier(charisma)
-    val powerModifier: Int get() = calculateModifier(power)
 
     val hpMax: Int get() = hpBase + strengthModifier + peSpentHP
     val speed: Double get() = 6 + (1.5 * agilityModifier)

@@ -743,7 +743,7 @@ private fun StatSection(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text("Velocità", style = MaterialTheme.typography.bodyMedium)
-                Text("${speed} m", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("$speed m", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -933,7 +933,6 @@ fun statChart(
     val textMeasurer = rememberTextMeasurer()
 
     val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
-    val labelColor = MaterialTheme.colorScheme.onSurface
 
     Canvas(
         modifier = modifier

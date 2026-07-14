@@ -9,9 +9,8 @@ fun addEventToCalendar(
     context: Context,
     title: String,
     startTime: Long,
-    duration: Int = 180
+    duration: Int = 180 //180 minuti -> 3 ore, tempo indicativo
 ) {
-    //metto un evento di tre ore, tre ore sono giusto indicative, non penso nessuno riesca a dire quanto duri una sessione
     val endTime = startTime + duration*60*1000
 
     val intent = Intent(Intent.ACTION_INSERT).apply {

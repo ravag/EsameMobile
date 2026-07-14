@@ -9,9 +9,6 @@ import com.example.esamemobile.data.repositories.CharacterRepository
 import com.example.esamemobile.data.firebase.firestore.GroupRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -39,7 +36,7 @@ class AddCharacterViewModel(
 
     init {
         viewModelScope.launch {
-            characterRepository.getAllUserCharacters().collect() { loadedCharacters ->
+            characterRepository.getAllUserCharacters().collect { loadedCharacters ->
                 _state.update { it.copy(characters = loadedCharacters, filteredCharacters = loadedCharacters) }
             }
         }

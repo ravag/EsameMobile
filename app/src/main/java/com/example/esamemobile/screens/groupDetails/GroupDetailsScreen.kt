@@ -268,7 +268,7 @@ fun GroupDetailsScreen(
                                                 .weight(0.5f)
                                                 .background(color = MaterialTheme.colorScheme.secondaryContainer)
                                             ) {
-                                            Row() {
+                                            Row {
                                                 Icon(Icons.Default.Cancel,"Annulla")
                                                 Text("Annulla")
                                             }
@@ -279,7 +279,7 @@ fun GroupDetailsScreen(
                                                 .weight(0.5f)
                                                 .background(color = MaterialTheme.colorScheme.secondaryContainer)
                                         ) {
-                                            Row() {
+                                            Row {
                                                 Icon(Icons.Default.Save,"Salva modifiche")
                                                 Text("Salva modifiche")
                                             }
@@ -291,7 +291,7 @@ fun GroupDetailsScreen(
                                                 .background(color = MaterialTheme.colorScheme.secondaryContainer)
                                                 .fillMaxWidth()
                                         ) {
-                                            Row() {
+                                            Row {
                                                 Icon(Icons.Default.Edit,"Modifica")
                                                 Text("Modifica")
                                             }
@@ -468,9 +468,9 @@ fun SessionDateButton(
         BasicAlertDialog(
             onDismissRequest = { showTimePicker = false }
         ) {
-            Column() {
+            Column {
                 TimePicker(timePickerState)
-                Row() {
+                Row {
                     TextButton(onClick = { showTimePicker = false }) {
                         Text("Annulla")
                     }

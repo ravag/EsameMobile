@@ -9,7 +9,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.ui.graphics.vector.ImageVector
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -63,11 +62,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.Group
-
-data class NavigationItem(
-    val title: String,
-    val icon: ImageVector
-)
 
 @Composable
 fun NavigationBottomBarWithFAB(
@@ -202,29 +196,6 @@ fun CharacterDetailsNavigationBar(
                 )
             }
         )
-    }
-}
-
-//Mi sa che rimuovo characterList e groupList e metto gli altri metodi in home screen, vengono usati solo li
-@Composable
-fun CharacterList(
-    contentPadding: PaddingValues,
-    chars: List<Character>,
-    onClick: () -> Unit) {
-    GenericList( contentPadding,chars) { char ->
-        CharacterItem(char, onClick)
-    }
-}
-
-@Composable
-fun GroupList(
-    contentPadding: PaddingValues,
-    groups: List<Group>,
-    context: Context) {
-    GenericList(contentPadding, groups ){ group ->
-        GroupItem(group) {
-            Toast.makeText(context, "Cliccato gruppo ${group.id}", Toast.LENGTH_SHORT).show()
-        }
     }
 }
 

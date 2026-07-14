@@ -135,7 +135,7 @@ class HomeViewModel(
 
     private fun loadCharacters() {
         viewModelScope.launch {
-            characterRepository.getAllUserCharacters().collect() { loadedCharacters ->
+            characterRepository.getAllUserCharacters().collect { loadedCharacters ->
                 _state.update { it.copy(
                     characters = loadedCharacters,
                     filteredCharacters = loadedCharacters,
