@@ -47,7 +47,7 @@ data class GroupDetailsActions(
     val onLoad: () -> Unit,
     val onChangePage: () -> Unit,
     val toggleEdit: () -> Unit,
-    val onChageSessionDate: (Timestamp) -> Unit,
+    val onChangeSessionDate: (Timestamp) -> Unit,
     val onMessageShown: () -> Unit
 )
 
@@ -68,7 +68,6 @@ class GroupDetailsViewModel (
                 text == authRepository.currentUser?.uid
             },
             onSelectTab = { index -> _state.update { it.copy(selectedTab = GroupDetailsTab.entries[index]) } },
-            //Ho bisogno di fare le query per il db prima
             onExitOrDelete = {
                 viewModelScope.launch {
                     val result = if (_state.value.isOwner) {
@@ -80,8 +79,9 @@ class GroupDetailsViewModel (
                         )
                     }
                     result.fold(
-                        onSuccess = { Log.i("debug", "Eliminazione avvenuta con successo") },
+                        onSuccess = { newMsg("Gruppo eliminato con successo") },
                         onFailure = { exception ->
+                            newMsg("Si è verificato un errore durante l'eliminazione")
                             Log.w(
                                 "debug",
                                 "Errore nell'eliminazione ${exception.message}"
@@ -165,7 +165,7 @@ class GroupDetailsViewModel (
                     )
                 }
             },
-            onChageSessionDate = { timestamp ->
+            onChangeSessionDate = { timestamp ->
                 val current = _state.value.group ?: return@GroupDetailsActions
                 viewModelScope.launch {
                     val updated = current.copy(nextSession = timestamp)

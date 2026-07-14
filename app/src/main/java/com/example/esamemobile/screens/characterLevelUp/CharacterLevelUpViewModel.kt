@@ -279,7 +279,9 @@ class LevelUpViewModel(
             }
 
             if (currentState.currentLevel == 6) {
-                updatedChar = updatedChar.copy(classAbilitiesList = updatedChar.classAbilitiesList + "SUBCLASS_${currentState.selectedSubClassId}")
+                updatedChar = updatedChar.copy(
+                    classAbilitiesList = updatedChar.classAbilitiesList + "SUBCLASS_${currentState.selectedSubClassId}",
+                    chosenSubClass = _state.value?.selectedSubClassId)
             }
 
             val charismaModifier = calculateModifier(char.charisma)
