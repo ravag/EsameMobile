@@ -80,7 +80,7 @@ fun NavigationBottomBarWithFAB(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp)
-                .background(MaterialTheme.colorScheme.surface),
+                .background(MaterialTheme.colorScheme.surfaceContainer),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceAround
         ) {
