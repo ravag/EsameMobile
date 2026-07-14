@@ -189,6 +189,7 @@ fun HomeScreen(
                     textFieldState = groupTextFieldState,
                     title = "Entra in un gruppo",
                     query = "Codice gruppo",
+                    limit = 8,
                     onDismiss = {
                         homeActions.onDismissDialog()
                         groupTextFieldState.edit { replace(0,this.length,"") }
@@ -302,6 +303,7 @@ fun GenericInputPopup(
     textFieldState: TextFieldState,
     title: String,
     query: String,
+    limit: Int? = null,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
@@ -323,18 +325,17 @@ fun GenericInputPopup(
                 OutlinedTextField(
                     value = textFieldState.text.toString(),
                     onValueChange = { s ->
-                        textFieldState.edit {
-                            replace(
-                                0,
-                                this.length,
-                                s
-                            )
+                        if (limit == null || s.length <= limit) {
+                            textFieldState.edit { replace(0,this.length,s) }
                         }
                     },
                     label = { Text(query) },
+                    supportingText = if (limit != null) { {
+                        Text("${textFieldState.text.length}/$limit")
+                    } } else null,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Row() {
+                Row{
                     Button(
                         onClick = onDismiss
                     ) {

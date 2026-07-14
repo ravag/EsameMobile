@@ -77,6 +77,8 @@ import com.example.esamemobile.utilities.NavigationBottomBarWithFAB
 import com.example.esamemobile.utilities.composables.ChangeImageCard
 import com.example.esamemobile.utilities.composables.ImageWithPlaceholder
 import com.example.esamemobile.utilities.composables.Size
+import com.example.esamemobile.utilities.intent.addEventToCalendar
+import com.example.esamemobile.utilities.intent.sendMessageIntent
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.launch
 import java.time.ZoneId
@@ -137,7 +139,15 @@ fun GroupDetailsScreen(
                 onTabSelected = { index ->  groupActions.onSelectTab(index) }
             ) {
                 if (groupState.isOwner) {
-                    Log.i("debug","Questo è incompleto, devi inserire il calendario")
+                    Log.i("debug","Entra nel mio gruppo ${groupState.group?.name} " +
+                            "inserendo il codice ${groupState.group?.inviteCode} " +
+                            "nell'app EsameMobile")
+                    sendMessageIntent(
+                        context = context,
+                        message = "Entra nel mio gruppo ${groupState.group?.name} " +
+                                "inserendo il codice ${groupState.group?.inviteCode} " +
+                                "nell'app EsameMobile", //TODO(CAMBIA NOME APP)
+                        title = "Condividi codice invito")
                 } else {
                     groupActions.onChangePage()
                     navController.navigate(EsameMobileRoute.AddCharacter(groupState.group!!.id))
@@ -214,11 +224,13 @@ fun GroupDetailsScreen(
                                     )
                                 } else {
                                     Button(
-                                        onClick = { addSessionToCalendar(
-                                            context = context,
-                                            title = "Sessione ${groupState.group.name}",
-                                            startTime = groupState.group.nextSession!!.toDate().time
-                                        ) },
+                                        onClick = {
+                                            addEventToCalendar(
+                                                context = context,
+                                                title = "Sessione ${groupState.group.name}",
+                                                startTime = groupState.group.nextSession!!.toDate().time
+                                            )
+                                        },
                                         enabled = groupState.group.nextSession != null
                                     ) {
                                         Text(formatDate(groupState.group.nextSession) ?: "Nessuna sessione prevista")
@@ -474,31 +486,6 @@ fun SessionDateButton(
 
 
     }
-}
-
-
-
-private fun addSessionToCalendar(
-    context: Context,
-    title: String,
-    startTime: Long,
-) {
-    //metto un evento di tre ore, tre ore sono giusto indicative, non penso nessuno riesca a dire quanto duri una sessione
-    val endTime = startTime + 180*60*1000
-
-    val intent = Intent(Intent.ACTION_INSERT).apply {
-        data = CalendarContract.Events.CONTENT_URI
-        putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startTime)
-        putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endTime)
-        putExtra(CalendarContract.Events.TITLE, title)
-    }
-
-    if (intent.resolveActivity(context.packageManager) != null) {
-        context.startActivity(intent)
-    } else {
-        Toast.makeText(context,"Impossibile aggiungere al calendario", Toast.LENGTH_SHORT).show()
-    }
-
 }
 private fun formatDate(timestamp: Timestamp?): String? {
     if (timestamp == null) return null
