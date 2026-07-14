@@ -3,8 +3,10 @@ package com.example.esamemobile.utilities.composables
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
@@ -22,7 +24,13 @@ fun SimpleSearchBar(
                 onQuery(text) } },
             readOnly = false,
             placeholder = { Text("Cerca") },
-            modifier = modifier.fillMaxWidth()
+            modifier = modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                focusedTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSecondaryContainer
+            )
         )
 
 }
