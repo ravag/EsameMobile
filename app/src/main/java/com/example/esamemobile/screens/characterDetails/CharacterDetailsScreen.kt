@@ -516,6 +516,8 @@ private fun AbilitiesSection(
     onIncreaseUsage: (() -> Unit)?
 ) {
     var selectedItem by remember { mutableStateOf<ClassAbility?>(null) }
+    val baseClassAbilities = classAbilities.filter { !it.isAdvanced }
+    val advancedClassAbilities = classAbilities.filter { it.isAdvanced }
 
     Column(modifier = modifier) {
         CountRow(
@@ -532,7 +534,8 @@ private fun AbilitiesSection(
             contentPadding = PaddingValues(vertical = 4.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            if (classAbilities.isNotEmpty()) {
+            if (baseClassAbilities.isNotEmpty()) {
+                //Abilità di classe base
                 item {
                     Text(
                         "Abilità di Classe Base",
@@ -542,7 +545,27 @@ private fun AbilitiesSection(
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
-                items(classAbilities) { ability ->
+                items(baseClassAbilities) { ability ->
+                    GenericListElement(
+                        item = AbilityItem(name = ability.name, description = ability.description, numericValue = 0),
+                        onClick = { selectedItem = ability },
+                        isHighlighted = false
+                    )
+                }
+            }
+
+            if (advancedClassAbilities.isNotEmpty()) {
+                //Abilità di calsse avanzate
+                item {
+                    Text(
+                        "Abilità di Classe Avanzate",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+                items(advancedClassAbilities) { ability ->
                     GenericListElement(
                         item = AbilityItem(name = ability.name, description = ability.description, numericValue = 0),
                         onClick = { selectedItem = ability },
@@ -552,6 +575,7 @@ private fun AbilitiesSection(
             }
 
             if (subClassAbilities.isNotEmpty()) {
+                //Abilità di sottoclasse base
                 item {
                     Text(
                         "Abilità di Sotto-Classe Base",
