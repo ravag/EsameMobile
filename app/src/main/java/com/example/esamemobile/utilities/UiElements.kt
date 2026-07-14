@@ -55,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -64,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.esamemobile.data.Character
 import com.example.esamemobile.data.Group
+import com.example.esamemobile.utilities.composables.ChangeImageCard
 import com.example.esamemobile.utilities.composables.ImageWithPlaceholder
 import com.example.esamemobile.utilities.composables.Size
 
@@ -319,9 +321,12 @@ fun CharacterHeader(
     level: Int,
     imageUrl: String?,
     points: Int,
+    context: Context,
+    enabled: Boolean,
     modifier: Modifier = Modifier,
     onMalusClick: () -> Unit,
     onLevelUpClick: (() -> Unit)?,
+    useUri: (String) -> Unit
 ) {
 
     Column(
@@ -382,10 +387,18 @@ fun CharacterHeader(
                     .background(Color.DarkGray),
                 contentAlignment = Alignment.Center
             ) {
-                ImageWithPlaceholder(
-                    url = imageUrl,
-                    size = Size.Lg
-                )
+                ChangeImageCard(
+                    context = context,
+                    enabled = enabled,
+                    modifier = modifier,
+                    useUri = useUri
+                ) {
+                    ImageWithPlaceholder(
+                        url = imageUrl,
+                        size = Size.Lg
+                    )
+                }
+
             }
         }
 

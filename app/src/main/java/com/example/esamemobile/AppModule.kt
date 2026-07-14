@@ -80,7 +80,7 @@ val appModule = module {
     viewModel { SettingsViewModel(get(),get(),get(),get(),get(), get()) }
     viewModel { SessionViewModel(get(),get(),get()) }
     viewModel { HomeViewModel(get(),get(), get(), get()) }
-    viewModel { CharacterDetailsViewModel(get(),get(),get(),get()) }
+    viewModel { CharacterDetailsViewModel(get(),get(),get(),get(),get(),get()) }
     viewModel { CharacterCreationViewModel(get(),get(),get(),get(),get()) }
     viewModel { LevelUpViewModel(get(),get(),get()) }
     viewModel { GroupDetailsViewModel(get(),get(),get(),get()) }

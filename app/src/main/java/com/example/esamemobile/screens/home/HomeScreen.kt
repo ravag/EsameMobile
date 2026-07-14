@@ -172,7 +172,7 @@ fun HomeScreen(
                     onConfirm = {
                         homeActions.onGroupCreate(groupTextFieldState.text.toString())
                         groupTextFieldState.edit { replace(0,this.length,"") }
-                        homeActions.onDismissDialog
+                        homeActions.onDismissDialog()
                     }
                 )
             }

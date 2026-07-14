@@ -200,12 +200,15 @@ fun CharacterDetailsScreen(
                         level = detailsState.character.character.level,
                         imageUrl = detailsState.character.character.imageUrl,
                         points = detailsState.character.character.peAvailable,
+                        context = context,
+                        enabled = detailsState.isOwner,
                         onMalusClick = detailsActions.onMalusButton,
                         modifier = Modifier,
                         onLevelUpClick = detailsActions.onLevelUp?.let { {
                                 detailsActions.onLevelUp()
                                 navController.navigate(EsameMobileRoute.LevelUp(detailsState.character.character.id))
-                            } }
+                            } },
+                        useUri = detailsActions.onChangeImage
                         )
 
                     if (detailsState.character.character.level >= 11) {

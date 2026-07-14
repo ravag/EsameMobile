@@ -95,9 +95,7 @@ fun ChangeImageCard(
         )
     ) {
         Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
