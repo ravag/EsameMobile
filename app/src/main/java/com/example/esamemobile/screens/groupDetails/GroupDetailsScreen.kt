@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -126,7 +125,7 @@ fun GroupDetailsScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {Text(groupState?.group?.name ?: "Dettagli Gruppo", style = MaterialTheme.typography.titleMedium)},
+                title = {Text(groupState.group?.name ?: "Dettagli Gruppo", style = MaterialTheme.typography.titleMedium)},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
@@ -146,8 +145,7 @@ fun GroupDetailsScreen(
                             Icon(Icons.AutoMirrored.Filled.Logout,"Abbandona", tint = MaterialTheme.colorScheme.error)
                         }
                     }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                }
             )
         },
         bottomBar = {
@@ -408,9 +406,11 @@ fun GroupDetailsScreen(
                                                 modifier = Modifier.weight(1f),
                                                 colors = ButtonDefaults.buttonColors(contentColor = MaterialTheme.colorScheme.primary)
                                             ) {
-                                                Icon(Icons.Default.Save, "Salva")
+                                                Icon(Icons.Default.Save,
+                                                    "Salva",
+                                                    tint = MaterialTheme.colorScheme.onPrimary)
                                                 Spacer(Modifier.width(8.dp))
-                                                Text("Salva")
+                                                Text("Salva", color = MaterialTheme.colorScheme.onPrimary)
                                             }
                                         }
                                     } else {

@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.BasicAlertDialog
@@ -49,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import com.example.esamemobile.utilities.composables.NavigationBottomBarWithFAB
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavHostController
@@ -235,14 +238,25 @@ fun HomeScreen(
                     HomePage.CHARACTERS -> {
                         if (homeState.characters.isEmpty()) {
                             Column(
-                                modifier = Modifier.fillMaxHeight(0.8f),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(24.dp),
                                 verticalArrangement = Arrangement.Center,
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = null,
+                                    modifier = Modifier.height(64.dp).width(64.dp),
+                                    tint = MaterialTheme.colorScheme.secondary
+                                )
+                                Spacer(Modifier.height(16.dp))
                                 Text(
-                                    "Non ci sono personaggi presenti\nCreane uno nuovo oppure premendo il tasto +",
+                                    "Non ci sono personaggi presenti, crea un personaggio nuovo" +
+                                            " premendo il tasto +",
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
                                 )
                             }
                         } else {
@@ -262,14 +276,25 @@ fun HomeScreen(
                     HomePage.GROUPS ->  {
                         if (homeState.groups.isEmpty()) {
                             Column(
-                                modifier = Modifier.fillMaxHeight(0.8f),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(24.dp),
                                 verticalArrangement = Arrangement.Center,
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
+                                Icon(
+                                    imageVector = Icons.Default.Groups,
+                                    contentDescription = null,
+                                    modifier = Modifier.height(64.dp).width(64.dp),
+                                    tint = MaterialTheme.colorScheme.secondary
+                                )
+                                Spacer(Modifier.height(16.dp))
                                 Text(
-                                    "Non ci sono gruppi presenti\nCreane uno nuovo oppure entra in un gruppo premendo il tasto +",
+                                    "Non ci sono gruppi presenti, creane uno o entra in un gruppo con il codice invito." +
+                                        "Puoi fare tutte le operazioni premendo il tasto +",
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center
                                 )
                             }
                         } else {
