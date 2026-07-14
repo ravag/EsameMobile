@@ -63,7 +63,7 @@ fun AddCharacterScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = {Text("HOME")},
+                title = {Text("")},
                 navigationIcon = {
                     IconButton({ navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Default.ArrowBack,"Indietro")

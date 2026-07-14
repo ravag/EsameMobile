@@ -30,7 +30,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -76,8 +75,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.core.content.FileProvider
-import androidx.navigation.ActivityNavigatorExtras
-import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.esamemobile.data.calculateModifier
 import com.example.esamemobile.utilities.GenericBasicDialog
@@ -535,7 +533,7 @@ fun CharacterCreationScreen(
     creationState: CharacterCreationState,
     creationActions: CharacterCreationActions,
     focusManager: FocusManager,
-    navController: NavController
+    navController: NavHostController
 ) {
     val context = LocalContext.current
 
