@@ -2,6 +2,7 @@ package com.example.esamemobile.screens.settings
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,30 +16,38 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowRight
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,6 +62,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -80,6 +90,8 @@ fun SettingsScreen(
     val webClientId = stringResource(R.string.default_web_client_id)
     var deleteAccountPopup by remember { mutableStateOf(false) }
 
+    val scrollState = rememberScrollState()
+
     LaunchedEffect(settingsState.message) {
         settingsState.message?.let { msg ->
             Toast.makeText(context,msg,Toast.LENGTH_SHORT).show()
@@ -96,7 +108,7 @@ fun SettingsScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack,"Indietro")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.surfaceVariant)
+                colors = TopAppBarDefaults.topAppBarColors(MaterialTheme.colorScheme.surfaceContainer)
             )
         },
         modifier = Modifier.background(MaterialTheme.colorScheme.background)
@@ -173,127 +185,184 @@ fun SettingsScreen(
             }
         } else {
             Column(
-                modifier = Modifier.padding(innerPadding).fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .background(MaterialTheme.colorScheme.background)
+                    .verticalScroll(scrollState)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                //Immagine e username
-                ChangeImageCard(
-                    context = context,
-                    enabled = settingsState.isLoggedIn,
-                    modifier = Modifier.weight(0.2f),
-                    useUri = settingsActions.onAvatarSelected
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
                 ) {
-                    ImageWithPlaceholder(settingsState.imageUrl,Size.Lg)
-                    Text(settingsState.username)
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        //Immagine e username
+                        ChangeImageCard(
+                            context = context,
+                            enabled = settingsState.isLoggedIn,
+                            modifier = Modifier,
+                            useUri = settingsActions.onAvatarSelected
+                        ) {
+                            ImageWithPlaceholder(settingsState.imageUrl,Size.Lg)
+                        }
+
+                        Text(
+                            text = if (settingsState.isLoggedIn) settingsState.username else "Utente Ospite",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
 
                 if (settingsState.isLoggedIn) {
-                    Row(
-                        modifier = Modifier
-                            .border(
-                                width = 1.dp,
-                                color = Color.Magenta
-                            )
-                            .weight(0.1f)
-                            .fillMaxWidth()
-                            .clickable(onClick = {
-                                settingsActions.onClickChangeName()
-                                Log.i("debug","premuto cambio nome")
-                            })
+                    Text(
+                        "Account",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
                     ) {
-                        Text("Cambia nome utente")
-                        Spacer(Modifier.width(15.dp))
-                        Icon(Icons.Filled.KeyboardDoubleArrowRight,"avanti?")
-                    }
-                    if (settingsState.providerType == AuthProviderType.PASSWORD) {
-                        Row(
-                            modifier = Modifier
-                                .border(
-                                    width = 1.dp,
-                                    color = Color.Magenta
+                        Column {
+                            SettingRowItem(
+                                title = "Cambia nome utente",
+                                onClick = { settingsActions.onClickChangeName() }
+                            )
+                            if (settingsState.providerType == AuthProviderType.PASSWORD) {
+                                SettingRowItem(
+                                    title = "Cambia Password",
+                                    onClick = { settingsActions.onClickChangePassword() }
                                 )
-                                .weight(0.1f)
-                                .fillMaxWidth()
-                                .clickable(onClick = {
-                                    settingsActions.onClickChangePassword()
-                                    Log.i("debug","premuto cambio password")
-                                })
-                        ) {
-                            Text("cambia password")
-                            Spacer(Modifier.width(15.dp))
-                            Icon(Icons.Filled.KeyboardDoubleArrowRight,"avanti?")
+                            }
                         }
                     }
                 }
 
-                Column(
-                    modifier = Modifier
-                        .border(
-                            width = 1.dp,
-                            color = Color.Magenta
-                        )
-                        .weight(0.4f)
-                        .fillMaxWidth()
-                ) {
-                    Text("Tema applicazione:")
-                    ThemeValues.entries.forEach { theme ->
-                        RadioItem(
-                            selected = theme == settingsState.theme,
-                            text = theme.text,
-                            onClick = { settingsActions.onThemeChange(theme) }
-                        )
-                    }
+                Text(
+                    text = "Personalizzazione",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
 
-                    Text("Colori dinamici:")
-                    listOf(true,false).forEach { color ->
-                        RadioItem(
-                            selected = color == settingsState.dynamicColors,
-                            text = if (color) "Colori di sistema" else "colori personalizzati",
-                            onClick = { settingsActions.onDynamicColorsChange(color) }
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                ) {
+                    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                        Text(
+                            "Tema applicazione",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
+
+                        ThemeValues.entries.forEach { theme ->
+                            RadioItem(
+                                selected = theme == settingsState.theme,
+                                text = theme.text,
+                                onClick = { settingsActions.onThemeChange(theme) }
+                            )
+                        }
+
+                        Spacer(Modifier.height(12.dp))
+
+                        Text(
+                            "Colori dinamici",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                        listOf(true,false).forEach { color ->
+                            RadioItem(
+                                selected = color == settingsState.dynamicColors,
+                                text = if (color) "Colori di Sistema" else "Colori Dinamici",
+                                onClick = { settingsActions.onDynamicColorsChange(color) }
+                            )
+                        }
                     }
                 }
+
+                Spacer(Modifier.height(16.dp))
 
                 if (settingsState.isLoggedIn) {
                     Row(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(0.1f)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         //Bottone logout
-                        Button(
-                            onClick = {
-                                settingsActions.onLogOut()
-                            }
+                        OutlinedButton(
+                            onClick = { settingsActions.onLogOut() },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.errorContainer)
                         ) {
-                            Text("Logout")
                             Icon(Icons.AutoMirrored.Filled.Logout,"Logout")
+                            Spacer(Modifier.width(8.dp))
+                            Text("Logout")
                         }
-
-                        Spacer(Modifier.width(10.dp))
 
                         //Bottone elimina account
                         Button(
-                            onClick = {
-                                Log.i("debug","Elimina")
-                                deleteAccountPopup = true
-                            }
+                            onClick = { deleteAccountPopup = true },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError)
                         ) {
-                            Text("Elimina account")
                             Icon(Icons.Filled.Cancel,"Elimina account")
+                            Spacer(Modifier.height(8.dp))
+                            Text("Elimina account")
                         }
                     }
                 } else {
                     Button(
-                        onClick = settingsActions.goToLogin
+                        onClick = settingsActions.goToLogin,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Vai al login")
                         Icon(Icons.AutoMirrored.Filled.Logout,"Logout")
+                        Spacer(Modifier.height(8.dp))
+                        Text("Vai al login")
                     }
                 }
-
             }
         }
+    }
+}
 
+@Composable
+private fun SettingRowItem(title: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -339,11 +408,16 @@ private fun InputDialog(
             tonalElevation = 6.dp
         ) {
             Column(
-                modifier = Modifier.padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.Start
             ) {
-                Text(text)
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
                 for (i in 0 until labels.size) {
                     OutlinedTextField(
                         value = textValues[i],
@@ -366,17 +440,15 @@ private fun InputDialog(
                         } else null
                     )
                 }
-                Spacer(Modifier.height(8.dp))
-                Row {
-                    Button(
-                        onClick = onDismiss
-                    ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
                         Text("Annulla")
                     }
-                    Spacer(Modifier.width(10.dp))
-                    Button(
-                        onClick = onConfirm
-                    ) {
+                    Spacer(Modifier.width(8.dp))
+                    Button(onClick = onConfirm) {
                         Text("Conferma")
                     }
                 }
