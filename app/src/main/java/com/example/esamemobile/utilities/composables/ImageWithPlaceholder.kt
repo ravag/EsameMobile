@@ -24,7 +24,6 @@ import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 
-//Per il momento io questa la metto, però si può forse rimuovere
 enum class Size {Sm, Lg}
 
 @Composable

@@ -1,5 +1,6 @@
 package com.example.esamemobile.screens.home
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -245,12 +247,26 @@ fun HomeScreen(
                     }
 
                     HomePage.GROUPS ->  {
-                        GenericList(
-                            contentPadding = PaddingValues(0.dp),
-                            elems = homeState.filteredGroups,
-                            key = {it.id}
-                        ) { group ->
-                            GroupItem(group) { navController.navigate(EsameMobileRoute.GroupDetails(group.id)) }
+                        if (homeState.groups.isEmpty()) {
+                            Column(
+                                modifier = Modifier.fillMaxHeight(0.8f),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    "Non ci sono gruppi presenti\nCreane uno nuovo oppure entra in un gruppo premendo il tasto +",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        } else {
+                            GenericList(
+                                contentPadding = PaddingValues(0.dp),
+                                elems = homeState.filteredGroups,
+                                key = {it.id}
+                            ) { group ->
+                                GroupItem(group) { navController.navigate(EsameMobileRoute.GroupDetails(group.id)) }
+                            }
                         }
                     }
                 }
