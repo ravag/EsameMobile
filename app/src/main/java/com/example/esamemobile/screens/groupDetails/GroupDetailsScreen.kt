@@ -127,6 +127,9 @@ fun GroupDetailsScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {Text(groupState?.group?.name ?: "Dettagli Gruppo", style = MaterialTheme.typography.titleMedium)},
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                ),
                 navigationIcon = {
                     IconButton({ navController.navigateUp() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack,"Indietro")
@@ -177,7 +180,8 @@ fun GroupDetailsScreen(
         when {
             groupState.isLoading -> {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize()
+                        .background(color = MaterialTheme.colorScheme.background),
                     contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
