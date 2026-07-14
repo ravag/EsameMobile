@@ -54,6 +54,7 @@ import com.example.esamemobile.R
 import com.example.esamemobile.utilities.connection.requestGoogleIdToken
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
 
 @Composable
@@ -80,7 +81,8 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black),
+            .background(MaterialTheme.colorScheme.background)
+            .padding(24.dp),
         contentAlignment = Alignment.Center
        ) {
         Column(
@@ -97,7 +99,7 @@ fun LoginScreen(
                 ),
                 border = BorderStroke(
                     width = 1.dp,
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                 )
             ) {
                 Column(
@@ -124,7 +126,7 @@ fun LoginScreen(
                         "Benvenuto nel tuo terminale operativo per la gestione dei mutanti, il tracciamento biometrico delle evoluzioni e il coordinamento delle sessioni tattiche sul campo.\n\n" +
                                 "Effettua l'accesso per sincronizzare il tuo profilo biologico e archiviare i progressi nel mainframe.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.tertiary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                         lineHeight = 20.sp
                     )
@@ -133,20 +135,21 @@ fun LoginScreen(
 
             Text(
                 text = "ACCEDI",
-                color = Color.White,
-                fontSize = 28.sp,
+                color = MaterialTheme.colorScheme.onBackground,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
             OutlinedTextField(
                 value = loginState.email,
                 onValueChange = loginActions.onEmailChange,
-                label = { Text("Email", color = Color.Gray) },
+                label = { Text("Email") },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White
+                    focusedTextColor = MaterialTheme.colorScheme.primary,
+                    unfocusedTextColor = MaterialTheme.colorScheme.outline,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -156,12 +159,12 @@ fun LoginScreen(
             OutlinedTextField(
                 value = loginState.password,
                 onValueChange = loginActions.onPasswordChange,
-                label = { Text("Password", color = Color.Gray) },
+                label = { Text("Password") },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = Color.White,
-                    unfocusedBorderColor = Color.White
+                    focusedTextColor = MaterialTheme.colorScheme.primary,
+                    unfocusedTextColor = MaterialTheme.colorScheme.outline,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = if (visiblePassword) VisualTransformation.None else PasswordVisualTransformation(),
@@ -169,18 +172,18 @@ fun LoginScreen(
                 trailingIcon =  {
                     val icon = if (visiblePassword) Icons.Default.VisibilityOff else Icons.Default.Visibility
                     IconButton( { visiblePassword = !visiblePassword } ) {
-                        Icon(icon,if (visiblePassword) "Nascondi password" else "Mostra password")
+                        Icon(icon,if (visiblePassword) "Nascondi password" else "Mostra password", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             //Bottone Accedi/Registrati con email
             Button(
                 onClick = loginActions.onEmailPasswordSubmit,
                 enabled = !loginState.isLoading,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
@@ -191,7 +194,7 @@ fun LoginScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            HorizontalDivider(color = Color.DarkGray, thickness = 1.dp)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
             Spacer(modifier = Modifier.height(24.dp))
 
             //Bottone accedi con google
@@ -205,7 +208,9 @@ fun LoginScreen(
                         onError = loginActions.onGoogleSignInError)
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh, contentColor = MaterialTheme.colorScheme.onSurface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier.fillMaxWidth()
             ) {
 
                 Row(
@@ -218,37 +223,43 @@ fun LoginScreen(
                         modifier = Modifier.size(24.dp)
                     )
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
 
                     Text(
                         text = "Accedi con Google",
-                        color = Color.Black,
-                        fontSize = 18.sp
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp
                     )
                 }
             }
 
+            Spacer(Modifier.height(12.dp))
+
             //Bottone continua senza un account
             Button(
                 onClick = loginActions.onGuestLogin,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Person,
+                        painter = painterResource(R.drawable.ic_noaccount),
                         contentDescription = "Anonimo",
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer
                     )
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
 
                     Text(
                         text = "Continua senza un account",
-                        color = Color.Black,
-                        fontSize = 18.sp
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp
                     )
                 }
             }
