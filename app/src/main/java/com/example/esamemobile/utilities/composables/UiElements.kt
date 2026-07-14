@@ -52,7 +52,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -81,7 +80,7 @@ fun NavigationBottomBarWithFAB(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp)
-                .background(Color(0xFF1E1E1E)),
+                .background(MaterialTheme.colorScheme.surface),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceAround
         ) {
@@ -95,12 +94,12 @@ fun NavigationBottomBarWithFAB(
                 Icon(
                     firstOptionImage,
                     contentDescription = firstOptionText,
-                    tint = if (selectedIndex == 0) Color.Green else Color.White,
+                    tint = if (selectedIndex == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(26.dp)
                 )
                 Text(
                     firstOptionText,
-                    color = if (selectedIndex == 0) Color.Green else Color.White,
+                    color = if (selectedIndex == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp
                 )
             }
@@ -118,12 +117,12 @@ fun NavigationBottomBarWithFAB(
                 Icon(
                     secondOptionImage,
                     contentDescription = secondOptionText,
-                    tint = if (selectedIndex == 1) Color.Green else Color.White,
+                    tint = if (selectedIndex == 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(26.dp)
                 )
                 Text(
                     secondOptionText,
-                    color = if (selectedIndex == 1) Color.Green else Color.White,
+                    color = if (selectedIndex == 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp
                 )
             }
@@ -133,8 +132,8 @@ fun NavigationBottomBarWithFAB(
         //Floating Action Button (FAB)
         FloatingActionButton(
             onClick = onFabClick,
-            containerColor = Color.Green,
-            contentColor = Color.Black,
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             shape = CircleShape,
             modifier = Modifier
                 .size(72.dp)
@@ -154,17 +153,16 @@ fun CharacterDetailsNavigationBar(
     selectedIndex: Int,
     onTabSelected: (Int) -> Unit
 ) {
-    NavigationBar(containerColor = Color(0xFF1E1E1E)) {
+    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
         //Tasto sinistro: Statistiche
         NavigationBarItem(
             selected = selectedIndex == 0,
             onClick = { onTabSelected(0) },
-            label = { Text("Statistiche", color = Color.White) },
+            label = { Text("Statistiche") },
             icon = {
                 Icon(
                     Icons.Outlined.Person,
                     contentDescription = "Statistiche",
-                    tint = Color.White
                 )
             }
         )
@@ -173,12 +171,11 @@ fun CharacterDetailsNavigationBar(
         NavigationBarItem(
             selected = selectedIndex == 1,
             onClick = { onTabSelected(1) },
-            label = { Text("Abilità", color = Color.White) },
+            label = { Text("Abilità") },
             icon = {
                 Icon(
                     Icons.Outlined.Info,
                     contentDescription = "Abilità",
-                    tint = Color.White
                 )
             }
         )
@@ -187,12 +184,11 @@ fun CharacterDetailsNavigationBar(
         NavigationBarItem(
             selected = selectedIndex == 2,
             onClick = { onTabSelected(2) },
-            label = { Text("Equipaggiamento", color = Color.White) },
+            label = { Text("Equipaggiamento") },
             icon = {
                 Icon(
                     Icons.Outlined.ShoppingCart,
                     contentDescription = "Equipaggiamento",
-                    tint = Color.White
                 )
             }
         )
@@ -349,8 +345,8 @@ fun CharacterHeader(
                 modifier = Modifier
                     .size(110.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
-                    .background(Color.DarkGray),
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                 contentAlignment = Alignment.Center
             ) {
                 ChangeImageCard(
@@ -405,7 +401,7 @@ fun CharacterHeader(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        HorizontalDivider(color = Color.Gray, thickness = 1.dp)
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
     }
 }
 
