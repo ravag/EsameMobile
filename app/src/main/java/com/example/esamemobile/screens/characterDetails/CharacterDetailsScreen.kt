@@ -31,6 +31,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -310,8 +311,11 @@ fun CharacterDetailsScreen(
                             StatSection(
                                 hp = detailsState.character.character.currentHP,
                                 maxHp = detailsState.character.character.maxHP,
+                                tempHp = detailsState.character.character.tempHP,
                                 onDecrease = detailsActions.onDecreaseHp,
                                 onIncrease = detailsActions.onIncreaseHp,
+                                onDecreaseTemp = detailsActions.onDecreaseTempHp,
+                                onIncreaseTemp = detailsActions.onIncreaseTempHp,
                                 stats = detailsState.character.stats,
                                 speed = detailsState.character.character.speed,
                                 armor = detailsState.character.character.armor.text,
@@ -641,8 +645,11 @@ private fun InventorySection(
 private fun StatSection(
     hp: Int,
     maxHp: Int,
+    tempHp: Int,
     onDecrease: (() -> Unit)?,
     onIncrease: (() -> Unit)?,
+    onDecreaseTemp: (() -> Unit)?,
+    onIncreaseTemp: (() -> Unit)?,
     stats: List<Int>,
     speed: Double,
     armor: String,
@@ -666,6 +673,56 @@ private fun StatSection(
                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 strokeCap = StrokeCap.Round
             )
+
+            if (onIncreaseTemp != null || tempHp > 0) {
+                Spacer(Modifier.height(12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f))
+                Spacer(Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            "HP Temporanei",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        onDecreaseTemp?.let {
+                            IconButton(onClick = it) {
+                                Icon(
+                                    Icons.Default.Remove,
+                                    contentDescription = "Diminuisci hp temporanei di 1",
+                                    tint = MaterialTheme.colorScheme.tertiary
+                                )
+                            }
+                        }
+                        Text(
+                            "+$tempHp",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.tertiary,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+
+                        onIncreaseTemp?.let {
+                            IconButton(onClick = it) {
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = "Incrementa gli hp temporanei do 1",
+                                    tint = MaterialTheme.colorScheme.tertiary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

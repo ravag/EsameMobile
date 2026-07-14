@@ -31,6 +31,7 @@ data class Character(
 
     val currentHP: Int = 0,
     val maxHP: Int = 0,
+    val tempHP: Int = 0,
 
     val abilitiesList: List<AbilityItem> = emptyList(),
     val classAbilitiesList: List<String> = emptyList(),
@@ -57,6 +58,7 @@ data class Character(
         power = power,
         currentHP = currentHP,
         maxHP = maxHP,
+        tempHP = tempHP,
         abilitiesList = Json.encodeToString(abilitiesList),
         classAbilitiesList = Json.encodeToString(classAbilitiesList),
         inventoryList = Json.encodeToString(inventoryList),

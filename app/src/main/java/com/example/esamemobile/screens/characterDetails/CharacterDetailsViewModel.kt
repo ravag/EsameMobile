@@ -1,12 +1,6 @@
-//TODO: Le abilità di classe di base vanno divise da quelle avanzate e solo in quelle avanzate va messo il contatore di usi
-//TODO: Le abilità di altre classi non vengono mostrate, vengono solo mostrate le abilità della mia classe principale
-//TODO: Mettere un modo per modificare il personaggio (Armatura(quindi ancher gli effetti delle armature)) cardclickable che fa vedere le opzioni e le descrizioni
-//TODO: Da inserire un modo per segnare gli hp temporanei (come in dnd funzionano)
-
 package com.example.esamemobile.screens.characterDetails
 
 import android.util.Log
-import android.content.Context
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -59,6 +53,8 @@ data class CharacterDetailsActions(
     val onMalusButton: () -> Unit,
     val onDecreaseHp: (() -> Unit)? = null,
     val onIncreaseHp: (() -> Unit)? = null,
+    val onDecreaseTempHp: (() -> Unit)? = null,
+    val onIncreaseTempHp: (() -> Unit)? = null,
 
     val onOpenAddPowerDialog: (() -> Unit)? = null,
     val onOpenAddItemDialog: (() -> Unit)? = null,
@@ -122,7 +118,13 @@ class CharacterDetailsViewModel (
 
             onDecreaseHp = if (editable) {
                 {
-                    updateCharacter { it.copy(currentHP = (it.currentHP - 1).coerceAtLeast(0)) }
+                    updateCharacter { char ->
+                        if (char.tempHP > 0) {
+                            char.copy(tempHP = char.tempHP - 1)
+                        } else {
+                            char.copy(currentHP = (char.currentHP - 1).coerceAtLeast(0))
+                        }
+                    }
                 }
             } else null,
 
@@ -131,6 +133,18 @@ class CharacterDetailsViewModel (
                     updateCharacter { it.copy(currentHP = (it.currentHP + 1).coerceAtMost(it.maxHP)) }
                 }
             } else null,
+
+            onDecreaseTempHp = if (editable) { {
+                updateCharacter { char ->
+                    char.copy(tempHP = (char.tempHP - 1).coerceAtLeast(0))
+                }
+            } } else null,
+
+            onIncreaseTempHp = if (editable) { {
+                updateCharacter { char ->
+                    char.copy(tempHP = char.tempHP + 1)
+                }
+            } } else null,
 
             onOpenAddPowerDialog = if (editable) {
                 {

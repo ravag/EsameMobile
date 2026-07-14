@@ -29,6 +29,7 @@ data class CharacterEntity(
 
     val currentHP: Int,
     val maxHP: Int,
+    val tempHP: Int,
 
     val abilitiesList: String,
     val classAbilitiesList: String,
@@ -55,6 +56,7 @@ data class CharacterEntity(
         power = power,
         currentHP = currentHP,
         maxHP = maxHP,
+        tempHP = tempHP,
         abilitiesList = Json.decodeFromString(abilitiesList),
         classAbilitiesList = Json.decodeFromString(classAbilitiesList),
         inventoryList = Json.decodeFromString(inventoryList),
