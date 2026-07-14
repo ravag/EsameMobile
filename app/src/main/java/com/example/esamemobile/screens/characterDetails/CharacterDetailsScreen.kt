@@ -1,6 +1,7 @@
 package com.example.esamemobile.screens.characterDetails
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,7 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -37,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -82,7 +84,7 @@ fun CharacterDetailsScreen(
 ) {
 
     val context = LocalContext.current
-    var deleting by mutableStateOf(false)
+    var deleting by remember { mutableStateOf(false) }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         detailsActions.onLoad()
@@ -110,9 +112,6 @@ fun CharacterDetailsScreen(
                 },
                 actions = {
                     detailsActions.onDelete?.let {
-                        IconButton({}) {
-                            Icon(Icons.Outlined.Star,"Inserisci tra i preferiti")
-                        }
                         IconButton({ deleting = true }) {
                             Icon(Icons.Default.Delete,"Elimina")
                         }
@@ -170,6 +169,82 @@ fun CharacterDetailsScreen(
                         detailsActions.onConfirmAddPower?.invoke()
                     } else {
                         detailsActions.onConfirmAddItem?.invoke()
+                    }
+                }
+            )
+        }
+
+        if (detailsState.showArmorDialog) {
+            AlertDialog(
+                onDismissRequest = { detailsActions.onCloseArmorDialog() },
+                title = {
+                    Text(
+                        "Seleziona un'Armatura",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            "Scegli il tipo d'armatura da indossare:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+
+                        com.example.esamemobile.data.ArmorTypes.entries.forEach { armorType ->
+                            val isSelected = detailsState.character?.character?.armor == armorType
+
+                            OutlinedCard(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { detailsActions.onChangeArmor?.invoke(armorType) },
+                                colors = CardDefaults.outlinedCardColors(
+                                    containerColor = if (isSelected) {
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.surface
+                                    }
+                                ),
+                                border = BorderStroke(
+                                    width = if (isSelected) 2.dp else 1.dp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                )
+                            ) {
+                                Column(Modifier.padding(12.dp)) {
+                                    Text(
+                                        text = armorType.text.replaceFirstChar { it.uppercase() },
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    if (armorType.description.isNotEmpty()) {
+                                        Spacer(Modifier.height(4.dp))
+                                        Text(
+                                            text = armorType.description,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    } else {
+                                        Spacer(Modifier.height(4.dp))
+                                        Text(
+                                            "Nessun effetto o modificatore.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { detailsActions.onCloseArmorDialog() }) {
+                        Text("Annulla")
                     }
                 }
             )
@@ -240,7 +315,8 @@ fun CharacterDetailsScreen(
                                 stats = detailsState.character.stats,
                                 speed = detailsState.character.character.speed,
                                 armor = detailsState.character.character.armor.text,
-                                normalizedStats = detailsState.character.normalizedStats
+                                normalizedStats = detailsState.character.normalizedStats,
+                                onArmorClick = detailsActions.onOpenArmorDialog
                             )
                         }
 
@@ -546,7 +622,8 @@ private fun StatSection(
     stats: List<Int>,
     speed: Double,
     armor: String,
-    normalizedStats: List<Float>
+    normalizedStats: List<Float>,
+    onArmorClick: (() -> Unit)?
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -590,15 +667,17 @@ private fun StatSection(
         }
 
         Card(
-            modifier = Modifier.weight(1f),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            modifier = Modifier
+                .weight(1f)
+                .then(if (onArmorClick != null) Modifier.clickable { onArmorClick() } else Modifier),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
         ) {
             Column(
                 modifier = Modifier.padding(12.dp).fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text("Armatura", style = MaterialTheme.typography.bodyMedium)
-                Text(armor, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(armor.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
         }
 

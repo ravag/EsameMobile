@@ -1,14 +1,10 @@
 package com.example.esamemobile.data
 
 import com.example.esamemobile.data.room.CharacterEntity
-import com.example.esamemobile.data.staticData.AgeMalus
-import com.example.esamemobile.data.staticData.ClassAbility
-import com.example.esamemobile.data.staticData.GameClass
 import com.example.esamemobile.screens.characterCreation.AbilityItem
 import com.example.esamemobile.screens.characterCreation.InventoryItem
 import com.google.firebase.firestore.DocumentId
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.UUID
 
@@ -38,6 +34,7 @@ data class Character(
 
     val abilitiesList: List<AbilityItem> = emptyList(),
     val classAbilitiesList: List<String> = emptyList(),
+    val subClassAbilitiesList: List<String> = emptyList(),
     val inventoryList: List<InventoryItem> = emptyList(),
 
     val speed: Double = 0.0,
@@ -63,6 +60,7 @@ data class Character(
         maxHP = maxHP,
         abilitiesList = Json.encodeToString(abilitiesList),
         classAbilitiesList = Json.encodeToString(classAbilitiesList),
+        subClassAbilitiesList = Json.encodeToString(subClassAbilitiesList),
         inventoryList = Json.encodeToString(inventoryList),
         speed = speed,
         maxCapacity = maxCapacity,
@@ -70,7 +68,12 @@ data class Character(
     )
 }
 
-enum class ArmorTypes(val text: String) { LIGHT("leggera"), MEDIUM("media"), HEAVY("pesante"), NONE("nessuna") }
+enum class ArmorTypes(val text: String, val description: String) {
+    LIGHT("leggera", "-1 a tutti i danni."),
+    MEDIUM("media", "-3 a tutti i danni."),
+    HEAVY("pesante", "-5 a tutti i danni.\nInoltre hai svantaggio alle prove di agilità."),
+    NONE("nessuna", "")
+}
 
 fun calculateModifier(stat: Int): Int {
     return when (stat) {
