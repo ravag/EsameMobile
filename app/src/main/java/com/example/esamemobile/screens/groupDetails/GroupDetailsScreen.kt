@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -303,17 +304,35 @@ fun GroupDetailsScreen(
                             }
                         }
                         GroupDetailsTab.MEMBERS -> {
-                            LazyColumn {
-                                items(groupState.members) { user ->
-                                    ExpandableListItem(user) {
-                                        user.characterId?.let { charId ->
-                                            navController.navigate(EsameMobileRoute.CharacterDetails(
-                                                charId,
-                                                groupActions.onCharacterClick(user.userId),
-                                                user.userId
-                                            ))
-                                        }
+                            if (groupState.members.isEmpty()) {
+                                Column(
+                                    modifier = Modifier.fillMaxHeight(0.8f)
+                                        .padding(8.dp),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        "Non ci sono membri presenti, invita altri utenti con il codice invito." +
+                                                " Puoi inviare direttamente il codice premendo il tasto +",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            } else {
+                                LazyColumn(
+                                    modifier = Modifier.padding(8.dp)
+                                ) {
+                                    items(groupState.members) { user ->
+                                        ExpandableListItem(user) {
+                                            user.characterId?.let { charId ->
+                                                navController.navigate(EsameMobileRoute.CharacterDetails(
+                                                    charId,
+                                                    groupActions.onCharacterClick(user.userId),
+                                                    user.userId
+                                                ))
+                                            }
 
+                                        }
                                     }
                                 }
                             }
