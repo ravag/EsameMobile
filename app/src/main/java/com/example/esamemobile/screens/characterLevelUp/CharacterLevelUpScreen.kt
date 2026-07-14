@@ -2,6 +2,7 @@ package com.example.esamemobile.screens.characterLevelUp
 
 import android.graphics.Paint
 import android.text.Layout
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -73,6 +74,12 @@ fun LevelUpScreen(
     val state by viewModel.state.collectAsState()
     val actions = viewModel.actions
 
+    LaunchedEffect(state?.message) {
+        state?.message?.let { msg ->
+            Toast.makeText(context,msg,Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val currentState = state ?: return
     val currentStep = currentState.currentStep
 
@@ -112,7 +119,7 @@ fun LevelUpScreen(
 
                 if (isFinalStep) {
                     Button(
-                        onClick = { actions.onConfirmLevelUp(context, onNavigateBack) },
+                        onClick = { actions.onConfirmLevelUp(onNavigateBack) },
                         enabled = currentState.isCurrentStepValid,
                         modifier = Modifier
                             .weight(1f)
