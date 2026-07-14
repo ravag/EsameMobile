@@ -545,7 +545,7 @@ private fun AbilitiesSection(
                         "Abilità di Classe Base",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.secondary,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
@@ -565,7 +565,7 @@ private fun AbilitiesSection(
                         "Abilità di Classe Avanzate",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.secondary,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                 }
@@ -808,7 +808,9 @@ private fun StatSection(
                 normalizedStats,
                 listOf("FOR","AGI","INT","CAR","POT"),
                 lineColor = MaterialTheme.colorScheme.primary,
-                fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
+                fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                textColor = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
@@ -926,7 +928,8 @@ fun statChart(
     labels: List<String>,
     modifier: Modifier = Modifier,
     lineColor: Color,
-    fillColor: Color
+    fillColor: Color,
+    textColor: Color
 ) {
     require(values.size == labels.size)
     val sides = values.size
@@ -945,8 +948,8 @@ fun statChart(
         val vertexAngle = (2* Math.PI / sides)
 
         //Disegna i pentagoni concentrici per ora 4 pentagoni concentrici
-        for (level in 1..4) {
-            val pentagonLevel = radius * level / 4
+        for (level in 1..6) {
+            val pentagonLevel = radius * level / 6
             val path = Path()
             for (i in 0 until sides) {
                 val angle = -Math.PI / 2 + i*vertexAngle
@@ -995,7 +998,7 @@ fun statChart(
 
             val textLayoutResult = textMeasurer.measure(
                 text = labels[i],
-                style = TextStyle(fontSize = 12.sp, color = Color.White)
+                style = TextStyle(fontSize = 12.sp, color = textColor)
             )
 
             drawText(
