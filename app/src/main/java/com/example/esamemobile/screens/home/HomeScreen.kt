@@ -1,5 +1,6 @@
 package com.example.esamemobile.screens.home
 
+import android.widget.Toast
 import com.example.esamemobile.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.esamemobile.utilities.NavigationBottomBarWithFAB
@@ -64,12 +66,11 @@ fun HomeScreen(
     homeActions: HomeActions,
     navController: NavHostController
 ) {
-
+    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val textFieldState = rememberTextFieldState()
     val groupTextFieldState = rememberTextFieldState()
 
-    //Soluzione temporanea per refresh dopo creazione personaggio
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         homeActions.syncCharacters()
         homeActions.getAllGroups()
@@ -77,6 +78,13 @@ fun HomeScreen(
 
     LaunchedEffect(homeState.homePage) {
         focusManager.clearFocus()
+    }
+
+    LaunchedEffect(homeState.message) {
+        homeState.message?.let { msg ->
+            Toast.makeText(context,msg,Toast.LENGTH_SHORT).show()
+            homeActions.onMessageShown()
+        }
     }
 
     Scaffold(
@@ -249,15 +257,32 @@ fun HomeScreen(
             ) {
                 when (homeState.homePage) {
                     HomePage.CHARACTERS -> {
-                        GenericList(
-                            contentPadding = PaddingValues(0.dp),
-                            elems = homeState.filteredCharacters,
-                            key = {it.id}
-                        ) {character ->
-                            CharacterItem(character) { navController.navigate(EsameMobileRoute.CharacterDetails(character.id,true)) }
+                        if (homeState.characters.isEmpty()) {
+                            Column(
+                                modifier = Modifier.fillMaxHeight(0.8f),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    "Non ci sono personaggi presenti\nCreane uno nuovo oppure premendo il tasto +",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        } else {
+                            GenericList(
+                                contentPadding = PaddingValues(0.dp),
+                                elems = homeState.filteredCharacters,
+                                key = { it.id }
+                            ) { character ->
+                                CharacterItem(character) {
+                                    navController.navigate(
+                                        EsameMobileRoute.CharacterDetails(character.id, true)
+                                    )
+                                }
+                            }
                         }
                     }
-
                     HomePage.GROUPS ->  {
                         if (homeState.groups.isEmpty()) {
                             Column(

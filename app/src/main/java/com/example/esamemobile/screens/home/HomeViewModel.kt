@@ -31,7 +31,8 @@ data class HomeState(
     val filteredCharacters: List<Character> = emptyList(),
     val filteredGroups: List<Group> = emptyList(),
     val currentDialog: HomeDialog? = null,
-    val isLoggedIn: Boolean = false
+    val isLoggedIn: Boolean = false,
+    val message: String? = null
     )
 
 data class HomeActions(
@@ -43,7 +44,8 @@ data class HomeActions(
     val onGroupCreate: (String) -> Unit,
     val onGroupJoin: (String) -> Unit,
     val onOpenDialog: (HomeDialog) -> Unit,
-    val onDismissDialog: () -> Unit
+    val onDismissDialog: () -> Unit,
+    val onMessageShown: () -> Unit
 )
 
 class HomeViewModel(
@@ -90,13 +92,10 @@ class HomeViewModel(
                 )
                 val result = groupRepository.addNewGroup(group, user.first, user.second)
                 result.fold(
-                    onSuccess = { Log.i("debug", "Gruppo creato con successo") },
+                    onSuccess = { newMsg("Gruppo creato con successo") },
                     onFailure = { exception ->
-                        Log.w(
-                            "debug",
-                            "Errore creazione gruppo ${exception.message}"
-                        )
-                    }
+                        newMsg("Errore nella creazione del gruppo")
+                        Log.w("debug","errore creazione gruppo: ${exception.message}")}
                 )
 
                 loadGroups()
@@ -109,21 +108,24 @@ class HomeViewModel(
                 val member = Member(
                     userId = uid,
                     username = user.first,
-                    userImgUrl = user.second)
-                val result = groupRepository.insertNewGroupMember(member,id)
+                    userImgUrl = user.second
+                )
+                val result = groupRepository.insertNewGroupMember(member, id)
                 result.fold(
                     onSuccess = {
-                        Log.i("debug","Successo nell'unione")
+                        newMsg("Ti sei unito a un nuovo gruppo")
                         loadGroups()
-                        },
+                    },
                     onFailure = { exception ->
-                        Log.w("debug","Errore nell'unirsi al gruppo ${exception.message}")
+                        newMsg("C'è stato un errore nell'unione al gruppo")
+                        Log.w("debug", "Errore nell'unirsi al gruppo ${exception.message}")
                     }
                 )
             }
         },
         onOpenDialog = { dialog -> _state.update { it.copy(currentDialog = dialog) } },
-        onDismissDialog = { _state.update { it.copy(currentDialog = null) } }
+        onDismissDialog = { _state.update { it.copy(currentDialog = null) } },
+        onMessageShown = { _state.update { it.copy(message = null) } }
     )
 
     init {
@@ -152,4 +154,6 @@ class HomeViewModel(
                 .onFailure {  exception -> Log.w("debug","OOPSIE ${exception.message}") }
         }
     }
+
+    private fun newMsg(msg: String) = _state.update { it.copy(message = msg) }
 }
