@@ -1,7 +1,5 @@
 package com.example.esamemobile.screens.characterLevelUp
 
-import android.graphics.Paint
-import android.text.Layout
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
@@ -17,18 +15,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,7 +35,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,18 +46,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.example.esamemobile.R
 import com.example.esamemobile.data.calculateModifier
 import com.example.esamemobile.data.staticData.GameClass
 import com.example.esamemobile.screens.characterCreation.AbilityItem
-import com.example.esamemobile.utilities.GenericStepContent
-import java.util.logging.Level
 
 @Composable
 fun LevelUpScreen(
     charId: String,
     viewModel: LevelUpViewModel,
-    onNavigateBack: () -> Unit
+    navController: NavHostController
 ) {
     val context = LocalContext.current
 
@@ -98,7 +91,7 @@ fun LevelUpScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 OutlinedButton(
-                    onClick = { actions.onBackStep(onNavigateBack) },
+                    onClick = { actions.onBackStep { navController.navigateUp() } },
                     modifier = Modifier.weight(1f).height(50.dp)
                 ) {
                     Text(
@@ -119,7 +112,7 @@ fun LevelUpScreen(
 
                 if (isFinalStep) {
                     Button(
-                        onClick = { actions.onConfirmLevelUp(onNavigateBack) },
+                        onClick = { actions.onConfirmLevelUp { navController.navigateUp() } },
                         enabled = currentState.isCurrentStepValid,
                         modifier = Modifier
                             .weight(1f)

@@ -41,7 +41,7 @@ data class SettingsState(
     val dynamicColors: Boolean = false,
     val changeName: Boolean = false,
     val changePassword: Boolean = false,
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true,
     val providerType: AuthProviderType = AuthProviderType.UNKNOWN,
     val message: String? = null
 )
@@ -99,11 +99,16 @@ class SettingsViewModel(
             theme= theme,
             dynamicColors = colors,
             isLoggedIn = user != null,
-            providerType = authRepository.providerType) }
+            providerType = authRepository.providerType,
+            isLoading = false) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(),
-            initialValue = _state.value.copy(theme = ThemeValues.SYSTEM, dynamicColors = false, providerType = authRepository.providerType)
+            initialValue = _state.value.copy(
+                theme = ThemeValues.SYSTEM,
+                dynamicColors = false,
+                providerType = authRepository.providerType,
+                isLoading = true)
         )
         
 
@@ -147,7 +152,9 @@ class SettingsViewModel(
                 )
             }
         },
-        onLogOut = { authRepository.logout() },
+        onLogOut = {
+            _state.update { it.copy(isLoading = true) }
+            authRepository.logout() },
         onAvatarSelected = { uri ->
             if (authRepository.currentUser != null) {
                 viewModelScope.launch {
@@ -258,7 +265,10 @@ class SettingsViewModel(
                 )
             }
         },
-        goToLogin = { viewModelScope.launch { guestRepository.setGuest(false) } },
+        goToLogin = {
+            _state.update { it.copy(isLoading = true) }
+            viewModelScope.launch { guestRepository.setGuest(false) }
+            },
         onMessageShown = { _state.update { it.copy(message = null) } }
     )
 

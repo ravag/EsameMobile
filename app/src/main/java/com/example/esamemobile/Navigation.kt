@@ -105,7 +105,7 @@ fun EsameMobileNavGraph(
             LevelUpScreen(
                 charId = route.charId,
                 viewModel = levelUpVM,
-                onNavigateBack = { navController.popBackStack() }
+                navController = navController
             )
         }
         composable<EsameMobileRoute.GroupDetails> { backStackEntry ->

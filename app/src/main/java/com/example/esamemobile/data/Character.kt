@@ -35,7 +35,6 @@ data class Character(
 
     val abilitiesList: List<AbilityItem> = emptyList(),
     val classAbilitiesList: List<String> = emptyList(),
-    val subClassAbilitiesList: List<String> = emptyList(),
     val inventoryList: List<InventoryItem> = emptyList(),
 
     val speed: Double = 0.0,
@@ -62,7 +61,6 @@ data class Character(
         tempHP = tempHP,
         abilitiesList = Json.encodeToString(abilitiesList),
         classAbilitiesList = Json.encodeToString(classAbilitiesList),
-        subClassAbilitiesList = Json.encodeToString(subClassAbilitiesList),
         inventoryList = Json.encodeToString(inventoryList),
         speed = speed,
         maxCapacity = maxCapacity,
